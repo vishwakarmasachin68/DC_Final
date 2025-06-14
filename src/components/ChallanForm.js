@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
-Form,Button,Table,Row,Col,Card,Alert,Navbar,Container,Dropdown,InputGroup,
+  Form, Button, Table, Row, Col, Card, Alert, Navbar, Container, Dropdown, InputGroup,
 } from "react-bootstrap";
 import { generateDoc } from "../services/docGenerator";
 import DataView from "./DataView";
@@ -8,8 +8,18 @@ import PreviewModal from "./PreviewModal";
 import "../styles/ChallanForm.css";
 
 const ChallanForm = () => {
+  // Helper function to format date as DDMMYYYY
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}${month}${year}`;
+  };
+
   const [challan, setChallan] = useState({
-    dcNumber: "",
+    // Remove dcNumber and add dcSequence
+    dcSequence: "001", // Default sequence number
     date: new Date().toISOString().split("T")[0],
     name: "",
     client: "",
@@ -33,6 +43,15 @@ const ChallanForm = () => {
   const [error, setError] = useState(null);
   const [showDataView, setShowDataView] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+
+  // Generate the full DC number
+  const getDcNumber = () => {
+    const prefix = "DSI/";
+    const middle = challan.hasPO === "yes" && challan.poNumber 
+      ? challan.poNumber 
+      : formatDate(challan.date);
+    return `${prefix}${middle}/${challan.dcSequence}`;
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -86,7 +105,8 @@ const ChallanForm = () => {
   };
 
   const validateForm = () => {
-    const requiredFields = ["dcNumber", "name", "client", "location"];
+    // Remove dcNumber and add dcSequence
+    const requiredFields = ["dcSequence", "name", "client", "location"];
     const missing = requiredFields.find((field) => !challan[field]);
     if (missing) {
       setError(`Please fill in the ${missing} field`);
@@ -95,6 +115,12 @@ const ChallanForm = () => {
 
     if (challan.hasPO === "yes" && !challan.poNumber) {
       setError("Please enter PO Number");
+      return false;
+    }
+
+    // Validate DC sequence format (3 digits)
+    if (!/^\d{3}$/.test(challan.dcSequence)) {
+      setError("DC Sequence must be a 3-digit number");
       return false;
     }
 
@@ -122,7 +148,12 @@ const ChallanForm = () => {
   const handleSave = async () => {
     setLoading(true);
     try {
-      await generateDoc(challan);
+      // Create a copy with the generated DC number
+      const docChallan = {
+        ...challan,
+        dcNumber: getDcNumber(),
+      };
+      await generateDoc(docChallan);
       setShowPreview(false);
     } catch (err) {
       console.error("Document generation failed:", err);
@@ -134,6 +165,30 @@ const ChallanForm = () => {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  // Update clear form function
+  const handleClearForm = () => {
+    setChallan({
+      dcSequence: "001",
+      date: new Date().toISOString().split("T")[0],
+      name: "",
+      client: "",
+      location: "",
+      hasPO: "no",
+      poNumber: "",
+      items: [
+        {
+          sno: 1,
+          assetName: "",
+          description: "",
+          quantity: 1,
+          serialNo: "",
+          returnable: "no",
+          expectedReturnDate: "",
+        },
+      ],
+    });
   };
 
   return (
@@ -227,16 +282,29 @@ const ChallanForm = () => {
                         <InputGroup.Text>
                           <i className="bi bi-hash"></i>
                         </InputGroup.Text>
+                        <InputGroup.Text className="dc-prefix">
+                          DSI/
+                        </InputGroup.Text>
+                        <InputGroup.Text className="dc-middle">
+                          {challan.hasPO === "yes" && challan.poNumber
+                            ? challan.poNumber
+                            : formatDate(challan.date)}
+                        </InputGroup.Text>
+                        <InputGroup.Text className="dc-slash">/</InputGroup.Text>
                         <Form.Control
                           type="text"
-                          name="dcNumber"
-                          value={challan.dcNumber}
+                          name="dcSequence"
+                          value={challan.dcSequence}
                           onChange={handleInputChange}
-                          placeholder="Enter DC Number"
+                          placeholder="001"
                           required
-                          className="form-control-custom"
+                          className="form-control-custom dc-sequence"
+                          maxLength={3}
                         />
                       </InputGroup>
+                      <div className="dc-preview mt-2">
+                        Full DC Number: <strong>{getDcNumber()}</strong>
+                      </div>
                     </Form.Group>
                   </Col>
                   <Col md={6}>
@@ -530,28 +598,7 @@ const ChallanForm = () => {
                 variant="outline-secondary"
                 size="lg"
                 className="me-3"
-                onClick={() => {
-                  setChallan({
-                    dcNumber: "",
-                    date: new Date().toISOString().split("T")[0],
-                    name: "",
-                    client: "",
-                    location: "",
-                    hasPO: "no",
-                    poNumber: "",
-                    items: [
-                      {
-                        sno: 1,
-                        assetName: "",
-                        description: "",
-                        quantity: 1,
-                        serialNo: "",
-                        returnable: "no",
-                        expectedReturnDate: "",
-                      },
-                    ],
-                  });
-                }}
+                onClick={handleClearForm}
               >
                 <i className="bi bi-x-circle me-2"></i>Clear Form
               </Button>
@@ -572,6 +619,7 @@ const ChallanForm = () => {
         show={showPreview}
         onHide={() => setShowPreview(false)}
         challan={challan}
+        dcNumber={getDcNumber()} // Pass generated DC number
         onSave={handleSave}
         onPrint={handlePrint}
         loading={loading}
