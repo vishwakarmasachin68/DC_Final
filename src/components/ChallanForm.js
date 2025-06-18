@@ -1,25 +1,34 @@
 import React, { useState, useEffect } from "react";
 import {
-  Form, Button, Table, Row, Col, Card, Alert, Navbar, Container, Dropdown, InputGroup,
+  Form,
+  Button,
+  Table,
+  Row,
+  Col,
+  Card,
+  Alert,
+  Navbar,
+  Container,
+  Dropdown,
+  InputGroup,
 } from "react-bootstrap";
 import { generateDoc } from "../services/docGenerator";
 import DataView from "./DataView";
 import PreviewModal from "./PreviewModal";
+import ProjectForm from "./ProjectForm";
 import "../styles/ChallanForm.css";
 
 const ChallanForm = () => {
-  // Helper function to format date as DDMMYYYY
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
     return `${day}${month}${year}`;
   };
 
   const [challan, setChallan] = useState({
-    // Remove dcNumber and add dcSequence
-    dcSequence: "001", // Default sequence number
+    dcSequence: "001",
     date: new Date().toISOString().split("T")[0],
     name: "",
     client: "",
@@ -41,15 +50,15 @@ const ChallanForm = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [showDataView, setShowDataView] = useState(false);
+  const [currentView, setCurrentView] = useState("challan"); // 'challan', 'data', 'project'
   const [showPreview, setShowPreview] = useState(false);
 
-  // Generate the full DC number
   const getDcNumber = () => {
     const prefix = "DSI/";
-    const middle = challan.hasPO === "yes" && challan.poNumber 
-      ? challan.poNumber 
-      : formatDate(challan.date);
+    const middle =
+      challan.hasPO === "yes" && challan.poNumber
+        ? challan.poNumber
+        : formatDate(challan.date);
     return `${prefix}${middle}/${challan.dcSequence}`;
   };
 
@@ -105,7 +114,6 @@ const ChallanForm = () => {
   };
 
   const validateForm = () => {
-    // Remove dcNumber and add dcSequence
     const requiredFields = ["dcSequence", "name", "client", "location"];
     const missing = requiredFields.find((field) => !challan[field]);
     if (missing) {
@@ -118,7 +126,6 @@ const ChallanForm = () => {
       return false;
     }
 
-    // Validate DC sequence format (3 digits)
     if (!/^\d{3}$/.test(challan.dcSequence)) {
       setError("DC Sequence must be a 3-digit number");
       return false;
@@ -148,7 +155,6 @@ const ChallanForm = () => {
   const handleSave = async () => {
     setLoading(true);
     try {
-      // Create a copy with the generated DC number
       const docChallan = {
         ...challan,
         dcNumber: getDcNumber(),
@@ -167,7 +173,6 @@ const ChallanForm = () => {
     window.print();
   };
 
-  // Update clear form function
   const handleClearForm = () => {
     setChallan({
       dcSequence: "001",
@@ -193,8 +198,16 @@ const ChallanForm = () => {
 
   return (
     <div className="challan-app-container">
-      <Navbar bg="primary" variant="dark" expand="lg" className="app-navbar py-2">
-        <Container fluid className="d-flex justify-content-between align-items-center position-relative">
+      <Navbar
+        bg="primary"
+        variant="dark"
+        expand="lg"
+        className="app-navbar py-2"
+      >
+        <Container
+          fluid
+          className="d-flex justify-content-between align-items-center position-relative"
+        >
           <div className="d-flex align-items-center">
             <Navbar.Brand href="#" className="d-flex align-items-center">
               <img
@@ -219,20 +232,30 @@ const ChallanForm = () => {
                 id="dropdown-basic"
                 className="menu-toggle border-0"
               >
-                {/* <i className="bi b  i-three-dots-vertical fs-5"></i> */}
+                <i className="bi bi-three-dots-vertical fs-5"></i>
               </Dropdown.Toggle>
 
               <Dropdown.Menu className="dropdown-menu-end custom-dropdown">
                 <Dropdown.Item
-                  onClick={() => setShowDataView(!showDataView)}
+                  onClick={() => setCurrentView("challan")}
                   className="dropdown-item-custom"
                 >
-                  <i
-                    className={`bi ${
-                      showDataView ? "bi-card-checklist" : "bi-house"
-                    } me-2`}
-                  ></i>
-                  {showDataView ? "Dashboard" : "Data View"}
+                  <i className="bi bi-house me-2"></i>
+                  Dashboard
+                </Dropdown.Item>
+                <Dropdown.Item
+                  onClick={() => setCurrentView("data")}
+                  className="dropdown-item-custom"
+                >
+                  <i className="bi bi-card-checklist me-2"></i>
+                  Data View
+                </Dropdown.Item>
+                <Dropdown.Item
+                  onClick={() => setCurrentView("project")}
+                  className="dropdown-item-custom"
+                >
+                  <i className="bi bi-folder-plus me-2"></i>
+                  Add Project
                 </Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
@@ -240,8 +263,10 @@ const ChallanForm = () => {
         </Container>
       </Navbar>
 
-      {showDataView ? (
+      {currentView === "data" ? (
         <DataView challan={challan} />
+      ) : currentView === "project" ? (
+        <ProjectForm />
       ) : (
         <Container fluid className="main-content-container">
           <div className="page-header mb-4">
@@ -264,7 +289,6 @@ const ChallanForm = () => {
           )}
 
           <Form>
-            {/* Challan Details Card */}
             <Card className="mb-4 form-card">
               <Card.Header className="card-header-custom">
                 <h5 className="card-title">
@@ -290,7 +314,9 @@ const ChallanForm = () => {
                             ? challan.poNumber
                             : formatDate(challan.date)}
                         </InputGroup.Text>
-                        <InputGroup.Text className="dc-slash">/</InputGroup.Text>
+                        <InputGroup.Text className="dc-slash">
+                          /
+                        </InputGroup.Text>
                         <Form.Control
                           type="text"
                           name="dcSequence"
@@ -467,7 +493,6 @@ const ChallanForm = () => {
               </Card.Body>
             </Card>
 
-            {/* Items Card */}
             <Card className="mb-4 form-card">
               <Card.Header className="card-header-custom d-flex justify-content-between align-items-center">
                 <h5 className="card-title">
@@ -591,8 +616,6 @@ const ChallanForm = () => {
                 </div>
               </Card.Body>
             </Card>
-
-            {/* Form Actions */}
             <div className="form-actions">
               <Button
                 variant="outline-secondary"
@@ -614,12 +637,11 @@ const ChallanForm = () => {
           </Form>
         </Container>
       )}
-
       <PreviewModal
         show={showPreview}
         onHide={() => setShowPreview(false)}
         challan={challan}
-        dcNumber={getDcNumber()} // Pass generated DC number
+        dcNumber={getDcNumber()}
         onSave={handleSave}
         onPrint={handlePrint}
         loading={loading}
@@ -627,5 +649,4 @@ const ChallanForm = () => {
     </div>
   );
 };
-
 export default ChallanForm;
