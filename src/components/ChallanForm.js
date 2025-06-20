@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Form,
   Button,
@@ -9,7 +9,6 @@ import {
   Alert,
   Navbar,
   Container,
-  Dropdown,
   InputGroup,
 } from "react-bootstrap";
 import { generateDoc } from "../services/docGenerator";
@@ -26,6 +25,14 @@ const ChallanForm = () => {
     const year = date.getFullYear();
     return `${day}${month}${year}`;
   };
+
+  // State for clients and locations with sample data
+  const [clients, setClients] = useState([]);
+  const [locations, setLocations] = useState([]);
+  const [showNewClientInput, setShowNewClientInput] = useState(false);
+  const [showNewLocationInput, setShowNewLocationInput] = useState(false);
+  const [newClient, setNewClient] = useState("");
+  const [newLocation, setNewLocation] = useState("");
 
   const [challan, setChallan] = useState({
     dcSequence: "001",
@@ -50,7 +57,7 @@ const ChallanForm = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [currentView, setCurrentView] = useState("challan"); // 'challan', 'data', 'project'
+  const [currentView, setCurrentView] = useState("challan");
   const [showPreview, setShowPreview] = useState(false);
 
   const getDcNumber = () => {
@@ -111,6 +118,50 @@ const ChallanForm = () => {
       ...prev,
       items: updatedItems,
     }));
+  };
+
+  // Handle client selection
+  const handleClientChange = (e) => {
+    const value = e.target.value;
+    if (value === "new") {
+      setShowNewClientInput(true);
+      setChallan((prev) => ({ ...prev, client: "" }));
+    } else {
+      setShowNewClientInput(false);
+      setChallan((prev) => ({ ...prev, client: value }));
+    }
+  };
+
+  // Handle location selection
+  const handleLocationChange = (e) => {
+    const value = e.target.value;
+    if (value === "new") {
+      setShowNewLocationInput(true);
+      setChallan((prev) => ({ ...prev, location: "" }));
+    } else {
+      setShowNewLocationInput(false);
+      setChallan((prev) => ({ ...prev, location: value }));
+    }
+  };
+
+  // Save new client
+  const saveNewClient = () => {
+    if (newClient.trim() && !clients.includes(newClient.trim())) {
+      setClients([...clients, newClient.trim()]);
+      setChallan((prev) => ({ ...prev, client: newClient.trim() }));
+      setShowNewClientInput(false);
+      setNewClient("");
+    }
+  };
+
+  // Save new location
+  const saveNewLocation = () => {
+    if (newLocation.trim() && !locations.includes(newLocation.trim())) {
+      setLocations([...locations, newLocation.trim()]);
+      setChallan((prev) => ({ ...prev, location: newLocation.trim() }));
+      setShowNewLocationInput(false);
+      setNewLocation("");
+    }
   };
 
   const validateForm = () => {
@@ -194,6 +245,8 @@ const ChallanForm = () => {
         },
       ],
     });
+    setShowNewClientInput(false);
+    setShowNewLocationInput(false);
   };
 
   return (
@@ -226,39 +279,32 @@ const ChallanForm = () => {
           </div>
 
           <div className="d-flex align-items-center ms-auto">
-            <Dropdown align="end">
-              <Dropdown.Toggle
-                variant="primary"
-                id="dropdown-basic"
-                className="menu-toggle border-0"
+            <div className="d-flex gap-2">
+              <Button
+                variant={currentView === "challan" ? "light" : "outline-light"}
+                onClick={() => setCurrentView("challan")}
+                className="d-flex align-items-center"
               >
-                <i className="bi bi-three-dots-vertical fs-5"></i>
-              </Dropdown.Toggle>
-
-              <Dropdown.Menu className="dropdown-menu-end custom-dropdown">
-                <Dropdown.Item
-                  onClick={() => setCurrentView("challan")}
-                  className="dropdown-item-custom"
-                >
-                  <i className="bi bi-house me-2"></i>
-                  Dashboard
-                </Dropdown.Item>
-                <Dropdown.Item
-                  onClick={() => setCurrentView("data")}
-                  className="dropdown-item-custom"
-                >
-                  <i className="bi bi-card-checklist me-2"></i>
-                  Data View
-                </Dropdown.Item>
-                <Dropdown.Item
-                  onClick={() => setCurrentView("project")}
-                  className="dropdown-item-custom"
-                >
-                  <i className="bi bi-folder-plus me-2"></i>
-                  Add Project
-                </Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown>
+                <i className="bi bi-house me-2"></i>
+                Dashboard
+              </Button>
+              <Button
+                variant={currentView === "data" ? "light" : "outline-light"}
+                onClick={() => setCurrentView("data")}
+                className="d-flex align-items-center"
+              >
+                <i className="bi bi-card-checklist me-2"></i>
+                Data View
+              </Button>
+              <Button
+                variant={currentView === "project" ? "light" : "outline-light"}
+                onClick={() => setCurrentView("project")}
+                className="d-flex align-items-center"
+              >
+                <i className="bi bi-folder-plus me-2"></i>
+                Add Project
+              </Button>
+            </div>
           </div>
         </Container>
       </Navbar>
@@ -382,20 +428,52 @@ const ChallanForm = () => {
                       <Form.Label>
                         Client <span className="text-danger">*</span>
                       </Form.Label>
-                      <InputGroup>
-                        <InputGroup.Text>
-                          <i className="bi bi-building"></i>
-                        </InputGroup.Text>
-                        <Form.Control
-                          type="text"
-                          name="client"
-                          value={challan.client}
-                          onChange={handleInputChange}
-                          placeholder="Enter Client Name"
-                          required
-                          className="form-control-custom"
-                        />
-                      </InputGroup>
+                      {showNewClientInput ? (
+                        <InputGroup>
+                          <InputGroup.Text>
+                            <i className="bi bi-building"></i>
+                          </InputGroup.Text>
+                          <Form.Control
+                            type="text"
+                            value={newClient}
+                            onChange={(e) => setNewClient(e.target.value)}
+                            placeholder="Enter new client"
+                            className="form-control-custom"
+                          />
+                          <Button
+                            variant="outline-success"
+                            onClick={saveNewClient}
+                          >
+                            <i className="bi bi-check"></i>
+                          </Button>
+                          <Button
+                            variant="outline-secondary"
+                            onClick={() => setShowNewClientInput(false)}
+                          >
+                            <i className="bi bi-x"></i>
+                          </Button>
+                        </InputGroup>
+                      ) : (
+                        <InputGroup>
+                          <InputGroup.Text>
+                            <i className="bi bi-building"></i>
+                          </InputGroup.Text>
+                          <Form.Select
+                            value={challan.client || ""}
+                            onChange={handleClientChange}
+                            className="form-control-custom"
+                            required
+                          >
+                            <option value="">Select a client</option>
+                            {clients.map((client, index) => (
+                              <option key={index} value={client}>
+                                {client}
+                              </option>
+                            ))}
+                            <option value="new">+ Add New Client</option>
+                          </Form.Select>
+                        </InputGroup>
+                      )}
                     </Form.Group>
                   </Col>
                 </Row>
@@ -406,20 +484,52 @@ const ChallanForm = () => {
                       <Form.Label>
                         Location <span className="text-danger">*</span>
                       </Form.Label>
-                      <InputGroup>
-                        <InputGroup.Text>
-                          <i className="bi bi-geo-alt"></i>
-                        </InputGroup.Text>
-                        <Form.Control
-                          type="text"
-                          name="location"
-                          value={challan.location}
-                          onChange={handleInputChange}
-                          placeholder="Enter Location"
-                          required
-                          className="form-control-custom"
-                        />
-                      </InputGroup>
+                      {showNewLocationInput ? (
+                        <InputGroup>
+                          <InputGroup.Text>
+                            <i className="bi bi-geo-alt"></i>
+                          </InputGroup.Text>
+                          <Form.Control
+                            type="text"
+                            value={newLocation}
+                            onChange={(e) => setNewLocation(e.target.value)}
+                            placeholder="Enter new location"
+                            className="form-control-custom"
+                          />
+                          <Button
+                            variant="outline-success"
+                            onClick={saveNewLocation}
+                          >
+                            <i className="bi bi-check"></i>
+                          </Button>
+                          <Button
+                            variant="outline-secondary"
+                            onClick={() => setShowNewLocationInput(false)}
+                          >
+                            <i className="bi bi-x"></i>
+                          </Button>
+                        </InputGroup>
+                      ) : (
+                        <InputGroup>
+                          <InputGroup.Text>
+                            <i className="bi bi-geo-alt"></i>
+                          </InputGroup.Text>
+                          <Form.Select
+                            value={challan.location || ""}
+                            onChange={handleLocationChange}
+                            className="form-control-custom"
+                            required
+                          >
+                            <option value="">Select a location</option>
+                            {locations.map((location, index) => (
+                              <option key={index} value={location}>
+                                {location}
+                              </option>
+                            ))}
+                            <option value="new">+ Add New Location</option>
+                          </Form.Select>
+                        </InputGroup>
+                      )}
                     </Form.Group>
                   </Col>
                   <Col md={6}>
