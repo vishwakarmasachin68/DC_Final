@@ -36,8 +36,8 @@ const DataView = ({ challan }) => {
                   <td>{challan.dcNumber || <span className="text-muted">Not provided</span>}</td>
                   <td>{challan.date || <span className="text-muted">Not provided</span>}</td>
                   <td>{challan.name || <span className="text-muted">Not provided</span>}</td>
-                  <td>{challan.client || <span className="text-muted">Not provided</span>}</td>
-                  <td>{challan.location || <span className="text-muted">Not provided</span>}</td>
+                  <td>{challan.client_name || <span className="text-muted">Not provided</span>}</td>
+                  <td>{challan.location_name || <span className="text-muted">Not provided</span>}</td>
                   <td>
                     {challan.hasPO === "yes" ? (
                       challan.poNumber || <span className="text-muted">Not provided</span>

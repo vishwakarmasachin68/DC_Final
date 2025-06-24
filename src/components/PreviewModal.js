@@ -1,8 +1,28 @@
-// src/components/PreviewModal.js
 import React from "react";
-import { Modal, Button, Card, Table, Badge } from "react-bootstrap";
+import { Modal, Button, Card, Table, Badge, Spinner } from "react-bootstrap";
 
-const PreviewModal = ({ show, onHide, challan, onPrint, onSave, loading }) => {
+const PreviewModal = ({ 
+  show, 
+  onHide, 
+  challan, 
+  dcNumber, 
+  onPrint, 
+  onSave, 
+  loading 
+}) => {
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  // Find client and location names
+  const clientName = challan.clientName || `Client ID: ${challan.client}`;
+  const locationName = challan.locationName || `Location ID: ${challan.location}`;
+
   return (
     <Modal
       show={show}
@@ -27,23 +47,23 @@ const PreviewModal = ({ show, onHide, challan, onPrint, onSave, loading }) => {
             <div className="row">
               <div className="col-md-6">
                 <p>
-                  <strong>DC Number:</strong> {challan.dcNumber}
+                  <strong>DC Number:</strong> {dcNumber}
                 </p>
                 <p>
-                  <strong>Date:</strong> {challan.date}
+                  <strong>Date:</strong> {formatDate(challan.date)}
                 </p>
                 <p>
-                  <strong>Name:</strong> {challan.name}
+                  <strong>Prepared By:</strong> {challan.name}
                 </p>
               </div>
               <div className="col-md-6">
                 <p>
-                  <strong>Client:</strong> {challan.client}
+                  <strong>Client:</strong> {clientName}
                 </p>
                 <p>
-                  <strong>Location:</strong> {challan.location}
+                  <strong>Location:</strong> {locationName}
                 </p>
-                {challan.hasPO === "yes" && (
+                {challan.hasPO === "yes" && challan.poNumber && (
                   <p>
                     <strong>PO Number:</strong> {challan.poNumber}
                   </p>
@@ -92,7 +112,7 @@ const PreviewModal = ({ show, onHide, challan, onPrint, onSave, loading }) => {
                     {challan.items.some((i) => i.returnable === "yes") && (
                       <td>
                         {item.returnable === "yes"
-                          ? item.expectedReturnDate
+                          ? formatDate(item.expectedReturnDate)
                           : "N/A"}
                       </td>
                     )}
@@ -116,11 +136,14 @@ const PreviewModal = ({ show, onHide, challan, onPrint, onSave, loading }) => {
           >
             {loading ? (
               <>
-                <span
-                  className="spinner-border spinner-border-sm me-2"
+                <Spinner
+                  as="span"
+                  animation="border"
+                  size="sm"
                   role="status"
                   aria-hidden="true"
-                ></span>
+                  className="me-2"
+                />
                 Generating...
               </>
             ) : (

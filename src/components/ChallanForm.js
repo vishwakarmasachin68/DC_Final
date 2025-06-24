@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Form,
   Button,
@@ -26,9 +26,9 @@ const ChallanForm = () => {
     return `${day}${month}${year}`;
   };
 
-  // State for clients and locations with sample data
   const [clients, setClients] = useState([]);
   const [locations, setLocations] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [showNewClientInput, setShowNewClientInput] = useState(false);
   const [showNewLocationInput, setShowNewLocationInput] = useState(false);
   const [newClient, setNewClient] = useState("");
@@ -38,6 +38,7 @@ const ChallanForm = () => {
     dcSequence: "001",
     date: new Date().toISOString().split("T")[0],
     name: "",
+    project: "",
     client: "",
     location: "",
     hasPO: "no",
@@ -59,6 +60,56 @@ const ChallanForm = () => {
   const [error, setError] = useState(null);
   const [currentView, setCurrentView] = useState("challan");
   const [showPreview, setShowPreview] = useState(false);
+
+  // Load all data from sessionStorage
+  useEffect(() => {
+    const loadData = () => {
+      const storedProjects = JSON.parse(sessionStorage.getItem("projects") || "[]");
+      setProjects(storedProjects);
+      
+      const storedClients = JSON.parse(sessionStorage.getItem("clients") || "[]");
+      setClients(storedClients);
+      
+      const storedLocations = JSON.parse(sessionStorage.getItem("locations") || "[]");
+      setLocations(storedLocations);
+    };
+
+    loadData();
+    
+    // Add event listener for storage changes
+    window.addEventListener('storage', loadData);
+    
+    return () => {
+      window.removeEventListener('storage', loadData);
+    };
+  }, []);
+
+  const handleProjectChange = (e) => {
+    const projectId = e.target.value;
+    if (!projectId) {
+      setChallan(prev => ({
+        ...prev,
+        project: "",
+        client: "",
+        location: "",
+        hasPO: "no",
+        poNumber: ""
+      }));
+      return;
+    }
+
+    const selectedProject = projects.find(p => p.id === projectId);
+    if (selectedProject) {
+      setChallan(prev => ({
+        ...prev,
+        project: projectId,
+        client: selectedProject.client || "",
+        location: selectedProject.location || "",
+        hasPO: selectedProject.hasPO || "no",
+        poNumber: selectedProject.poNumber || ""
+      }));
+    }
+  };
 
   const getDcNumber = () => {
     const prefix = "DSI/";
@@ -120,7 +171,6 @@ const ChallanForm = () => {
     }));
   };
 
-  // Handle client selection
   const handleClientChange = (e) => {
     const value = e.target.value;
     if (value === "new") {
@@ -132,7 +182,6 @@ const ChallanForm = () => {
     }
   };
 
-  // Handle location selection
   const handleLocationChange = (e) => {
     const value = e.target.value;
     if (value === "new") {
@@ -144,23 +193,25 @@ const ChallanForm = () => {
     }
   };
 
-  // Save new client
   const saveNewClient = () => {
     if (newClient.trim() && !clients.includes(newClient.trim())) {
-      setClients([...clients, newClient.trim()]);
+      const updatedClients = [...clients, newClient.trim()];
+      setClients(updatedClients);
       setChallan((prev) => ({ ...prev, client: newClient.trim() }));
       setShowNewClientInput(false);
       setNewClient("");
+      sessionStorage.setItem("clients", JSON.stringify(updatedClients));
     }
   };
 
-  // Save new location
   const saveNewLocation = () => {
     if (newLocation.trim() && !locations.includes(newLocation.trim())) {
-      setLocations([...locations, newLocation.trim()]);
+      const updatedLocations = [...locations, newLocation.trim()];
+      setLocations(updatedLocations);
       setChallan((prev) => ({ ...prev, location: newLocation.trim() }));
       setShowNewLocationInput(false);
       setNewLocation("");
+      sessionStorage.setItem("locations", JSON.stringify(updatedLocations));
     }
   };
 
@@ -229,6 +280,7 @@ const ChallanForm = () => {
       dcSequence: "001",
       date: new Date().toISOString().split("T")[0],
       name: "",
+      project: "",
       client: "",
       location: "",
       hasPO: "no",
@@ -251,16 +303,8 @@ const ChallanForm = () => {
 
   return (
     <div className="challan-app-container">
-      <Navbar
-        bg="primary"
-        variant="dark"
-        expand="lg"
-        className="app-navbar py-2"
-      >
-        <Container
-          fluid
-          className="d-flex justify-content-between align-items-center position-relative"
-        >
+      <Navbar bg="primary" variant="dark" expand="lg" className="app-navbar py-2">
+        <Container fluid className="d-flex justify-content-between align-items-center position-relative">
           <div className="d-flex align-items-center">
             <Navbar.Brand href="#" className="d-flex align-items-center">
               <img
@@ -323,12 +367,7 @@ const ChallanForm = () => {
           </div>
 
           {error && (
-            <Alert
-              variant="danger"
-              dismissible
-              onClose={() => setError(null)}
-              className="alert-custom"
-            >
+            <Alert variant="danger" dismissible onClose={() => setError(null)} className="alert-custom">
               <i className="bi bi-exclamation-triangle-fill me-2"></i>
               {error}
             </Alert>
@@ -345,24 +384,16 @@ const ChallanForm = () => {
                 <Row>
                   <Col md={6}>
                     <Form.Group controlId="dcNumber" className="mb-3">
-                      <Form.Label>
-                        DC Number <span className="text-danger">*</span>
-                      </Form.Label>
+                      <Form.Label>DC Number <span className="text-danger">*</span></Form.Label>
                       <InputGroup>
-                        <InputGroup.Text>
-                          <i className="bi bi-hash"></i>
-                        </InputGroup.Text>
-                        <InputGroup.Text className="dc-prefix">
-                          DSI/
-                        </InputGroup.Text>
+                        <InputGroup.Text><i className="bi bi-hash"></i></InputGroup.Text>
+                        <InputGroup.Text className="dc-prefix">DSI/</InputGroup.Text>
                         <InputGroup.Text className="dc-middle">
                           {challan.hasPO === "yes" && challan.poNumber
                             ? challan.poNumber
                             : formatDate(challan.date)}
                         </InputGroup.Text>
-                        <InputGroup.Text className="dc-slash">
-                          /
-                        </InputGroup.Text>
+                        <InputGroup.Text className="dc-slash">/</InputGroup.Text>
                         <Form.Control
                           type="text"
                           name="dcSequence"
@@ -381,13 +412,9 @@ const ChallanForm = () => {
                   </Col>
                   <Col md={6}>
                     <Form.Group controlId="date" className="mb-3">
-                      <Form.Label>
-                        Date <span className="text-danger">*</span>
-                      </Form.Label>
+                      <Form.Label>Date <span className="text-danger">*</span></Form.Label>
                       <InputGroup>
-                        <InputGroup.Text>
-                          <i className="bi bi-calendar"></i>
-                        </InputGroup.Text>
+                        <InputGroup.Text><i className="bi bi-calendar"></i></InputGroup.Text>
                         <Form.Control
                           type="date"
                           name="date"
@@ -403,14 +430,31 @@ const ChallanForm = () => {
 
                 <Row>
                   <Col md={6}>
-                    <Form.Group controlId="name" className="mb-3">
-                      <Form.Label>
-                        Name <span className="text-danger">*</span>
-                      </Form.Label>
+                    <Form.Group controlId="project" className="mb-3">
+                      <Form.Label>Project</Form.Label>
                       <InputGroup>
-                        <InputGroup.Text>
-                          <i className="bi bi-person"></i>
-                        </InputGroup.Text>
+                        <InputGroup.Text><i className="bi bi-folder"></i></InputGroup.Text>
+                        <Form.Select
+                          name="project"
+                          value={challan.project}
+                          onChange={handleProjectChange}
+                          className="form-control-custom"
+                        >
+                          <option value="">Select a project</option>
+                          {projects.map((project) => (
+                            <option key={project.id} value={project.id}>
+                              {project.projectName}
+                            </option>
+                          ))}
+                        </Form.Select>
+                      </InputGroup>
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group controlId="name" className="mb-3">
+                      <Form.Label>Name <span className="text-danger">*</span></Form.Label>
+                      <InputGroup>
+                        <InputGroup.Text><i className="bi bi-person"></i></InputGroup.Text>
                         <Form.Control
                           type="text"
                           name="name"
@@ -423,16 +467,15 @@ const ChallanForm = () => {
                       </InputGroup>
                     </Form.Group>
                   </Col>
+                </Row>
+
+                <Row>
                   <Col md={6}>
                     <Form.Group controlId="client" className="mb-3">
-                      <Form.Label>
-                        Client <span className="text-danger">*</span>
-                      </Form.Label>
+                      <Form.Label>Client <span className="text-danger">*</span></Form.Label>
                       {showNewClientInput ? (
                         <InputGroup>
-                          <InputGroup.Text>
-                            <i className="bi bi-building"></i>
-                          </InputGroup.Text>
+                          <InputGroup.Text><i className="bi bi-building"></i></InputGroup.Text>
                           <Form.Control
                             type="text"
                             value={newClient}
@@ -440,24 +483,16 @@ const ChallanForm = () => {
                             placeholder="Enter new client"
                             className="form-control-custom"
                           />
-                          <Button
-                            variant="outline-success"
-                            onClick={saveNewClient}
-                          >
+                          <Button variant="outline-success" onClick={saveNewClient}>
                             <i className="bi bi-check"></i>
                           </Button>
-                          <Button
-                            variant="outline-secondary"
-                            onClick={() => setShowNewClientInput(false)}
-                          >
+                          <Button variant="outline-secondary" onClick={() => setShowNewClientInput(false)}>
                             <i className="bi bi-x"></i>
                           </Button>
                         </InputGroup>
                       ) : (
                         <InputGroup>
-                          <InputGroup.Text>
-                            <i className="bi bi-building"></i>
-                          </InputGroup.Text>
+                          <InputGroup.Text><i className="bi bi-building"></i></InputGroup.Text>
                           <Form.Select
                             value={challan.client || ""}
                             onChange={handleClientChange}
@@ -466,9 +501,7 @@ const ChallanForm = () => {
                           >
                             <option value="">Select a client</option>
                             {clients.map((client, index) => (
-                              <option key={index} value={client}>
-                                {client}
-                              </option>
+                              <option key={index} value={client}>{client}</option>
                             ))}
                             <option value="new">+ Add New Client</option>
                           </Form.Select>
@@ -476,19 +509,12 @@ const ChallanForm = () => {
                       )}
                     </Form.Group>
                   </Col>
-                </Row>
-
-                <Row>
                   <Col md={6}>
                     <Form.Group controlId="location" className="mb-3">
-                      <Form.Label>
-                        Location <span className="text-danger">*</span>
-                      </Form.Label>
+                      <Form.Label>Location <span className="text-danger">*</span></Form.Label>
                       {showNewLocationInput ? (
                         <InputGroup>
-                          <InputGroup.Text>
-                            <i className="bi bi-geo-alt"></i>
-                          </InputGroup.Text>
+                          <InputGroup.Text><i className="bi bi-geo-alt"></i></InputGroup.Text>
                           <Form.Control
                             type="text"
                             value={newLocation}
@@ -496,24 +522,16 @@ const ChallanForm = () => {
                             placeholder="Enter new location"
                             className="form-control-custom"
                           />
-                          <Button
-                            variant="outline-success"
-                            onClick={saveNewLocation}
-                          >
+                          <Button variant="outline-success" onClick={saveNewLocation}>
                             <i className="bi bi-check"></i>
                           </Button>
-                          <Button
-                            variant="outline-secondary"
-                            onClick={() => setShowNewLocationInput(false)}
-                          >
+                          <Button variant="outline-secondary" onClick={() => setShowNewLocationInput(false)}>
                             <i className="bi bi-x"></i>
                           </Button>
                         </InputGroup>
                       ) : (
                         <InputGroup>
-                          <InputGroup.Text>
-                            <i className="bi bi-geo-alt"></i>
-                          </InputGroup.Text>
+                          <InputGroup.Text><i className="bi bi-geo-alt"></i></InputGroup.Text>
                           <Form.Select
                             value={challan.location || ""}
                             onChange={handleLocationChange}
@@ -522,9 +540,7 @@ const ChallanForm = () => {
                           >
                             <option value="">Select a location</option>
                             {locations.map((location, index) => (
-                              <option key={index} value={location}>
-                                {location}
-                              </option>
+                              <option key={index} value={location}>{location}</option>
                             ))}
                             <option value="new">+ Add New Location</option>
                           </Form.Select>
@@ -532,6 +548,9 @@ const ChallanForm = () => {
                       )}
                     </Form.Group>
                   </Col>
+                </Row>
+
+                <Row>
                   <Col md={6}>
                     <Form.Group controlId="hasPO" className="mb-3">
                       <Form.Label>Has PO Number?</Form.Label>
@@ -546,12 +565,7 @@ const ChallanForm = () => {
                             checked={challan.hasPO === "yes"}
                             onChange={handleInputChange}
                           />
-                          <label
-                            className="form-check-label"
-                            htmlFor="hasPO-yes"
-                          >
-                            Yes
-                          </label>
+                          <label className="form-check-label" htmlFor="hasPO-yes">Yes</label>
                         </div>
                         <div className="form-check">
                           <input
@@ -563,29 +577,17 @@ const ChallanForm = () => {
                             checked={challan.hasPO === "no"}
                             onChange={handleInputChange}
                           />
-                          <label
-                            className="form-check-label"
-                            htmlFor="hasPO-no"
-                          >
-                            No
-                          </label>
+                          <label className="form-check-label" htmlFor="hasPO-no">No</label>
                         </div>
                       </div>
                     </Form.Group>
                   </Col>
-                </Row>
-
-                {challan.hasPO === "yes" && (
-                  <Row>
+                  {challan.hasPO === "yes" && (
                     <Col md={6}>
                       <Form.Group controlId="poNumber" className="mb-3">
-                        <Form.Label>
-                          PO Number <span className="text-danger">*</span>
-                        </Form.Label>
+                        <Form.Label>PO Number <span className="text-danger">*</span></Form.Label>
                         <InputGroup>
-                          <InputGroup.Text>
-                            <i className="bi bi-file-earmark-text"></i>
-                          </InputGroup.Text>
+                          <InputGroup.Text><i className="bi bi-file-earmark-text"></i></InputGroup.Text>
                           <Form.Control
                             type="text"
                             name="poNumber"
@@ -598,8 +600,8 @@ const ChallanForm = () => {
                         </InputGroup>
                       </Form.Group>
                     </Col>
-                  </Row>
-                )}
+                  )}
+                </Row>
               </Card.Body>
             </Card>
 
@@ -609,12 +611,7 @@ const ChallanForm = () => {
                   <i className="bi bi-list-ul me-2"></i>Item Details
                 </h5>
                 <div>
-                  <Button
-                    variant="outline-success"
-                    size="sm"
-                    onClick={addItem}
-                    className="me-2"
-                  >
+                  <Button variant="outline-success" size="sm" onClick={addItem} className="me-2">
                     <i className="bi bi-plus-circle me-1"></i>Add Item
                   </Button>
                   <Button
@@ -638,9 +635,9 @@ const ChallanForm = () => {
                         <th width="10%">Qty</th>
                         <th width="15%">Serial No *</th>
                         <th width="10%">Returnable</th>
-                        {challan.items.some(
-                          (item) => item.returnable === "yes"
-                        ) && <th width="15%">Expected Return Date</th>}
+                        {challan.items.some((item) => item.returnable === "yes") && (
+                          <th width="15%">Expected Return Date</th>
+                        )}
                       </tr>
                     </thead>
                     <tbody>
@@ -701,9 +698,7 @@ const ChallanForm = () => {
                               <option value="yes">Yes</option>
                             </Form.Select>
                           </td>
-                          {challan.items.some(
-                            (i) => i.returnable === "yes"
-                          ) && (
+                          {challan.items.some((i) => i.returnable === "yes") && (
                             <td>
                               {item.returnable === "yes" ? (
                                 <Form.Control
@@ -759,4 +754,5 @@ const ChallanForm = () => {
     </div>
   );
 };
+
 export default ChallanForm;

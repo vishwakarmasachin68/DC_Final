@@ -407,7 +407,145 @@ body {
   font-size: 0.9rem;
   color: #6c757d;
 }
+/* Add these styles for print functionality */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-content, .print-content * {
+    visibility: visible;
+  }
+  .print-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 20px;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
 
+/* Modal print styles */
+.preview-modal .modal-dialog {
+  max-width: 90%;
+  margin: 1.75rem auto;
+}
+
+/* Table styles for print */
+.items-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.items-table th, .items-table td {
+  border: 1px solid #dee2e6;
+  padding: 8px;
+}
+.items-table th {
+  background-color: #f8f9fa;
+}
+
+/* Card styles for print */
+.print-challan {
+  border: none;
+  box-shadow: none;
+}
+/* Print styles */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-content, .print-content * {
+    visibility: visible;
+  }
+  .print-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 20px;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Modal styles */
+.preview-modal .modal-dialog {
+  max-width: 90%;
+  margin: 1.75rem auto;
+}
+
+/* Table styles */
+.items-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.items-table th, .items-table td {
+  border: 1px solid #dee2e6;
+  padding: 8px;
+}
+.items-table th {
+  background-color: #f8f9fa;
+}
+
+/* Form styles */
+.form-card {
+  border-radius: 0.5rem;
+  border: 1px solid #dee2e6;
+}
+.card-header-custom {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  padding: 1rem 1.25rem;
+}
+.form-control-custom {
+  border-radius: 0.25rem;
+}
+.dc-prefix, .dc-middle, .dc-slash {
+  background-color: #e9ecef;
+  color: #495057;
+  font-weight: 500;
+}
+.dc-sequence {
+  max-width: 60px;
+}
+.dc-preview {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+/* Button styles */
+.form-actions {
+  padding: 1rem 0;
+  border-top: 1px solid #dee2e6;
+  margin-top: 1rem;
+}
+
+/* Alert styles */
+.alert-custom {
+  border-radius: 0.5rem;
+}
+
+/* Navbar styles */
+.app-navbar {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.navbar-brand-title {
+  white-space: nowrap;
+}
+
+/* Input group styles */
+.table-input, .table-select {
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  width: 100%;
+}
+.table-input:focus, .table-select:focus {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 0.25rem rgba(13,110,253,0.25);
+}
 /* Print Styles */
 @media print {
   body * {

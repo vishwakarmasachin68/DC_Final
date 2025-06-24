@@ -12,27 +12,31 @@ import {
 } from "react-bootstrap";
 import "../styles/ProjectForm.css";
 
-const ProjectForm = () => {
-  // Define initial project state
-  const initialProjectState = {
-    location: "",
-    client: "",
-    hasPO: "no",
-    poNumber: "",
-    projectName: "",
-    projectDetails: "",
-    personsInvolved: [""],
-    fieldSupervisor: "",
-  };
+const initialProjectState = {
+  location: "",
+  client: "",
+  hasPO: "no",
+  poNumber: "",
+  projectName: "",
+  projectDetails: "",
+  personsInvolved: [""],
+  fieldSupervisor: "",
+};
 
-  // State for clients and locations with sessionStorage persistence
+const STORAGE_KEYS = {
+  PROJECTS: "projects",
+  CLIENTS: "clients",
+  LOCATIONS: "locations",
+};
+
+const ProjectForm = () => {
   const [clients, setClients] = useState(() => {
-    const savedClients = sessionStorage.getItem("clients");
+    const savedClients = sessionStorage.getItem(STORAGE_KEYS.CLIENTS);
     return savedClients ? JSON.parse(savedClients) : [];
   });
   
   const [locations, setLocations] = useState(() => {
-    const savedLocations = sessionStorage.getItem("locations");
+    const savedLocations = sessionStorage.getItem(STORAGE_KEYS.LOCATIONS);
     return savedLocations ? JSON.parse(savedLocations) : [];
   });
   
@@ -40,48 +44,32 @@ const ProjectForm = () => {
   const [showNewLocationInput, setShowNewLocationInput] = useState(false);
   const [newClient, setNewClient] = useState("");
   const [newLocation, setNewLocation] = useState("");
-
-  // Project state
   const [project, setProject] = useState(initialProjectState);
-
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [projectsList, setProjectsList] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState("");
 
-  // Load projects and client/location data from sessionStorage on mount
+  // Load all data from sessionStorage on mount
   useEffect(() => {
-    const storedProjects = JSON.parse(sessionStorage.getItem("projects") || "[]");
+    const storedProjects = JSON.parse(sessionStorage.getItem(STORAGE_KEYS.PROJECTS) || "[]");
     setProjectsList(storedProjects);
     
-    // Load clients and locations if they exist
-    const storedClients = sessionStorage.getItem("clients");
-    if (storedClients) {
-      setClients(JSON.parse(storedClients));
-    }
+    const storedClients = sessionStorage.getItem(STORAGE_KEYS.CLIENTS);
+    if (storedClients) setClients(JSON.parse(storedClients));
     
-    const storedLocations = sessionStorage.getItem("locations");
-    if (storedLocations) {
-      setLocations(JSON.parse(storedLocations));
-    }
+    const storedLocations = sessionStorage.getItem(STORAGE_KEYS.LOCATIONS);
+    if (storedLocations) setLocations(JSON.parse(storedLocations));
   }, []);
 
-  // Save clients/locations to sessionStorage when they change
+  // Save data to sessionStorage when they change
   useEffect(() => {
-    sessionStorage.setItem("clients", JSON.stringify(clients));
-  }, [clients]);
+    sessionStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(clients));
+    sessionStorage.setItem(STORAGE_KEYS.LOCATIONS, JSON.stringify(locations));
+    sessionStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(projectsList));
+  }, [clients, locations, projectsList]);
 
-  useEffect(() => {
-    sessionStorage.setItem("locations", JSON.stringify(locations));
-  }, [locations]);
-
-  // Save projects to sessionStorage when they change
-  useEffect(() => {
-    sessionStorage.setItem("projects", JSON.stringify(projectsList));
-  }, [projectsList]);
-
-  // Handle client selection
   const handleClientChange = (e) => {
     const value = e.target.value;
     if (value === "new") {
@@ -93,7 +81,6 @@ const ProjectForm = () => {
     }
   };
 
-  // Handle location selection
   const handleLocationChange = (e) => {
     const value = e.target.value;
     if (value === "new") {
@@ -105,7 +92,6 @@ const ProjectForm = () => {
     }
   };
 
-  // Save new client
   const saveNewClient = () => {
     if (newClient.trim() && !clients.includes(newClient.trim())) {
       const updatedClients = [...clients, newClient.trim()];
@@ -116,7 +102,6 @@ const ProjectForm = () => {
     }
   };
 
-  // Save new location
   const saveNewLocation = () => {
     if (newLocation.trim() && !locations.includes(newLocation.trim())) {
       const updatedLocations = [...locations, newLocation.trim()];
@@ -127,20 +112,17 @@ const ProjectForm = () => {
     }
   };
 
-  // Handle form field changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setProject((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle person changes
   const handlePersonChange = (index, value) => {
     const updatedPersons = [...project.personsInvolved];
     updatedPersons[index] = value;
     setProject((prev) => ({ ...prev, personsInvolved: updatedPersons }));
   };
 
-  // Add person field
   const addPersonField = () => {
     setProject((prev) => ({
       ...prev,
@@ -148,34 +130,28 @@ const ProjectForm = () => {
     }));
   };
 
-  // Remove person field
   const removePersonField = (index) => {
     if (project.personsInvolved.length <= 1) return;
     const updatedPersons = project.personsInvolved.filter((_, i) => i !== index);
     setProject((prev) => ({ ...prev, personsInvolved: updatedPersons }));
   };
 
-  // Validate form - only project name and field supervisor are required
   const validateForm = () => {
     if (!project.projectName) {
       setError("Please fill in the project name field");
       return false;
     }
-
     if (!project.fieldSupervisor) {
       setError("Please fill in the field supervisor field");
       return false;
     }
-
     return true;
   };
 
-  // Load project for editing
   const loadProjectForEdit = (projectId) => {
     const projectToEdit = projectsList.find(p => p.id === projectId);
     if (projectToEdit) {
-      // Ensure personsInvolved has at least one element
-      const persons = projectToEdit.personsInvolved && projectToEdit.personsInvolved.length > 0 
+      const persons = projectToEdit.personsInvolved?.length > 0 
         ? projectToEdit.personsInvolved 
         : [""];
       
@@ -191,12 +167,10 @@ const ProjectForm = () => {
       setShowNewClientInput(false);
       setShowNewLocationInput(false);
       
-      // Scroll to form
       document.getElementById("project-form").scrollIntoView({ behavior: "smooth" });
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -207,26 +181,21 @@ const ProjectForm = () => {
       let updatedProjects = [...projectsList];
       
       if (editMode) {
-        // Update existing project
         updatedProjects = updatedProjects.map(p => 
           p.id === selectedProjectId ? { ...project, id: selectedProjectId } : p
         );
       } else {
-        // Add new project
         updatedProjects.push({ ...project, id: Date.now().toString() });
       }
 
       setProjectsList(updatedProjects);
       setSuccess(true);
-      
-      // Reset form after successful save
       handleClearForm();
     } catch (err) {
       setError("Failed to save project: " + err.message);
     }
   };
 
-  // Clear form
   const handleClearForm = () => {
     setProject(initialProjectState);
     setEditMode(false);
@@ -236,7 +205,6 @@ const ProjectForm = () => {
     setError(null);
   };
 
-  // Delete project
   const handleDeleteProject = (projectId) => {
     const updatedProjects = projectsList.filter(project => project.id !== projectId);
     setProjectsList(updatedProjects);
@@ -256,12 +224,7 @@ const ProjectForm = () => {
       </div>
 
       {error && (
-        <Alert
-          variant="danger"
-          dismissible
-          onClose={() => setError(null)}
-          className="alert-custom"
-        >
+        <Alert variant="danger" dismissible onClose={() => setError(null)} className="alert-custom">
           <i className="bi bi-exclamation-triangle-fill me-2"></i>
           {error}
         </Alert>
@@ -274,7 +237,6 @@ const ProjectForm = () => {
         </Alert>
       )}
 
-      {/* Project Form Section */}
       <Card className="mb-4 form-card" id="project-form">
         <Card.Header className="card-header-custom">
           <h5 className="card-title">
@@ -290,9 +252,7 @@ const ProjectForm = () => {
                   <Form.Label>Client</Form.Label>
                   {showNewClientInput ? (
                     <InputGroup>
-                      <InputGroup.Text>
-                        <i className="bi bi-building"></i>
-                      </InputGroup.Text>
+                      <InputGroup.Text><i className="bi bi-building"></i></InputGroup.Text>
                       <Form.Control
                         type="text"
                         value={newClient}
@@ -300,24 +260,16 @@ const ProjectForm = () => {
                         placeholder="Enter new client"
                         className="form-control-custom"
                       />
-                      <Button
-                        variant="outline-success"
-                        onClick={saveNewClient}
-                      >
+                      <Button variant="outline-success" onClick={saveNewClient}>
                         <i className="bi bi-check"></i>
                       </Button>
-                      <Button
-                        variant="outline-secondary"
-                        onClick={() => setShowNewClientInput(false)}
-                      >
+                      <Button variant="outline-secondary" onClick={() => setShowNewClientInput(false)}>
                         <i className="bi bi-x"></i>
                       </Button>
                     </InputGroup>
                   ) : (
                     <InputGroup>
-                      <InputGroup.Text>
-                        <i className="bi bi-building"></i>
-                      </InputGroup.Text>
+                      <InputGroup.Text><i className="bi bi-building"></i></InputGroup.Text>
                       <Form.Select
                         value={project.client || ""}
                         onChange={handleClientChange}
@@ -325,9 +277,7 @@ const ProjectForm = () => {
                       >
                         <option value="">Select a client</option>
                         {clients.map((client, index) => (
-                          <option key={index} value={client}>
-                            {client}
-                          </option>
+                          <option key={index} value={client}>{client}</option>
                         ))}
                         <option value="new">+ Add New Client</option>
                       </Form.Select>
@@ -341,9 +291,7 @@ const ProjectForm = () => {
                   <Form.Label>Location</Form.Label>
                   {showNewLocationInput ? (
                     <InputGroup>
-                      <InputGroup.Text>
-                        <i className="bi bi-geo-alt"></i>
-                      </InputGroup.Text>
+                      <InputGroup.Text><i className="bi bi-geo-alt"></i></InputGroup.Text>
                       <Form.Control
                         type="text"
                         value={newLocation}
@@ -351,24 +299,16 @@ const ProjectForm = () => {
                         placeholder="Enter new location"
                         className="form-control-custom"
                       />
-                      <Button
-                        variant="outline-success"
-                        onClick={saveNewLocation}
-                      >
+                      <Button variant="outline-success" onClick={saveNewLocation}>
                         <i className="bi bi-check"></i>
                       </Button>
-                      <Button
-                        variant="outline-secondary"
-                        onClick={() => setShowNewLocationInput(false)}
-                      >
+                      <Button variant="outline-secondary" onClick={() => setShowNewLocationInput(false)}>
                         <i className="bi bi-x"></i>
                       </Button>
                     </InputGroup>
                   ) : (
                     <InputGroup>
-                      <InputGroup.Text>
-                        <i className="bi bi-geo-alt"></i>
-                      </InputGroup.Text>
+                      <InputGroup.Text><i className="bi bi-geo-alt"></i></InputGroup.Text>
                       <Form.Select
                         value={project.location || ""}
                         onChange={handleLocationChange}
@@ -376,9 +316,7 @@ const ProjectForm = () => {
                       >
                         <option value="">Select a location</option>
                         {locations.map((location, index) => (
-                          <option key={index} value={location}>
-                            {location}
-                          </option>
+                          <option key={index} value={location}>{location}</option>
                         ))}
                         <option value="new">+ Add New Location</option>
                       </Form.Select>
@@ -403,9 +341,7 @@ const ProjectForm = () => {
                         checked={project.hasPO === "yes"}
                         onChange={handleChange}
                       />
-                      <label className="form-check-label" htmlFor="hasPO-yes">
-                        Yes
-                      </label>
+                      <label className="form-check-label" htmlFor="hasPO-yes">Yes</label>
                     </div>
                     <div className="form-check">
                       <input
@@ -417,9 +353,7 @@ const ProjectForm = () => {
                         checked={project.hasPO === "no"}
                         onChange={handleChange}
                       />
-                      <label className="form-check-label" htmlFor="hasPO-no">
-                        No
-                      </label>
+                      <label className="form-check-label" htmlFor="hasPO-no">No</label>
                     </div>
                   </div>
                 </Form.Group>
@@ -430,9 +364,7 @@ const ProjectForm = () => {
                   <Form.Group className="mb-3">
                     <Form.Label>PO Number</Form.Label>
                     <InputGroup>
-                      <InputGroup.Text>
-                        <i className="bi bi-file-earmark-text"></i>
-                      </InputGroup.Text>
+                      <InputGroup.Text><i className="bi bi-file-earmark-text"></i></InputGroup.Text>
                       <Form.Control
                         type="text"
                         name="poNumber"
@@ -450,13 +382,9 @@ const ProjectForm = () => {
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>
-                    Project Name <span className="text-danger">*</span>
-                  </Form.Label>
+                  <Form.Label>Project Name <span className="text-danger">*</span></Form.Label>
                   <InputGroup>
-                    <InputGroup.Text>
-                      <i className="bi bi-journal"></i>
-                    </InputGroup.Text>
+                    <InputGroup.Text><i className="bi bi-journal"></i></InputGroup.Text>
                     <Form.Control
                       type="text"
                       name="projectName"
@@ -472,13 +400,9 @@ const ProjectForm = () => {
 
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>
-                    Field Supervisor <span className="text-danger">*</span>
-                  </Form.Label>
+                  <Form.Label>Field Supervisor <span className="text-danger">*</span></Form.Label>
                   <InputGroup>
-                    <InputGroup.Text>
-                      <i className="bi bi-person-badge"></i>
-                    </InputGroup.Text>
+                    <InputGroup.Text><i className="bi bi-person-badge"></i></InputGroup.Text>
                     <Form.Control
                       type="text"
                       name="fieldSupervisor"
@@ -512,11 +436,7 @@ const ProjectForm = () => {
                   <i className="bi bi-people me-2"></i>
                   Team Members
                 </h5>
-                <Button
-                  variant="outline-primary"
-                  size="sm"
-                  onClick={addPersonField}
-                >
+                <Button variant="outline-primary" size="sm" onClick={addPersonField}>
                   <i className="bi bi-plus-circle me-1"></i>Add Member
                 </Button>
               </Card.Header>
@@ -525,9 +445,7 @@ const ProjectForm = () => {
                   <Row key={index} className="mb-3 align-items-center">
                     <Col>
                       <InputGroup>
-                        <InputGroup.Text>
-                          <i className="bi bi-person"></i>
-                        </InputGroup.Text>
+                        <InputGroup.Text><i className="bi bi-person"></i></InputGroup.Text>
                         <Form.Control
                           type="text"
                           value={person}
@@ -539,10 +457,7 @@ const ProjectForm = () => {
                     </Col>
                     <Col xs="auto">
                       {project.personsInvolved.length > 1 && (
-                        <Button
-                          variant="outline-danger"
-                          onClick={() => removePersonField(index)}
-                        >
+                        <Button variant="outline-danger" onClick={() => removePersonField(index)}>
                           <i className="bi bi-trash"></i>
                         </Button>
                       )}
@@ -553,11 +468,7 @@ const ProjectForm = () => {
             </Card>
 
             <div className="form-actions">
-              <Button 
-                variant="outline-secondary" 
-                onClick={handleClearForm}
-                className="me-3"
-              >
+              <Button variant="outline-secondary" onClick={handleClearForm} className="me-3">
                 <i className="bi bi-x-circle me-2"></i>Clear Form
               </Button>
               <Button variant="primary" type="submit" size="lg">
@@ -569,7 +480,6 @@ const ProjectForm = () => {
         </Card.Body>
       </Card>
 
-      {/* Existing Projects Section */}
       <Card className="mb-4 form-card">
         <Card.Header className="card-header-custom">
           <h5 className="card-title">
