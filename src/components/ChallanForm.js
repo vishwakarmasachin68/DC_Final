@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   Form,
   Button,
@@ -10,12 +10,13 @@ import {
   Navbar,
   Container,
   InputGroup,
-} from "react-bootstrap";
-import { generateDoc } from "../services/docGenerator";
-import DataView from "./DataView";
-import PreviewModal from "./PreviewModal";
-import ProjectForm from "./ProjectForm";
-import "../styles/ChallanForm.css";
+} from 'react-bootstrap';
+import { generateDoc } from '../services/docGenerator';
+import { jsonStorage } from '../services/jsonStorage';
+import DataView from './DataView';
+import PreviewModal from './PreviewModal';
+import ProjectForm from './ProjectForm';
+import '../styles/ChallanForm.css';
 
 const ChallanForm = () => {
   const formatDate = (dateString) => {
@@ -33,6 +34,7 @@ const ChallanForm = () => {
   const [showNewLocationInput, setShowNewLocationInput] = useState(false);
   const [newClient, setNewClient] = useState("");
   const [newLocation, setNewLocation] = useState("");
+  const [loading, setLoading] = useState(true);
 
   const [challan, setChallan] = useState({
     dcSequence: "001",
@@ -56,34 +58,34 @@ const ChallanForm = () => {
     ],
   });
 
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [currentView, setCurrentView] = useState("challan");
   const [showPreview, setShowPreview] = useState(false);
 
-  // Load all data from sessionStorage
+  // Load all data
   useEffect(() => {
-    const loadData = () => {
-      const storedProjects = JSON.parse(sessionStorage.getItem("projects") || "[]");
-      setProjects(storedProjects);
-      
-      const storedClients = JSON.parse(sessionStorage.getItem("clients") || "[]");
-      setClients(storedClients);
-      
-      const storedLocations = JSON.parse(sessionStorage.getItem("locations") || "[]");
-      setLocations(storedLocations);
+    const loadData = async () => {
+      try {
+        const [projects, clients, locations] = await Promise.all([
+          jsonStorage.getProjects(),
+          jsonStorage.getClients(),
+          jsonStorage.getLocations()
+        ]);
+        
+        setProjects(projects);
+        setClients(clients);
+        setLocations(locations);
+      } catch (err) {
+        setError("Failed to load data");
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadData();
-    
-    // Add event listener for storage changes
-    window.addEventListener('storage', loadData);
-    
-    return () => {
-      window.removeEventListener('storage', loadData);
-    };
   }, []);
 
+  // Handle project selection
   const handleProjectChange = (e) => {
     const projectId = e.target.value;
     if (!projectId) {
@@ -111,24 +113,26 @@ const ChallanForm = () => {
     }
   };
 
+  // Generate DC number
   const getDcNumber = () => {
     const prefix = "DSI/";
-    const middle =
-      challan.hasPO === "yes" && challan.poNumber
-        ? challan.poNumber
-        : formatDate(challan.date);
+    const middle = challan.hasPO === "yes" && challan.poNumber 
+      ? challan.poNumber 
+      : formatDate(challan.date);
     return `${prefix}${middle}/${challan.dcSequence}`;
   };
 
+  // Handle input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setChallan((prev) => ({ ...prev, [name]: value }));
+    setChallan(prev => ({ ...prev, [name]: value }));
     setError(null);
   };
 
+  // Handle item changes
   const handleItemChange = (index, e) => {
     const { name, value } = e.target;
-    setChallan((prev) => {
+    setChallan(prev => {
       const updatedItems = [...prev.items];
       updatedItems[index] = {
         ...updatedItems[index],
@@ -136,11 +140,11 @@ const ChallanForm = () => {
       };
       return { ...prev, items: updatedItems };
     });
-    setError(null);
   };
 
+  // Add new item
   const addItem = () => {
-    setChallan((prev) => ({
+    setChallan(prev => ({
       ...prev,
       items: [
         ...prev.items,
@@ -157,124 +161,134 @@ const ChallanForm = () => {
     }));
   };
 
+  // Remove item
   const removeItem = (index) => {
     if (challan.items.length <= 1) return;
     const updatedItems = challan.items
       .filter((_, i) => i !== index)
-      .map((item, i) => ({
-        ...item,
-        sno: i + 1,
-      }));
-    setChallan((prev) => ({
-      ...prev,
-      items: updatedItems,
-    }));
+      .map((item, i) => ({ ...item, sno: i + 1 }));
+    setChallan(prev => ({ ...prev, items: updatedItems }));
   };
 
+  // Handle client selection
   const handleClientChange = (e) => {
     const value = e.target.value;
     if (value === "new") {
       setShowNewClientInput(true);
-      setChallan((prev) => ({ ...prev, client: "" }));
+      setChallan(prev => ({ ...prev, client: "" }));
     } else {
       setShowNewClientInput(false);
-      setChallan((prev) => ({ ...prev, client: value }));
+      setChallan(prev => ({ ...prev, client: value }));
     }
   };
 
+  // Handle location selection
   const handleLocationChange = (e) => {
     const value = e.target.value;
     if (value === "new") {
       setShowNewLocationInput(true);
-      setChallan((prev) => ({ ...prev, location: "" }));
+      setChallan(prev => ({ ...prev, location: "" }));
     } else {
       setShowNewLocationInput(false);
-      setChallan((prev) => ({ ...prev, location: value }));
+      setChallan(prev => ({ ...prev, location: value }));
     }
   };
 
-  const saveNewClient = () => {
-    if (newClient.trim() && !clients.includes(newClient.trim())) {
-      const updatedClients = [...clients, newClient.trim()];
-      setClients(updatedClients);
-      setChallan((prev) => ({ ...prev, client: newClient.trim() }));
+  // Save new client
+  const saveNewClient = async () => {
+    if (!newClient.trim()) return;
+    
+    try {
+      await jsonStorage.saveClient(newClient.trim());
+      const clients = await jsonStorage.getClients();
+      setClients(clients);
+      setChallan(prev => ({ ...prev, client: newClient.trim() }));
       setShowNewClientInput(false);
       setNewClient("");
-      sessionStorage.setItem("clients", JSON.stringify(updatedClients));
+    } catch (err) {
+      setError("Failed to save client");
     }
   };
 
-  const saveNewLocation = () => {
-    if (newLocation.trim() && !locations.includes(newLocation.trim())) {
-      const updatedLocations = [...locations, newLocation.trim()];
-      setLocations(updatedLocations);
-      setChallan((prev) => ({ ...prev, location: newLocation.trim() }));
+  // Save new location
+  const saveNewLocation = async () => {
+    if (!newLocation.trim()) return;
+    
+    try {
+      await jsonStorage.saveLocation(newLocation.trim());
+      const locations = await jsonStorage.getLocations();
+      setLocations(locations);
+      setChallan(prev => ({ ...prev, location: newLocation.trim() }));
       setShowNewLocationInput(false);
       setNewLocation("");
-      sessionStorage.setItem("locations", JSON.stringify(updatedLocations));
+    } catch (err) {
+      setError("Failed to save location");
     }
   };
 
+  // Validate form
   const validateForm = () => {
-    const requiredFields = ["dcSequence", "name", "client", "location"];
-    const missing = requiredFields.find((field) => !challan[field]);
-    if (missing) {
-      setError(`Please fill in the ${missing} field`);
-      return false;
-    }
-
-    if (challan.hasPO === "yes" && !challan.poNumber) {
-      setError("Please enter PO Number");
-      return false;
-    }
-
-    if (!/^\d{3}$/.test(challan.dcSequence)) {
+    if (!challan.dcSequence || !/^\d{3}$/.test(challan.dcSequence)) {
       setError("DC Sequence must be a 3-digit number");
       return false;
     }
-
+    if (!challan.name) {
+      setError("Name is required");
+      return false;
+    }
+    if (!challan.client) {
+      setError("Client is required");
+      return false;
+    }
+    if (!challan.location) {
+      setError("Location is required");
+      return false;
+    }
+    if (challan.hasPO === "yes" && !challan.poNumber) {
+      setError("PO Number is required");
+      return false;
+    }
     for (const [i, item] of challan.items.entries()) {
       if (!item.assetName || !item.description || !item.serialNo) {
         setError(`Please complete all fields for item ${i + 1}`);
         return false;
       }
-
       if (item.returnable === "yes" && !item.expectedReturnDate) {
         setError(`Please enter expected return date for item ${i + 1}`);
         return false;
       }
     }
-
     return true;
   };
 
+  // Handle preview
   const handlePreview = () => {
     if (validateForm()) {
       setShowPreview(true);
     }
   };
 
+  // Handle save
   const handleSave = async () => {
-    setLoading(true);
+    if (!validateForm()) return;
+    
     try {
-      const docChallan = {
+      await generateDoc({
         ...challan,
         dcNumber: getDcNumber(),
-      };
-      await generateDoc(docChallan);
+      });
       setShowPreview(false);
     } catch (err) {
-      console.error("Document generation failed:", err);
-      setError(err.message || "Failed to generate document.");
-    } finally {
-      setLoading(false);
+      setError("Failed to generate document");
     }
   };
 
+  // Handle print
   const handlePrint = () => {
     window.print();
   };
 
+  // Clear form
   const handleClearForm = () => {
     setChallan({
       dcSequence: "001",
@@ -303,16 +317,19 @@ const ChallanForm = () => {
 
   return (
     <div className="challan-app-container">
+      {/* Navbar */}
       <Navbar bg="primary" variant="dark" expand="lg" className="app-navbar py-2">
         <Container fluid className="d-flex justify-content-between align-items-center position-relative">
           <div className="d-flex align-items-center">
             <Navbar.Brand href="#" className="d-flex align-items-center">
-              <img
+              <a href='/'>
+                <img
                 src="/deevia-logo.png"
                 alt="Deevia Software"
                 height="50"
                 className="navbar-logo me-2"
               />
+              </a>
             </Navbar.Brand>
           </div>
 
@@ -329,30 +346,28 @@ const ChallanForm = () => {
                 onClick={() => setCurrentView("challan")}
                 className="d-flex align-items-center"
               >
-                <i className="bi bi-house me-2"></i>
-                Dashboard
+                <i className="bi bi-house me-2"></i>Dashboard
               </Button>
               <Button
                 variant={currentView === "data" ? "light" : "outline-light"}
                 onClick={() => setCurrentView("data")}
                 className="d-flex align-items-center"
               >
-                <i className="bi bi-card-checklist me-2"></i>
-                Data View
+                <i className="bi bi-card-checklist me-2"></i>Data View
               </Button>
               <Button
                 variant={currentView === "project" ? "light" : "outline-light"}
                 onClick={() => setCurrentView("project")}
                 className="d-flex align-items-center"
               >
-                <i className="bi bi-folder-plus me-2"></i>
-                Add Project
+                <i className="bi bi-folder-plus me-2"></i>Add Project
               </Button>
             </div>
           </div>
         </Container>
       </Navbar>
 
+      {/* Main Content */}
       {currentView === "data" ? (
         <DataView challan={challan} />
       ) : currentView === "project" ? (
@@ -367,13 +382,14 @@ const ChallanForm = () => {
           </div>
 
           {error && (
-            <Alert variant="danger" dismissible onClose={() => setError(null)} className="alert-custom">
+            <Alert variant="danger" dismissible onClose={() => setError(null)}>
               <i className="bi bi-exclamation-triangle-fill me-2"></i>
               {error}
             </Alert>
           )}
 
           <Form>
+            {/* Challan Information */}
             <Card className="mb-4 form-card">
               <Card.Header className="card-header-custom">
                 <h5 className="card-title">
@@ -383,17 +399,16 @@ const ChallanForm = () => {
               <Card.Body>
                 <Row>
                   <Col md={6}>
-                    <Form.Group controlId="dcNumber" className="mb-3">
+                    <Form.Group className="mb-3">
                       <Form.Label>DC Number <span className="text-danger">*</span></Form.Label>
                       <InputGroup>
-                        <InputGroup.Text><i className="bi bi-hash"></i></InputGroup.Text>
-                        <InputGroup.Text className="dc-prefix">DSI/</InputGroup.Text>
-                        <InputGroup.Text className="dc-middle">
+                        <InputGroup.Text>DSI/</InputGroup.Text>
+                        <InputGroup.Text>
                           {challan.hasPO === "yes" && challan.poNumber
                             ? challan.poNumber
                             : formatDate(challan.date)}
                         </InputGroup.Text>
-                        <InputGroup.Text className="dc-slash">/</InputGroup.Text>
+                        <InputGroup.Text>/</InputGroup.Text>
                         <Form.Control
                           type="text"
                           name="dcSequence"
@@ -401,150 +416,125 @@ const ChallanForm = () => {
                           onChange={handleInputChange}
                           placeholder="001"
                           required
-                          className="form-control-custom dc-sequence"
                           maxLength={3}
                         />
                       </InputGroup>
-                      <div className="dc-preview mt-2">
+                      <div className="mt-2">
                         Full DC Number: <strong>{getDcNumber()}</strong>
                       </div>
                     </Form.Group>
                   </Col>
                   <Col md={6}>
-                    <Form.Group controlId="date" className="mb-3">
+                    <Form.Group className="mb-3">
                       <Form.Label>Date <span className="text-danger">*</span></Form.Label>
-                      <InputGroup>
-                        <InputGroup.Text><i className="bi bi-calendar"></i></InputGroup.Text>
-                        <Form.Control
-                          type="date"
-                          name="date"
-                          value={challan.date}
-                          onChange={handleInputChange}
-                          required
-                          className="form-control-custom"
-                        />
-                      </InputGroup>
+                      <Form.Control
+                        type="date"
+                        name="date"
+                        value={challan.date}
+                        onChange={handleInputChange}
+                        required
+                      />
                     </Form.Group>
                   </Col>
                 </Row>
 
                 <Row>
                   <Col md={6}>
-                    <Form.Group controlId="project" className="mb-3">
+                    <Form.Group className="mb-3">
                       <Form.Label>Project</Form.Label>
-                      <InputGroup>
-                        <InputGroup.Text><i className="bi bi-folder"></i></InputGroup.Text>
-                        <Form.Select
-                          name="project"
-                          value={challan.project}
-                          onChange={handleProjectChange}
-                          className="form-control-custom"
-                        >
-                          <option value="">Select a project</option>
-                          {projects.map((project) => (
-                            <option key={project.id} value={project.id}>
-                              {project.projectName}
-                            </option>
-                          ))}
-                        </Form.Select>
-                      </InputGroup>
+                      <Form.Select
+                        name="project"
+                        value={challan.project}
+                        onChange={handleProjectChange}
+                      >
+                        <option value="">Select a project</option>
+                        {projects.map((project) => (
+                          <option key={project.id} value={project.id}>
+                            {project.projectName}
+                          </option>
+                        ))}
+                      </Form.Select>
                     </Form.Group>
                   </Col>
                   <Col md={6}>
-                    <Form.Group controlId="name" className="mb-3">
+                    <Form.Group className="mb-3">
                       <Form.Label>Name <span className="text-danger">*</span></Form.Label>
-                      <InputGroup>
-                        <InputGroup.Text><i className="bi bi-person"></i></InputGroup.Text>
-                        <Form.Control
-                          type="text"
-                          name="name"
-                          value={challan.name}
-                          onChange={handleInputChange}
-                          placeholder="Enter Name"
-                          required
-                          className="form-control-custom"
-                        />
-                      </InputGroup>
+                      <Form.Control
+                        type="text"
+                        name="name"
+                        value={challan.name}
+                        onChange={handleInputChange}
+                        placeholder="Enter Name"
+                        required
+                      />
                     </Form.Group>
                   </Col>
                 </Row>
 
                 <Row>
                   <Col md={6}>
-                    <Form.Group controlId="client" className="mb-3">
+                    <Form.Group className="mb-3">
                       <Form.Label>Client <span className="text-danger">*</span></Form.Label>
                       {showNewClientInput ? (
                         <InputGroup>
-                          <InputGroup.Text><i className="bi bi-building"></i></InputGroup.Text>
                           <Form.Control
                             type="text"
                             value={newClient}
                             onChange={(e) => setNewClient(e.target.value)}
                             placeholder="Enter new client"
-                            className="form-control-custom"
                           />
                           <Button variant="outline-success" onClick={saveNewClient}>
-                            <i className="bi bi-check"></i>
+                            Save
                           </Button>
                           <Button variant="outline-secondary" onClick={() => setShowNewClientInput(false)}>
-                            <i className="bi bi-x"></i>
+                            Cancel
                           </Button>
                         </InputGroup>
                       ) : (
-                        <InputGroup>
-                          <InputGroup.Text><i className="bi bi-building"></i></InputGroup.Text>
-                          <Form.Select
-                            value={challan.client || ""}
-                            onChange={handleClientChange}
-                            className="form-control-custom"
-                            required
-                          >
-                            <option value="">Select a client</option>
-                            {clients.map((client, index) => (
-                              <option key={index} value={client}>{client}</option>
-                            ))}
-                            <option value="new">+ Add New Client</option>
-                          </Form.Select>
-                        </InputGroup>
+                        <Form.Select
+                          value={challan.client || ""}
+                          onChange={handleClientChange}
+                          required
+                        >
+                          <option value="">Select a client</option>
+                          {clients.map((client, index) => (
+                            <option key={index} value={client}>{client}</option>
+                          ))}
+                          <option value="new">+ Add New Client</option>
+                        </Form.Select>
                       )}
                     </Form.Group>
                   </Col>
                   <Col md={6}>
-                    <Form.Group controlId="location" className="mb-3">
+                    <Form.Group className="mb-3">
                       <Form.Label>Location <span className="text-danger">*</span></Form.Label>
                       {showNewLocationInput ? (
                         <InputGroup>
-                          <InputGroup.Text><i className="bi bi-geo-alt"></i></InputGroup.Text>
                           <Form.Control
                             type="text"
                             value={newLocation}
                             onChange={(e) => setNewLocation(e.target.value)}
                             placeholder="Enter new location"
-                            className="form-control-custom"
                           />
                           <Button variant="outline-success" onClick={saveNewLocation}>
-                            <i className="bi bi-check"></i>
+                            Save
                           </Button>
                           <Button variant="outline-secondary" onClick={() => setShowNewLocationInput(false)}>
-                            <i className="bi bi-x"></i>
+                            Cancel
                           </Button>
                         </InputGroup>
                       ) : (
-                        <InputGroup>
-                          <InputGroup.Text><i className="bi bi-geo-alt"></i></InputGroup.Text>
-                          <Form.Select
-                            value={challan.location || ""}
-                            onChange={handleLocationChange}
-                            className="form-control-custom"
-                            required
-                          >
-                            <option value="">Select a location</option>
-                            {locations.map((location, index) => (
-                              <option key={index} value={location}>{location}</option>
-                            ))}
-                            <option value="new">+ Add New Location</option>
-                          </Form.Select>
-                        </InputGroup>
+                        <Form.Select
+                          value={challan.location || ""}
+                          onChange={handleLocationChange}
+                          required
+                        >
+                          <option value="">Select a location</option>
+                          {locations.map((location, index) => (
+                            <option key={index} value={location}>{location}</option>
+                          ))}
+                          <option value="new">+ Add New Location</option>
+                        </Form.Select>
                       )}
                     </Form.Group>
                   </Col>
@@ -552,52 +542,43 @@ const ChallanForm = () => {
 
                 <Row>
                   <Col md={6}>
-                    <Form.Group controlId="hasPO" className="mb-3">
+                    <Form.Group className="mb-3">
                       <Form.Label>Has PO Number?</Form.Label>
                       <div className="d-flex">
-                        <div className="form-check me-3">
-                          <input
-                            className="form-check-input"
-                            type="radio"
-                            name="hasPO"
-                            id="hasPO-yes"
-                            value="yes"
-                            checked={challan.hasPO === "yes"}
-                            onChange={handleInputChange}
-                          />
-                          <label className="form-check-label" htmlFor="hasPO-yes">Yes</label>
-                        </div>
-                        <div className="form-check">
-                          <input
-                            className="form-check-input"
-                            type="radio"
-                            name="hasPO"
-                            id="hasPO-no"
-                            value="no"
-                            checked={challan.hasPO === "no"}
-                            onChange={handleInputChange}
-                          />
-                          <label className="form-check-label" htmlFor="hasPO-no">No</label>
-                        </div>
+                        <Form.Check
+                          type="radio"
+                          label="Yes"
+                          name="hasPO"
+                          id="hasPO-yes"
+                          value="yes"
+                          checked={challan.hasPO === "yes"}
+                          onChange={handleInputChange}
+                          className="me-3"
+                        />
+                        <Form.Check
+                          type="radio"
+                          label="No"
+                          name="hasPO"
+                          id="hasPO-no"
+                          value="no"
+                          checked={challan.hasPO === "no"}
+                          onChange={handleInputChange}
+                        />
                       </div>
                     </Form.Group>
                   </Col>
                   {challan.hasPO === "yes" && (
                     <Col md={6}>
-                      <Form.Group controlId="poNumber" className="mb-3">
+                      <Form.Group className="mb-3">
                         <Form.Label>PO Number <span className="text-danger">*</span></Form.Label>
-                        <InputGroup>
-                          <InputGroup.Text><i className="bi bi-file-earmark-text"></i></InputGroup.Text>
-                          <Form.Control
-                            type="text"
-                            name="poNumber"
-                            value={challan.poNumber}
-                            onChange={handleInputChange}
-                            placeholder="Enter PO Number"
-                            required={challan.hasPO === "yes"}
-                            className="form-control-custom"
-                          />
-                        </InputGroup>
+                        <Form.Control
+                          type="text"
+                          name="poNumber"
+                          value={challan.poNumber}
+                          onChange={handleInputChange}
+                          placeholder="Enter PO Number"
+                          required
+                        />
                       </Form.Group>
                     </Col>
                   )}
@@ -605,6 +586,7 @@ const ChallanForm = () => {
               </Card.Body>
             </Card>
 
+            {/* Item Details */}
             <Card className="mb-4 form-card">
               <Card.Header className="card-header-custom d-flex justify-content-between align-items-center">
                 <h5 className="card-title">
@@ -625,114 +607,107 @@ const ChallanForm = () => {
                 </div>
               </Card.Header>
               <Card.Body className="p-0">
-                <div className="table-responsive">
-                  <Table bordered hover className="items-table mb-0">
-                    <thead className="table-header">
-                      <tr>
-                        <th width="5%">#</th>
-                        <th width="20%">Asset Name *</th>
-                        <th width="25%">Description *</th>
-                        <th width="10%">Qty</th>
-                        <th width="15%">Serial No *</th>
-                        <th width="10%">Returnable</th>
-                        {challan.items.some((item) => item.returnable === "yes") && (
-                          <th width="15%">Expected Return Date</th>
+                <Table bordered hover className="mb-0">
+                  <thead>
+                    <tr>
+                      <th width="5%">#</th>
+                      <th width="20%">Asset Name *</th>
+                      <th width="25%">Description *</th>
+                      <th width="10%">Qty</th>
+                      <th width="15%">Serial No *</th>
+                      <th width="10%">Returnable</th>
+                      {challan.items.some((item) => item.returnable === "yes") && (
+                        <th width="15%">Expected Return Date</th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {challan.items.map((item, idx) => (
+                      <tr key={idx}>
+                        <td className="text-center">{item.sno}</td>
+                        <td>
+                          <Form.Control
+                            type="text"
+                            name="assetName"
+                            value={item.assetName}
+                            onChange={(e) => handleItemChange(idx, e)}
+                            required
+                            placeholder="Enter asset name"
+                          />
+                        </td>
+                        <td>
+                          <Form.Control
+                            type="text"
+                            name="description"
+                            value={item.description}
+                            onChange={(e) => handleItemChange(idx, e)}
+                            required
+                            placeholder="Enter description"
+                          />
+                        </td>
+                        <td>
+                          <Form.Control
+                            type="number"
+                            name="quantity"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) => handleItemChange(idx, e)}
+                            className="text-center"
+                          />
+                        </td>
+                        <td>
+                          <Form.Control
+                            type="text"
+                            name="serialNo"
+                            value={item.serialNo}
+                            onChange={(e) => handleItemChange(idx, e)}
+                            required
+                            placeholder="Enter serial no"
+                          />
+                        </td>
+                        <td>
+                          <Form.Select
+                            name="returnable"
+                            value={item.returnable}
+                            onChange={(e) => handleItemChange(idx, e)}
+                          >
+                            <option value="no">No</option>
+                            <option value="yes">Yes</option>
+                          </Form.Select>
+                        </td>
+                        {challan.items.some((i) => i.returnable === "yes") && (
+                          <td>
+                            {item.returnable === "yes" ? (
+                              <Form.Control
+                                type="date"
+                                name="expectedReturnDate"
+                                value={item.expectedReturnDate}
+                                onChange={(e) => handleItemChange(idx, e)}
+                                required
+                              />
+                            ) : (
+                              <span className="text-muted">N/A</span>
+                            )}
+                          </td>
                         )}
                       </tr>
-                    </thead>
-                    <tbody>
-                      {challan.items.map((item, idx) => (
-                        <tr key={idx}>
-                          <td className="text-center">{item.sno}</td>
-                          <td>
-                            <Form.Control
-                              type="text"
-                              name="assetName"
-                              value={item.assetName}
-                              onChange={(e) => handleItemChange(idx, e)}
-                              required
-                              placeholder="Enter asset name"
-                              className="table-input"
-                            />
-                          </td>
-                          <td>
-                            <Form.Control
-                              type="text"
-                              name="description"
-                              value={item.description}
-                              onChange={(e) => handleItemChange(idx, e)}
-                              required
-                              placeholder="Enter description"
-                              className="table-input"
-                            />
-                          </td>
-                          <td>
-                            <Form.Control
-                              type="number"
-                              name="quantity"
-                              min="1"
-                              value={item.quantity}
-                              onChange={(e) => handleItemChange(idx, e)}
-                              className="table-input text-center"
-                            />
-                          </td>
-                          <td>
-                            <Form.Control
-                              type="text"
-                              name="serialNo"
-                              value={item.serialNo}
-                              onChange={(e) => handleItemChange(idx, e)}
-                              required
-                              placeholder="Enter serial no"
-                              className="table-input"
-                            />
-                          </td>
-                          <td>
-                            <Form.Select
-                              name="returnable"
-                              value={item.returnable}
-                              onChange={(e) => handleItemChange(idx, e)}
-                              className="table-select"
-                            >
-                              <option value="no">No</option>
-                              <option value="yes">Yes</option>
-                            </Form.Select>
-                          </td>
-                          {challan.items.some((i) => i.returnable === "yes") && (
-                            <td>
-                              {item.returnable === "yes" ? (
-                                <Form.Control
-                                  type="date"
-                                  name="expectedReturnDate"
-                                  value={item.expectedReturnDate}
-                                  onChange={(e) => handleItemChange(idx, e)}
-                                  required={item.returnable === "yes"}
-                                  className="table-input"
-                                />
-                              ) : (
-                                <span className="text-muted">N/A</span>
-                              )}
-                            </td>
-                          )}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
-                </div>
+                    ))}
+                  </tbody>
+                </Table>
               </Card.Body>
             </Card>
+
+            {/* Form Actions */}
             <div className="form-actions">
               <Button
                 variant="outline-secondary"
-                size="lg"
-                className="me-3"
                 onClick={handleClearForm}
+                className="me-3"
               >
                 <i className="bi bi-x-circle me-2"></i>Clear Form
               </Button>
               <Button
                 variant="primary"
-                size="lg"
                 onClick={handlePreview}
                 disabled={loading}
               >
@@ -742,6 +717,8 @@ const ChallanForm = () => {
           </Form>
         </Container>
       )}
+
+      {/* Preview Modal */}
       <PreviewModal
         show={showPreview}
         onHide={() => setShowPreview(false)}
