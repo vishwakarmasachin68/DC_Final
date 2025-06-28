@@ -9,6 +9,8 @@
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.10.0",
     "bootstrap": "^5.3.6",
+    "bootstrap-icons": "^1.13.1",
+    "docx": "^9.5.1",
     "docxtemplater": "^3.65.0",
     "file-saver": "^2.0.5",
     "pizzip": "^3.2.0",
