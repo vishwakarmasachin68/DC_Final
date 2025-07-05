@@ -138,6 +138,12 @@ const ChallanForm = () => {
         ...updatedItems[index],
         [name]: name === "quantity" ? Math.max(1, parseInt(value) || 1) : value,
       };
+      
+      // Clear expected return date if returnable is set to "no"
+      if (name === "returnable" && value === "no") {
+        updatedItems[index].expectedReturnDate = "";
+      }
+      
       return { ...prev, items: updatedItems };
     });
   };
@@ -273,10 +279,17 @@ const ChallanForm = () => {
     if (!validateForm()) return;
     
     try {
-      await generateDoc({
+      const docData = {
         ...challan,
         dcNumber: getDcNumber(),
-      });
+        items: challan.items.map(item => ({
+          ...item,
+          returnable: item.returnable, // Keep as "yes"/"no" - docGenerator will convert to "YES"/"NO"
+          expectedReturnDate: item.returnable === "yes" ? item.expectedReturnDate : ""
+        }))
+      };
+      
+      await generateDoc(docData);
       setShowPreview(false);
     } catch (err) {
       setError("Failed to generate document");

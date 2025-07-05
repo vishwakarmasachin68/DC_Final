@@ -30,30 +30,24 @@ export const generateDoc = async (challan) => {
     });
 
     // Prepare data for the document
-    const items = challan.items.map((item, index) => ({
-      SLNo: index + 1,
+    const items = challan.items.map((item) => ({
+      SLNo: item.sno,
       asset: item.assetName,
       desc: item.description,
       qty: item.quantity,
       serial: item.serialNo,
-      return: item.returnable ? 'Yes' : 'No',
-      returnDate: item.returnable ? formatDateToReadable(item.expectedReturnDate) : 'N/A'
+      return: item.returnable === "yes" ? "YES" : "NO", // Fixed to match template expectation
+      returnDate: item.returnable === "yes" ? formatDateToReadable(item.expectedReturnDate) : 'N/A'
     }));
-
-    const hasReturnableItems = items.some(item => item.return === 'Yes');
-    const returnableStatus = hasReturnableItems ? 'RETURNABLE' : 'NON-RETURNABLE';
 
     // Set the template variables
     doc.setData({
-      Name: challan.name,
-      Client: challan.clientName || challan.client,
-      Location: challan.locationName || challan.location,
       DCNO: challan.dcNumber,
       Date: formatDateToReadable(challan.date),
-      PONumber: challan.hasPO === 'yes' ? challan.poNumber : 'N/A',
-      items: items,
-      returnStatus: returnableStatus,
-      hasReturnableItems: hasReturnableItems
+      Name: challan.name,
+      Client: challan.client,
+      Location: challan.location,
+      items: items
     });
 
     try {
@@ -72,7 +66,7 @@ export const generateDoc = async (challan) => {
     // Save the document
     saveAs(blob, `Delivery_Challan_${challan.dcNumber.replace(/\//g, '_')}.docx`);
     
-    return { success: true, filename: `Delivery_Challan_${challan.dcNumber}.docx` };
+    return { success: true };
   } catch (error) {
     console.error('Document generation error:', error);
     throw new Error(`Failed to generate document: ${error.message}`);

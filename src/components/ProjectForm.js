@@ -428,7 +428,10 @@ const ProjectForm = () => {
                   <i className="bi bi-people me-2"></i>
                   Team Members
                 </h5>
-                <Button variant="outline-primary" size="sm" onClick={addPersonField}>
+                <Button
+                variant="btn btn-primary" 
+                size="sm" 
+                onClick={addPersonField}>
                   <i className="bi bi-plus-circle me-1"></i>Add Member
                 </Button>
               </Card.Header>
@@ -512,7 +515,7 @@ const ProjectForm = () => {
                     <td>{proj.fieldSupervisor}</td>
                     <td>
                       <Button
-                        variant="outline-primary"
+                        variant="primary"
                         size="sm"
                         onClick={() => loadProjectForEdit(proj.id)}
                         className="me-2"
