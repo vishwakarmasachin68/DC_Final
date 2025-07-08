@@ -605,3 +605,138 @@ body {
     justify-content: center;
   }
 }
+/* DataView.css */
+.data-view-container {
+  padding: 20px;
+  background-color: #f8fafc;
+}
+
+.page-header {
+  padding: 15px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.page-title {
+  font-weight: 600;
+  color: #2b2d42;
+  display: flex;
+  align-items: center;
+  font-size: 1.75rem;
+}
+
+.page-subtitle {
+  font-size: 0.9rem;
+}
+
+.stat-card {
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+  height: 100%;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #4361ee;
+  margin: 10px 0 5px;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.chart-card, .detail-card {
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.card-header-custom {
+  background: linear-gradient(135deg, #4361ee, #3a0ca3);
+  color: white;
+  padding: 15px 20px;
+  border-bottom: none;
+}
+
+.card-header-custom .card-title {
+  font-weight: 500;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  font-size: 1.1rem;
+}
+
+.detail-item {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  height: 100%;
+}
+
+.detail-label {
+  font-size: 0.8rem;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 5px;
+}
+
+.detail-value {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #2b2d42;
+  margin: 0;
+}
+
+.items-table {
+  margin-bottom: 0;
+}
+
+.items-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+  padding: 12px;
+}
+
+.items-table td {
+  vertical-align: middle;
+  padding: 10px;
+}
+
+.table-header {
+  background-color: #f8f9fa;
+}
+
+.text-muted {
+  color: #6c757d !important;
+  font-style: italic;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 1.4rem;
+  }
+  
+  .stat-value {
+    font-size: 1.5rem;
+  }
+  
+  .detail-item {
+    margin-bottom: 15px;
+  }
+}
