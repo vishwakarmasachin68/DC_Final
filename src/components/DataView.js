@@ -3,7 +3,6 @@ import {
   Table, 
   Card, 
   Container, 
-  Button, 
   Badge, 
   Row, 
   Col,
@@ -11,25 +10,17 @@ import {
 } from 'react-bootstrap';
 import { 
   BiBarChartAlt2, 
-  BiPieChartAlt, 
-  BiLineChart, 
-  BiDownload,
-  BiPrinter,
+  BiPieChartAlt,
   BiFilterAlt,
   BiCalendar
 } from 'react-icons/bi';
 import Chart from 'react-apexcharts';
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 
 const DataView = ({ challan }) => {
   const [timeRange, setTimeRange] = useState('all');
   const [chartData, setChartData] = useState({
     items: [],
-    returnStatus: [],
-    monthlyTrend: []
+    returnStatus: []
   });
 
   // Process data for charts
@@ -45,90 +36,15 @@ const DataView = ({ challan }) => {
       const returnableCount = challan.items.filter(item => item.returnable === "yes").length;
       const nonReturnableCount = challan.items.length - returnableCount;
 
-      // Monthly trend data (mock data for example)
-      const monthlyTrendData = [
-        { month: 'Jan', count: 5 },
-        { month: 'Feb', count: 8 },
-        { month: 'Mar', count: 12 },
-        { month: 'Apr', count: 7 },
-        { month: 'May', count: 15 },
-        { month: 'Jun', count: challan.items.length }
-      ];
-
       setChartData({
         items: itemsData,
         returnStatus: [
           { name: 'Returnable', value: returnableCount },
           { name: 'Non-Returnable', value: nonReturnableCount }
-        ],
-        monthlyTrend: monthlyTrendData
+        ]
       });
     }
   }, [challan]);
-
-  // Export to Excel
-  const exportToExcel = () => {
-    const worksheet = XLSX.utils.json_to_sheet([
-      {
-        'DC Number': challan.dcNumber,
-        Date: challan.date,
-        Name: challan.name,
-        Client: challan.client_name,
-        Location: challan.location_name,
-        'PO Number': challan.hasPO === "yes" ? challan.poNumber : 'No PO',
-        'Items Count': challan.items.length
-      },
-      ...challan.items.map(item => ({
-        'S.No': item.sno,
-        'Asset Name': item.assetName,
-        Description: item.description,
-        Quantity: item.quantity,
-        'Serial No': item.serialNo,
-        Returnable: item.returnable === "yes" ? "Yes" : "No",
-        'Expected Return Date': item.expectedReturnDate || 'N/A'
-      }))
-    ]);
-    
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Challan Data');
-    XLSX.writeFile(workbook, `Challan_${challan.dcNumber.replace(/\//g, '_')}.xlsx`);
-  };
-
-  // Export to PDF
-  const exportToPDF = () => {
-    const doc = new jsPDF();
-    
-    // Title
-    doc.setFontSize(18);
-    doc.text(`Delivery Challan: ${challan.dcNumber}`, 14, 20);
-    
-    // Summary
-    doc.setFontSize(12);
-    doc.text(`Date: ${challan.date}`, 14, 30);
-    doc.text(`Prepared By: ${challan.name}`, 14, 37);
-    doc.text(`Client: ${challan.client_name}`, 14, 44);
-    doc.text(`Location: ${challan.location_name}`, 14, 51);
-    doc.text(`PO Number: ${challan.hasPO === "yes" ? challan.poNumber : 'No PO'}`, 14, 58);
-    
-    // Items table
-    doc.autoTable({
-      startY: 65,
-      head: [['#', 'Asset Name', 'Description', 'Qty', 'Serial No', 'Returnable', 'Return Date']],
-      body: challan.items.map(item => [
-        item.sno,
-        item.assetName || '-',
-        item.description || '-',
-        item.quantity,
-        item.serialNo || '-',
-        item.returnable === "yes" ? "Yes" : "No",
-        item.returnable === "yes" ? (item.expectedReturnDate || '-') : 'N/A'
-      ]),
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [67, 97, 238] }
-    });
-    
-    doc.save(`Challan_${challan.dcNumber.replace(/\//g, '_')}.pdf`);
-  };
 
   // Chart options
   const barChartOptions = {
@@ -174,25 +90,6 @@ const DataView = ({ challan }) => {
     dataLabels: { enabled: false }
   };
 
-  const lineChartOptions = {
-    chart: {
-      type: 'line',
-      height: 350,
-      toolbar: { show: false }
-    },
-    stroke: { curve: 'smooth', width: 3 },
-    markers: { size: 5 },
-    xaxis: {
-      categories: chartData.monthlyTrend.map(item => item.month),
-      labels: { style: { fontSize: '12px' } }
-    },
-    yaxis: { title: { text: 'Challans Count' } },
-    colors: ['#4361ee'],
-    tooltip: {
-      y: { formatter: (val) => `${val} challans` }
-    }
-  };
-
   return (
     <Container fluid className="data-view-container">
       {/* Header with filters */}
@@ -207,46 +104,27 @@ const DataView = ({ challan }) => {
           </p>
         </div>
         
-        <div className="d-flex gap-2">
-          <Dropdown>
-            <Dropdown.Toggle variant="outline-secondary" size="sm">
-              <BiFilterAlt className="me-1" /> Filter
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-              <Dropdown.Item active={timeRange === 'all'} onClick={() => setTimeRange('all')}>
-                All Time
-              </Dropdown.Item>
-              <Dropdown.Item active={timeRange === 'month'} onClick={() => setTimeRange('month')}>
-                This Month
-              </Dropdown.Item>
-              <Dropdown.Item active={timeRange === 'week'} onClick={() => setTimeRange('week')}>
-                This Week
-              </Dropdown.Item>
-            </Dropdown.Menu>
-          </Dropdown>
-          
-          <Dropdown>
-            <Dropdown.Toggle variant="primary" size="sm">
-              <BiDownload className="me-1" /> Export
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-              <Dropdown.Item onClick={exportToExcel}>
-                <i className="bi bi-file-earmark-excel me-2"></i> Excel
-              </Dropdown.Item>
-              <Dropdown.Item onClick={exportToPDF}>
-                <i className="bi bi-file-earmark-pdf me-2"></i> PDF
-              </Dropdown.Item>
-              <Dropdown.Item>
-                <i className="bi bi-printer me-2"></i> Print
-              </Dropdown.Item>
-            </Dropdown.Menu>
-          </Dropdown>
-        </div>
+        <Dropdown>
+          <Dropdown.Toggle variant="outline-secondary" size="sm">
+            <BiFilterAlt className="me-1" /> Filter
+          </Dropdown.Toggle>
+          <Dropdown.Menu>
+            <Dropdown.Item active={timeRange === 'all'} onClick={() => setTimeRange('all')}>
+              All Time
+            </Dropdown.Item>
+            <Dropdown.Item active={timeRange === 'month'} onClick={() => setTimeRange('month')}>
+              This Month
+            </Dropdown.Item>
+            <Dropdown.Item active={timeRange === 'week'} onClick={() => setTimeRange('week')}>
+              This Week
+            </Dropdown.Item>
+          </Dropdown.Menu>
+        </Dropdown>
       </div>
 
       {/* Stats Cards Row */}
       <Row className="mb-4">
-        <Col md={3}>
+        <Col md={4}>
           <Card className="stat-card">
             <Card.Body>
               <h6 className="stat-label">Total Items</h6>
@@ -255,7 +133,7 @@ const DataView = ({ challan }) => {
             </Card.Body>
           </Card>
         </Col>
-        <Col md={3}>
+        <Col md={4}>
           <Card className="stat-card">
             <Card.Body>
               <h6 className="stat-label">Returnable Items</h6>
@@ -269,21 +147,12 @@ const DataView = ({ challan }) => {
             </Card.Body>
           </Card>
         </Col>
-        <Col md={3}>
+        <Col md={4}>
           <Card className="stat-card">
             <Card.Body>
               <h6 className="stat-label">Avg. Items/Challan</h6>
               <h2 className="stat-value">8</h2>
               <Badge bg="secondary">All Time</Badge>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={3}>
-          <Card className="stat-card">
-            <Card.Body>
-              <h6 className="stat-label">Total Value</h6>
-              <h2 className="stat-value">₹24,500</h2>
-              <Badge bg="warning">Estimated</Badge>
             </Card.Body>
           </Card>
         </Col>
@@ -322,28 +191,6 @@ const DataView = ({ challan }) => {
                 options={pieChartOptions}
                 series={chartData.returnStatus.map(item => item.value)}
                 type="donut"
-                height={350}
-              />
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Monthly Trend Chart */}
-      <Row className="mb-4">
-        <Col md={12}>
-          <Card className="chart-card">
-            <Card.Header className="card-header-custom">
-              <h5 className="card-title">
-                <BiLineChart className="me-2" />
-                Monthly Challan Trend
-              </h5>
-            </Card.Header>
-            <Card.Body>
-              <Chart
-                options={lineChartOptions}
-                series={[{ name: 'Challans', data: chartData.monthlyTrend.map(item => item.count) }]}
-                type="line"
                 height={350}
               />
             </Card.Body>
