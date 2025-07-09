@@ -17,6 +17,7 @@ import DataView from './DataView';
 import PreviewModal from './PreviewModal';
 import ProjectForm from './ProjectForm';
 import jsonStorage from '../services/jsonStorage';
+import { generateDoc } from '../services/docGenerator';
 import '../styles/ChallanForm.css';
 
 const ChallanForm = () => {
@@ -40,6 +41,7 @@ const ChallanForm = () => {
   const [error, setError] = useState(null);
   const [currentView, setCurrentView] = useState("challan");
   const [showPreview, setShowPreview] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   const [challan, setChallan] = useState({
     dcSequence: "001",
@@ -193,10 +195,11 @@ const ChallanForm = () => {
     }
   };
 
-  // Handle save
-  const handleSave = async () => {
+  // Handle save and generate challan
+  const handleSaveAndGenerate = async () => {
     if (!validateForm()) return;
     
+    setGenerating(true);
     try {
       const dcNumber = getDcNumber();
       const docData = {
@@ -214,14 +217,16 @@ const ChallanForm = () => {
       const updatedChallans = await jsonStorage.getChallans();
       setSavedChallans(updatedChallans);
       
-      // Generate document (you would implement this)
-      // await generateDoc(docData);
+      // Generate Word document
+      await generateDoc(docData);
       
       setShowPreview(false);
       setError(null);
     } catch (err) {
-      console.error("Failed to save challan:", err);
-      setError("Failed to save challan. Please try again.");
+      console.error("Failed to save/generate challan:", err);
+      setError(err.message || "Failed to save/generate challan. Please try again.");
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -268,14 +273,14 @@ const ChallanForm = () => {
           <div className="d-flex align-items-center">
             <Navbar.Brand href="#" className="d-flex align-items-center">
               <a href='/'>
-            <img
-              src="/deevia-logo.png"
-              alt="Deevia Software"
-              height="50"
-              className="navbar-logo me-2"
-            />
+                <img
+                  src="/deevia-logo.png"
+                  alt="Deevia Software"
+                  height="50"
+                  className="navbar-logo me-2"
+                />
               </a>
-          </Navbar.Brand>
+            </Navbar.Brand>
           </div>
 
           <div className="position-absolute top-50 start-50 translate-middle text-center">
@@ -285,28 +290,28 @@ const ChallanForm = () => {
           </div>
 
           <div className="d-flex align-items-center ms-auto">
-          <div className="d-flex gap-2">
-            <Button
-              variant={currentView === "challan" ? "light" : "outline-light"}
-              onClick={() => setCurrentView("challan")}
+            <div className="d-flex gap-2">
+              <Button
+                variant={currentView === "challan" ? "light" : "outline-light"}
+                onClick={() => setCurrentView("challan")}
                 className="d-flex align-items-center"
-            >
+              >
                 <i className="bi bi-house me-2"></i>Dashboard
-            </Button>
-            <Button
-              variant={currentView === "data" ? "light" : "outline-light"}
-              onClick={() => setCurrentView("data")}
+              </Button>
+              <Button
+                variant={currentView === "data" ? "light" : "outline-light"}
+                onClick={() => setCurrentView("data")}
                 className="d-flex align-items-center"
-            >
+              >
                 <i className="bi bi-card-checklist me-2"></i>Data View
-            </Button>
-            <Button
-              variant={currentView === "project" ? "light" : "outline-light"}
-              onClick={() => setCurrentView("project")}
+              </Button>
+              <Button
+                variant={currentView === "project" ? "light" : "outline-light"}
+                onClick={() => setCurrentView("project")}
                 className="d-flex align-items-center"
-            >
+              >
                 <i className="bi bi-folder-plus me-2"></i>Add Project
-            </Button>
+              </Button>
             </div>
           </div>
         </Container>
@@ -597,7 +602,6 @@ const ChallanForm = () => {
                     size="sm"
                     onClick={() => removeItem(challan.items.length - 1)}
                     disabled={challan.items.length <= 1}
-                    // style={{color:'red'}}
                   >
                     <i className="bi bi-dash-circle me-1"></i>Remove Item
                   </Button>
@@ -712,84 +716,15 @@ const ChallanForm = () => {
           </Form>
 
           {/* Preview Modal */}
-          {showPreview && (
-            <div className="modal-backdrop show">
-              <div className="modal d-block">
-                <div className="modal-dialog modal-lg">
-                  <div className="modal-content">
-                    <div className="modal-header">
-                      <h5 className="modal-title">Challan Preview - {getDcNumber()}</h5>
-                      <button type="button" className="btn-close" onClick={() => setShowPreview(false)}></button>
-                    </div>
-                    <div className="modal-body">
-                      <div className="mb-4">
-                        <h6>Challan Information</h6>
-                        <div className="row">
-                          <div className="col-md-4">
-                            <p><strong>Date:</strong> {new Date(challan.date).toLocaleDateString()}</p>
-                          </div>
-                          <div className="col-md-4">
-                            <p><strong>Prepared By:</strong> {challan.name}</p>
-                          </div>
-                          <div className="col-md-4">
-                            <p><strong>Client:</strong> {challan.client}</p>
-                          </div>
-                          <div className="col-md-4">
-                            <p><strong>Location:</strong> {challan.location}</p>
-                          </div>
-                          {challan.hasPO === "yes" && (
-                            <div className="col-md-4">
-                              <p><strong>PO Number:</strong> {challan.poNumber}</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div>
-                        <h6>Items</h6>
-                        <Table bordered>
-                          <thead>
-                            <tr>
-                              <th>#</th>
-                              <th>Asset Name</th>
-                              <th>Description</th>
-                              <th>Qty</th>
-                              <th>Serial No</th>
-                              <th>Returnable</th>
-                              {challan.items.some(i => i.returnable === "yes") && <th>Return Date</th>}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {challan.items.map((item, idx) => (
-                              <tr key={idx}>
-                                <td>{item.sno}</td>
-                                <td>{item.assetName}</td>
-                                <td>{item.description}</td>
-                                <td>{item.quantity}</td>
-                                <td>{item.serialNo}</td>
-                                <td>{item.returnable === "yes" ? "Yes" : "No"}</td>
-                                {challan.items.some(i => i.returnable === "yes") && (
-                                  <td>{item.returnable === "yes" ? item.expectedReturnDate : "N/A"}</td>
-                                )}
-                              </tr>
-                            ))}
-                          </tbody>
-                        </Table>
-                      </div>
-                    </div>
-                    <div className="modal-footer">
-                      <button type="button" className="btn btn-secondary" onClick={() => setShowPreview(false)}>
-                        Close
-                      </button>
-                      <button type="button" className="btn btn-primary" onClick={handleSave}>
-                        Save Challan
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          <PreviewModal
+            show={showPreview}
+            onHide={() => setShowPreview(false)}
+            challan={challan}
+            dcNumber={getDcNumber()}
+            onSave={handleSaveAndGenerate}
+            onPrint={() => window.print()}
+            loading={generating}
+          />
         </Container>
       )}
     </div>

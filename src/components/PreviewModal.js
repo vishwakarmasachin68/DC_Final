@@ -11,6 +11,7 @@ const PreviewModal = ({
   loading 
 }) => {
   const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
@@ -20,8 +21,8 @@ const PreviewModal = ({
   };
 
   // Find client and location names
-  const clientName = challan.clientName || `Client ID: ${challan.client}`;
-  const locationName = challan.locationName || `Location ID: ${challan.location}`;
+  const clientName = challan.client || "Not specified";
+  const locationName = challan.location || "Not specified";
 
   return (
     <Modal
@@ -30,6 +31,7 @@ const PreviewModal = ({
       size="lg"
       centered
       className="preview-modal"
+      backdrop="static"
     >
       <Modal.Header closeButton className="bg-primary text-white">
         <Modal.Title>
@@ -53,7 +55,7 @@ const PreviewModal = ({
                   <strong>Date:</strong> {formatDate(challan.date)}
                 </p>
                 <p>
-                  <strong>Prepared By:</strong> {challan.name}
+                  <strong>Prepared By:</strong> {challan.name || "Not specified"}
                 </p>
               </div>
               <div className="col-md-6">
@@ -98,10 +100,10 @@ const PreviewModal = ({
                 {challan.items.map((item, idx) => (
                   <tr key={idx}>
                     <td className="text-center">{item.sno}</td>
-                    <td>{item.assetName}</td>
-                    <td>{item.description}</td>
-                    <td className="text-center">{item.quantity}</td>
-                    <td>{item.serialNo}</td>
+                    <td>{item.assetName || "N/A"}</td>
+                    <td>{item.description || "N/A"}</td>
+                    <td className="text-center">{item.quantity || 1}</td>
+                    <td>{item.serialNo || "N/A"}</td>
                     <td className="text-center">
                       <Badge
                         bg={item.returnable === "yes" ? "success" : "secondary"}
@@ -148,7 +150,7 @@ const PreviewModal = ({
               </>
             ) : (
               <>
-                <i className="bi bi-save me-2"></i>Generate Challan
+                <i className="bi bi-save me-2"></i>Generate & Save Challan
               </>
             )}
           </Button>
