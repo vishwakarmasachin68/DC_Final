@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Button, Card, Alert, Row, Col, InputGroup, Container, Table } from 'react-bootstrap';
-import { jsonStorage } from '../services/jsonStorage';
+import { 
+  Form, 
+  Button, 
+  Card, 
+  Alert, 
+  Row, 
+  Col, 
+  InputGroup, 
+  Container, 
+  Table,
+  Spinner
+} from 'react-bootstrap';
+import jsonStorage from '../services/jsonStorage';
 import '../styles/ProjectForm.css';
 
 const initialProjectState = {
@@ -33,18 +44,18 @@ const ProjectForm = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [projects, clients, locations] = await Promise.all([
-          jsonStorage.getProjects(),
-          jsonStorage.getClients(),
-          jsonStorage.getLocations()
-        ]);
+        setLoading(true);
+        const projects = await jsonStorage.getProjects();
+        const clients = await jsonStorage.getClients();
+        const locations = await jsonStorage.getLocations();
         
         setProjectsList(projects);
         setClients(clients);
         setLocations(locations);
+        setLoading(false);
       } catch (err) {
-        setError("Failed to load data");
-      } finally {
+        console.error("Failed to load data:", err);
+        setError("Failed to load data. Please try again.");
         setLoading(false);
       }
     };
@@ -56,6 +67,7 @@ const ProjectForm = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setProject(prev => ({ ...prev, [name]: value }));
+    setError(null);
   };
 
   // Handle team member changes
@@ -107,7 +119,6 @@ const ProjectForm = () => {
       setSelectedProjectId(projectId);
       setSuccess(false);
       setError(null);
-      document.getElementById("project-form")?.scrollIntoView({ behavior: "smooth" });
     }
   };
 
@@ -126,11 +137,9 @@ const ProjectForm = () => {
       }
       
       // Refresh data
-      const [projects, clients, locations] = await Promise.all([
-        jsonStorage.getProjects(),
-        jsonStorage.getClients(),
-        jsonStorage.getLocations()
-      ]);
+      const projects = await jsonStorage.getProjects();
+      const clients = await jsonStorage.getClients();
+      const locations = await jsonStorage.getLocations();
       
       setProjectsList(projects);
       setClients(clients);
@@ -139,7 +148,8 @@ const ProjectForm = () => {
       setSuccess(true);
       handleClearForm();
     } catch (err) {
-      setError("Failed to save project");
+      console.error("Failed to save project:", err);
+      setError("Failed to save project. Please try again.");
     }
   };
 
@@ -166,7 +176,8 @@ const ProjectForm = () => {
         handleClearForm();
       }
     } catch (err) {
-      setError("Failed to delete project");
+      console.error("Failed to delete project:", err);
+      setError("Failed to delete project. Please try again.");
     }
   };
 
@@ -182,7 +193,8 @@ const ProjectForm = () => {
       setShowNewClientInput(false);
       setNewClient("");
     } catch (err) {
-      setError("Failed to save client");
+      console.error("Failed to save client:", err);
+      setError("Failed to save client. Please try again.");
     }
   };
 
@@ -198,7 +210,8 @@ const ProjectForm = () => {
       setShowNewLocationInput(false);
       setNewLocation("");
     } catch (err) {
-      setError("Failed to save location");
+      console.error("Failed to save location:", err);
+      setError("Failed to save location. Please try again.");
     }
   };
 
@@ -227,19 +240,15 @@ const ProjectForm = () => {
   };
 
   return (
-    <Container fluid className="project-form-container">
+    <Container fluid className="project-form-container py-4">
       {/* Header */}
       <div className="page-header mb-4">
-        <h2 className="page-title">
-          <i className="bi bi-folder-plus me-2"></i>
-          Project Management
-        </h2>
+        <h2>Project Management</h2>
       </div>
 
       {/* Error Alert */}
       {error && (
         <Alert variant="danger" dismissible onClose={() => setError(null)}>
-          <i className="bi bi-exclamation-triangle-fill me-2"></i>
           {error}
         </Alert>
       )}
@@ -247,7 +256,6 @@ const ProjectForm = () => {
       {/* Success Alert */}
       {success && (
         <Alert variant="success" dismissible onClose={() => setSuccess(false)}>
-          <i className="bi bi-check-circle-fill me-2"></i>
           Project {editMode ? "updated" : "saved"} successfully!
         </Alert>
       )}

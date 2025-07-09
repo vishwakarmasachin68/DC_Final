@@ -1,57 +1,48 @@
-// Service to handle all data operations
-export const jsonStorage = {
-  // Load initial data from JSON file or localStorage
-  async loadInitialData() {
-    try {
-      // Try to load from JSON file first
-      const response = await fetch('/data.json');
-      const jsonData = await response.json();
-      
-      // Check if localStorage has newer data
-      const localStorageData = JSON.parse(localStorage.getItem('appData') || '{}');
-      
-      // Merge data (give priority to localStorage)
-      return {
-        projects: localStorageData.projects || jsonData.projects || [],
-        clients: localStorageData.clients || jsonData.clients || [],
-        locations: localStorageData.locations || jsonData.locations || []
+// src/services/jsonStorage.js
+
+const jsonStorage = {
+  // Initialize with default data structure
+  async initialize() {
+    if (!localStorage.getItem('appData')) {
+      const defaultData = {
+        projects: [],
+        clients: [],
+        locations: [],
+        challans: []
       };
-    } catch (error) {
-      console.error("Error loading data:", error);
-      // Fallback to localStorage only
-      return JSON.parse(localStorage.getItem('appData') || '{"projects":[],"clients":[],"locations":[]}');
+      localStorage.setItem('appData', JSON.stringify(defaultData));
     }
+  },
+
+  // Get all data
+  async getAllData() {
+    await this.initialize();
+    return JSON.parse(localStorage.getItem('appData'));
   },
 
   // Save all data
   async saveAllData(data) {
-    try {
-      // Save to localStorage
-      localStorage.setItem('appData', JSON.stringify(data));
-      return true;
-    } catch (error) {
-      console.error("Error saving data:", error);
-      return false;
-    }
+    localStorage.setItem('appData', JSON.stringify(data));
+    return true;
   },
 
-  // Projects CRUD
+  // Projects
   async getProjects() {
-    const data = await this.loadInitialData();
-    return data.projects;
+    const data = await this.getAllData();
+    return data.projects || [];
   },
 
   async saveProject(project) {
-    const data = await this.loadInitialData();
+    const data = await this.getAllData();
     const newProject = { ...project, id: Date.now().toString() };
-    data.projects = [...data.projects, newProject];
+    data.projects = [...(data.projects || []), newProject];
     await this.saveAllData(data);
     return newProject;
   },
 
   async updateProject(id, updatedProject) {
-    const data = await this.loadInitialData();
-    data.projects = data.projects.map(p => 
+    const data = await this.getAllData();
+    data.projects = (data.projects || []).map(p => 
       p.id === id ? { ...updatedProject, id } : p
     );
     await this.saveAllData(data);
@@ -59,22 +50,22 @@ export const jsonStorage = {
   },
 
   async deleteProject(id) {
-    const data = await this.loadInitialData();
-    data.projects = data.projects.filter(p => p.id !== id);
+    const data = await this.getAllData();
+    data.projects = (data.projects || []).filter(p => p.id !== id);
     await this.saveAllData(data);
     return true;
   },
 
   // Clients
   async getClients() {
-    const data = await this.loadInitialData();
-    return data.clients;
+    const data = await this.getAllData();
+    return data.clients || [];
   },
 
   async saveClient(client) {
-    const data = await this.loadInitialData();
+    const data = await this.getAllData();
     if (!data.clients.includes(client)) {
-      data.clients = [...data.clients, client];
+      data.clients = [...(data.clients || []), client];
       await this.saveAllData(data);
     }
     return client;
@@ -82,16 +73,71 @@ export const jsonStorage = {
 
   // Locations
   async getLocations() {
-    const data = await this.loadInitialData();
-    return data.locations;
+    const data = await this.getAllData();
+    return data.locations || [];
   },
 
   async saveLocation(location) {
-    const data = await this.loadInitialData();
+    const data = await this.getAllData();
     if (!data.locations.includes(location)) {
-      data.locations = [...data.locations, location];
+      data.locations = [...(data.locations || []), location];
       await this.saveAllData(data);
     }
     return location;
+  },
+
+  // Challans
+  async getChallans() {
+    const data = await this.getAllData();
+    return data.challans || [];
+  },
+
+  async saveChallan(challan) {
+    const data = await this.getAllData();
+    const existingIndex = (data.challans || []).findIndex(c => c.dcNumber === challan.dcNumber);
+    
+    if (existingIndex >= 0) {
+      data.challans[existingIndex] = challan;
+    } else {
+      data.challans = [...(data.challans || []), challan];
+    }
+    
+    await this.saveAllData(data);
+    return challan;
+  },
+
+  async deleteChallan(dcNumber) {
+    const data = await this.getAllData();
+    data.challans = (data.challans || []).filter(c => c.dcNumber !== dcNumber);
+    await this.saveAllData(data);
+    return true;
+  },
+
+  // Initialize with sample data if empty
+  async seedSampleData() {
+    const data = await this.getAllData();
+    
+    if (data.projects.length === 0) {
+      data.projects = [
+        { id: '1', projectName: 'Project A', client: 'Client X', location: 'Location 1', hasPO: 'no' },
+        { id: '2', projectName: 'Project B', client: 'Client Y', location: 'Location 2', hasPO: 'yes', poNumber: 'PO123' }
+      ];
+    }
+
+    if (data.clients.length === 0) {
+      data.clients = ['Client X', 'Client Y', 'Client Z'];
+    }
+
+    if (data.locations.length === 0) {
+      data.locations = ['Location 1', 'Location 2', 'Location 3'];
+    }
+
+    await this.saveAllData(data);
   }
 };
+
+// Initialize storage with default structure and sample data
+jsonStorage.initialize();
+jsonStorage.seedSampleData();
+
+export default jsonStorage;
