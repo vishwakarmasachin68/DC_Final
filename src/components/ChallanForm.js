@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Form,
   Button,
@@ -10,15 +10,14 @@ import {
   Navbar,
   Container,
   InputGroup,
-  Spinner
-} from 'react-bootstrap';
-import { BiBarChartAlt2, BiPieChartAlt, BiTrash, BiPlusCircle, BiFontColor } from 'react-icons/bi';
-import DataView from './DataView';
-import PreviewModal from './PreviewModal';
-import ProjectForm from './ProjectForm';
-import jsonStorage from '../services/jsonStorage';
-import { generateDoc } from '../services/docGenerator';
-import '../styles/ChallanForm.css';
+  Spinner,
+} from "react-bootstrap";
+import DataView from "./DataView";
+import PreviewModal from "./PreviewModal";
+import ProjectForm from "./ProjectForm";
+import jsonStorage from "../services/jsonStorage";
+import { generateDoc } from "../services/docGenerator";
+import "../styles/ChallanForm.css";
 
 const ChallanForm = () => {
   const formatDate = (dateString) => {
@@ -73,9 +72,9 @@ const ChallanForm = () => {
           jsonStorage.getProjects(),
           jsonStorage.getClients(),
           jsonStorage.getLocations(),
-          jsonStorage.getChallans()
+          jsonStorage.getChallans(),
         ]);
-        
+
         setProjects(projects);
         setClients(clients);
         setLocations(locations);
@@ -94,40 +93,41 @@ const ChallanForm = () => {
   // Generate DC number
   const getDcNumber = () => {
     const prefix = "DSI/";
-    const middle = challan.hasPO === "yes" && challan.poNumber 
-      ? challan.poNumber 
-      : formatDate(challan.date);
+    const middle =
+      challan.hasPO === "yes" && challan.poNumber
+        ? challan.poNumber
+        : formatDate(challan.date);
     return `${prefix}${middle}/${challan.dcSequence}`;
   };
 
   // Handle input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setChallan(prev => ({ ...prev, [name]: value }));
+    setChallan((prev) => ({ ...prev, [name]: value }));
     setError(null);
   };
 
   // Handle item changes
   const handleItemChange = (index, e) => {
     const { name, value } = e.target;
-    setChallan(prev => {
+    setChallan((prev) => {
       const updatedItems = [...prev.items];
       updatedItems[index] = {
         ...updatedItems[index],
         [name]: name === "quantity" ? Math.max(1, parseInt(value) || 1) : value,
       };
-      
+
       if (name === "returnable" && value === "no") {
         updatedItems[index].expectedReturnDate = "";
       }
-      
+
       return { ...prev, items: updatedItems };
     });
   };
 
   // Add new item
   const addItem = () => {
-    setChallan(prev => ({
+    setChallan((prev) => ({
       ...prev,
       items: [
         ...prev.items,
@@ -150,7 +150,7 @@ const ChallanForm = () => {
     const updatedItems = challan.items
       .filter((_, i) => i !== index)
       .map((item, i) => ({ ...item, sno: i + 1 }));
-    setChallan(prev => ({ ...prev, items: updatedItems }));
+    setChallan((prev) => ({ ...prev, items: updatedItems }));
   };
 
   // Validate form
@@ -198,33 +198,36 @@ const ChallanForm = () => {
   // Handle save and generate challan
   const handleSaveAndGenerate = async () => {
     if (!validateForm()) return;
-    
+
     setGenerating(true);
     try {
       const dcNumber = getDcNumber();
       const docData = {
         ...challan,
         dcNumber,
-        items: challan.items.map(item => ({
+        items: challan.items.map((item) => ({
           ...item,
           returnable: item.returnable,
-          expectedReturnDate: item.returnable === "yes" ? item.expectedReturnDate : ""
-        }))
+          expectedReturnDate:
+            item.returnable === "yes" ? item.expectedReturnDate : "",
+        })),
       };
-      
+
       // Save to storage
       await jsonStorage.saveChallan(docData);
       const updatedChallans = await jsonStorage.getChallans();
       setSavedChallans(updatedChallans);
-      
+
       // Generate Word document
       await generateDoc(docData);
-      
+
       setShowPreview(false);
       setError(null);
     } catch (err) {
       console.error("Failed to save/generate challan:", err);
-      setError(err.message || "Failed to save/generate challan. Please try again.");
+      setError(
+        err.message || "Failed to save/generate challan. Please try again."
+      );
     } finally {
       setGenerating(false);
     }
@@ -259,7 +262,10 @@ const ChallanForm = () => {
 
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ height: "100vh" }}
+      >
         <Spinner animation="border" variant="primary" />
       </div>
     );
@@ -268,11 +274,19 @@ const ChallanForm = () => {
   return (
     <div className="challan-app-container">
       {/* Navbar */}
-      <Navbar bg="primary" variant="dark" expand="lg" className="app-navbar py-2">
-        <Container fluid className="d-flex justify-content-between align-items-center position-relative">
+      <Navbar
+        bg="primary"
+        variant="dark"
+        expand="lg"
+        className="app-navbar py-2"
+      >
+        <Container
+          fluid
+          className="d-flex justify-content-between align-items-center position-relative"
+        >
           <div className="d-flex align-items-center">
             <Navbar.Brand href="#" className="d-flex align-items-center">
-              <a href='/'>
+              <a href="/">
                 <img
                   src="/deevia-logo.png"
                   alt="Deevia Software"
@@ -390,26 +404,28 @@ const ChallanForm = () => {
                         onChange={(e) => {
                           const projectId = e.target.value;
                           if (!projectId) {
-                            setChallan(prev => ({
+                            setChallan((prev) => ({
                               ...prev,
                               project: "",
                               client: "",
                               location: "",
                               hasPO: "no",
-                              poNumber: ""
+                              poNumber: "",
                             }));
                             return;
                           }
 
-                          const selectedProject = projects.find(p => p.id === projectId);
+                          const selectedProject = projects.find(
+                            (p) => p.id === projectId
+                          );
                           if (selectedProject) {
-                            setChallan(prev => ({
+                            setChallan((prev) => ({
                               ...prev,
                               project: projectId,
                               client: selectedProject.client || "",
                               location: selectedProject.location || "",
                               hasPO: selectedProject.hasPO || "no",
-                              poNumber: selectedProject.poNumber || ""
+                              poNumber: selectedProject.poNumber || "",
                             }));
                           }
                         }}
@@ -450,18 +466,27 @@ const ChallanForm = () => {
                             onChange={(e) => setNewClient(e.target.value)}
                             placeholder="Enter new client"
                           />
-                          <Button variant="success" onClick={async () => {
-                            if (!newClient.trim()) return;
-                            await jsonStorage.saveClient(newClient.trim());
-                            const clients = await jsonStorage.getClients();
-                            setClients(clients);
-                            setChallan(prev => ({ ...prev, client: newClient.trim() }));
-                            setShowNewClientInput(false);
-                            setNewClient("");
-                          }}>
+                          <Button
+                            variant="success"
+                            onClick={async () => {
+                              if (!newClient.trim()) return;
+                              await jsonStorage.saveClient(newClient.trim());
+                              const clients = await jsonStorage.getClients();
+                              setClients(clients);
+                              setChallan((prev) => ({
+                                ...prev,
+                                client: newClient.trim(),
+                              }));
+                              setShowNewClientInput(false);
+                              setNewClient("");
+                            }}
+                          >
                             Save
                           </Button>
-                          <Button variant="secondary" onClick={() => setShowNewClientInput(false)}>
+                          <Button
+                            variant="secondary"
+                            onClick={() => setShowNewClientInput(false)}
+                          >
                             Cancel
                           </Button>
                         </InputGroup>
@@ -472,17 +497,22 @@ const ChallanForm = () => {
                             const value = e.target.value;
                             if (value === "new") {
                               setShowNewClientInput(true);
-                              setChallan(prev => ({ ...prev, client: "" }));
+                              setChallan((prev) => ({ ...prev, client: "" }));
                             } else {
                               setShowNewClientInput(false);
-                              setChallan(prev => ({ ...prev, client: value }));
+                              setChallan((prev) => ({
+                                ...prev,
+                                client: value,
+                              }));
                             }
                           }}
                           required
                         >
                           <option value="">Select a client</option>
                           {clients.map((client, index) => (
-                            <option key={index} value={client}>{client}</option>
+                            <option key={index} value={client}>
+                              {client}
+                            </option>
                           ))}
                           <option value="new">+ Add New Client</option>
                         </Form.Select>
@@ -500,18 +530,30 @@ const ChallanForm = () => {
                             onChange={(e) => setNewLocation(e.target.value)}
                             placeholder="Enter new location"
                           />
-                          <Button variant="success" onClick={async () => {
-                            if (!newLocation.trim()) return;
-                            await jsonStorage.saveLocation(newLocation.trim());
-                            const locations = await jsonStorage.getLocations();
-                            setLocations(locations);
-                            setChallan(prev => ({ ...prev, location: newLocation.trim() }));
-                            setShowNewLocationInput(false);
-                            setNewLocation("");
-                          }}>
+                          <Button
+                            variant="success"
+                            onClick={async () => {
+                              if (!newLocation.trim()) return;
+                              await jsonStorage.saveLocation(
+                                newLocation.trim()
+                              );
+                              const locations =
+                                await jsonStorage.getLocations();
+                              setLocations(locations);
+                              setChallan((prev) => ({
+                                ...prev,
+                                location: newLocation.trim(),
+                              }));
+                              setShowNewLocationInput(false);
+                              setNewLocation("");
+                            }}
+                          >
                             Save
                           </Button>
-                          <Button variant="secondary" onClick={() => setShowNewLocationInput(false)}>
+                          <Button
+                            variant="secondary"
+                            onClick={() => setShowNewLocationInput(false)}
+                          >
                             Cancel
                           </Button>
                         </InputGroup>
@@ -522,17 +564,22 @@ const ChallanForm = () => {
                             const value = e.target.value;
                             if (value === "new") {
                               setShowNewLocationInput(true);
-                              setChallan(prev => ({ ...prev, location: "" }));
+                              setChallan((prev) => ({ ...prev, location: "" }));
                             } else {
                               setShowNewLocationInput(false);
-                              setChallan(prev => ({ ...prev, location: value }));
+                              setChallan((prev) => ({
+                                ...prev,
+                                location: value,
+                              }));
                             }
                           }}
                           required
                         >
                           <option value="">Select a location</option>
                           {locations.map((location, index) => (
-                            <option key={index} value={location}>{location}</option>
+                            <option key={index} value={location}>
+                              {location}
+                            </option>
                           ))}
                           <option value="new">+ Add New Location</option>
                         </Form.Select>
@@ -594,7 +641,13 @@ const ChallanForm = () => {
                   <i className="bi bi-list-ul me-2"></i>Item Details
                 </h5>
                 <div>
-                  <Button variant="outline-success" size="sm" onClick={addItem} className="me-2" style={{color:'greenyellow'}}>
+                  <Button
+                    variant="outline-success"
+                    size="sm"
+                    onClick={addItem}
+                    className="me-2"
+                    style={{ color: "greenyellow" }}
+                  >
                     <i className="bi bi-plus-circle me-1"></i>Add Item
                   </Button>
                   <Button
@@ -617,9 +670,9 @@ const ChallanForm = () => {
                       <th width="10%">Qty</th>
                       <th width="15%">Serial No</th>
                       <th width="10%">Returnable</th>
-                      {challan.items.some((item) => item.returnable === "yes") && (
-                        <th width="15%">Expected Return Date</th>
-                      )}
+                      {challan.items.some(
+                        (item) => item.returnable === "yes"
+                      ) && <th width="15%">Expected Return Date</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -700,16 +753,10 @@ const ChallanForm = () => {
 
             {/* Form Actions */}
             <div className="d-flex justify-content-end gap-3">
-              <Button
-                variant="secondary"
-                onClick={handleClearForm}
-              >
+              <Button variant="secondary" onClick={handleClearForm}>
                 Clear Form
               </Button>
-              <Button
-                variant="primary"
-                onClick={handlePreview}
-              >
+              <Button variant="primary" onClick={handlePreview}>
                 Preview Challan
               </Button>
             </div>

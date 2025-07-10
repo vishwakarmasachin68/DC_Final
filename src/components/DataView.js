@@ -21,7 +21,6 @@ import {
   BiCalendar,
   BiTrash,
   BiSearch,
-  BiDownload
 } from 'react-icons/bi';
 import Chart from 'react-apexcharts';
 import jsonStorage from '../services/jsonStorage';
