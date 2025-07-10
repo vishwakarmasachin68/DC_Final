@@ -25,7 +25,16 @@ import {
 import Chart from 'react-apexcharts';
 import jsonStorage from '../services/jsonStorage';
 
-const DataView = () => {
+const DataView = ({ challans: initialChallans }) => {
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   const [timeRange, setTimeRange] = useState('all');
   const [chartData, setChartData] = useState({
     items: [],
@@ -33,30 +42,35 @@ const DataView = () => {
   });
   const [selectedChallan, setSelectedChallan] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [challans, setChallans] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [challans, setChallans] = useState(initialChallans || []);
   const [error, setError] = useState(null);
 
-  // Load all challans
+  // Load all challans if not passed as prop
   useEffect(() => {
-    const loadChallans = async () => {
-      try {
-        setLoading(true);
-        const loadedChallans = await jsonStorage.getChallans();
-        setChallans(loadedChallans);
-        if (loadedChallans.length > 0) {
-          setSelectedChallan(loadedChallans[0]);
+    if (!initialChallans) {
+      const loadChallans = async () => {
+        try {
+          setLoading(true);
+          const loadedChallans = await jsonStorage.getChallans();
+          setChallans(loadedChallans);
+          if (loadedChallans.length > 0) {
+            setSelectedChallan(loadedChallans[0]);
+          }
+          setLoading(false);
+        } catch (err) {
+          console.error("Failed to load challans:", err);
+          setError("Failed to load challan data. Please try again.");
+          setLoading(false);
         }
-        setLoading(false);
-      } catch (err) {
-        console.error("Failed to load challans:", err);
-        setError("Failed to load challan data. Please try again.");
-        setLoading(false);
+      };
+      loadChallans();
+    } else {
+      if (initialChallans.length > 0) {
+        setSelectedChallan(initialChallans[0]);
       }
-    };
-
-    loadChallans();
-  }, []);
+    }
+  }, [initialChallans]);
 
   // Filter challans based on search term and time range
   const filteredChallans = challans.filter(challan => {
@@ -304,7 +318,7 @@ const DataView = () => {
                             <div className="d-flex justify-content-between w-100">
                               <span className="fw-bold">{challan.dcNumber}</span>
                               <span className="text-muted small">
-                                {new Date(challan.date).toLocaleDateString()}
+                                {formatDate(challan.date)}
                               </span>
                             </div>
                           </Accordion.Header>
@@ -388,7 +402,7 @@ const DataView = () => {
                       <h5>Challan Details</h5>
                       <Badge bg="light" text="dark">
                         <BiCalendar className="me-1" />
-                        {selectedChallan.date || 'No date set'}
+                        {formatDate(selectedChallan.date) || 'No date set'}
                       </Badge>
                     </Card.Header>
                     <Card.Body>
@@ -455,7 +469,7 @@ const DataView = () => {
                                   </td>
                                   <td>
                                     {item.returnable === "yes" ? (
-                                      item.expectedReturnDate || <span className="text-muted">-</span>
+                                      formatDate(item.expectedReturnDate) || <span className="text-muted">-</span>
                                     ) : (
                                       <Badge bg="secondary">N/A</Badge>
                                     )}
@@ -472,7 +486,7 @@ const DataView = () => {
                       )}
                     </Card.Body>
                     <Card.Footer className="text-muted text-center">
-                      Generated on {new Date(selectedChallan.date).toLocaleDateString()}
+                      Generated on {formatDate(selectedChallan.date)}
                     </Card.Footer>
                   </Card>
                 </>
