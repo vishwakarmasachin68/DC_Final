@@ -112,32 +112,10 @@ const jsonStorage = {
     await this.saveAllData(data);
     return true;
   },
-
-  // Initialize with sample data if empty
-  async seedSampleData() {
-    const data = await this.getAllData();
-    
-    if (data.projects.length === 0) {
-      data.projects = [
-        { id: '1', projectName: 'Project A', client: 'Client X', location: 'Location 1', hasPO: 'no' },
-        { id: '2', projectName: 'Project B', client: 'Client Y', location: 'Location 2', hasPO: 'yes', poNumber: 'PO123' }
-      ];
-    }
-
-    if (data.clients.length === 0) {
-      data.clients = ['Client X', 'Client Y', 'Client Z'];
-    }
-
-    if (data.locations.length === 0) {
-      data.locations = ['Location 1', 'Location 2', 'Location 3'];
-    }
-
-    await this.saveAllData(data);
-  }
 };
 
 // Initialize storage with default structure and sample data
 jsonStorage.initialize();
-jsonStorage.seedSampleData();
+// jsonStorage.seedSampleData();
 
 export default jsonStorage;
