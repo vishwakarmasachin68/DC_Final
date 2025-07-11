@@ -43,7 +43,6 @@ const ChallanForm = () => {
   const [generating, setGenerating] = useState(false);
   const [nextSequence, setNextSequence] = useState("001");
 
-  // Load all data and determine next sequence number
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -59,7 +58,6 @@ const ChallanForm = () => {
         setLocations(locations);
         setSavedChallans(challans);
         
-        // Find the highest existing sequence number
         if (challans.length > 0) {
           const sequences = challans.map(c => {
             const parts = c.dcNumber?.split('/') || [];
@@ -82,7 +80,6 @@ const ChallanForm = () => {
     loadData();
   }, []);
 
-  // Generate DC number
   const getDcNumber = () => {
     const prefix = "DSI/";
     const middle =
@@ -97,6 +94,7 @@ const ChallanForm = () => {
     date: new Date().toISOString().split("T")[0],
     name: "",
     project: "",
+    projectName: "",
     client: "",
     location: "",
     hasPO: "no",
@@ -114,7 +112,6 @@ const ChallanForm = () => {
     ],
   });
 
-  // Update the challan state when nextSequence changes
   useEffect(() => {
     setChallan(prev => ({
       ...prev,
@@ -122,14 +119,12 @@ const ChallanForm = () => {
     }));
   }, [nextSequence]);
 
-  // Handle input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setChallan((prev) => ({ ...prev, [name]: value }));
     setError(null);
   };
 
-  // Handle item changes
   const handleItemChange = (index, e) => {
     const { name, value } = e.target;
     setChallan((prev) => {
@@ -147,7 +142,6 @@ const ChallanForm = () => {
     });
   };
 
-  // Add new item
   const addItem = () => {
     setChallan((prev) => ({
       ...prev,
@@ -166,7 +160,6 @@ const ChallanForm = () => {
     }));
   };
 
-  // Remove item
   const removeItem = (index) => {
     if (challan.items.length <= 1) return;
     const updatedItems = challan.items
@@ -175,7 +168,6 @@ const ChallanForm = () => {
     setChallan((prev) => ({ ...prev, items: updatedItems }));
   };
 
-  // Validate form
   const validateForm = () => {
     if (!challan.dcSequence || !/^\d{3}$/.test(challan.dcSequence)) {
       setError("DC Sequence must be a 3-digit number");
@@ -210,23 +202,23 @@ const ChallanForm = () => {
     return true;
   };
 
-  // Handle preview
   const handlePreview = () => {
     if (validateForm()) {
       setShowPreview(true);
     }
   };
 
-  // Handle save and generate challan
   const handleSaveAndGenerate = async () => {
     if (!validateForm()) return;
 
     setGenerating(true);
     try {
       const dcNumber = getDcNumber();
+      const selectedProject = projects.find(p => p.id === challan.project);
       const docData = {
         ...challan,
         dcNumber,
+        projectName: selectedProject ? selectedProject.projectName : "",
         items: challan.items.map((item) => ({
           ...item,
           returnable: item.returnable,
@@ -235,14 +227,11 @@ const ChallanForm = () => {
         })),
       };
 
-      // Save to storage
       await jsonStorage.saveChallan(docData);
       
-      // Increment the sequence number for next challan
       const newSequence = String(parseInt(nextSequence) + 1).padStart(3, '0');
       setNextSequence(newSequence);
       
-      // Update form with new sequence
       setChallan(prev => ({
         ...prev,
         dcSequence: newSequence
@@ -251,7 +240,6 @@ const ChallanForm = () => {
       const updatedChallans = await jsonStorage.getChallans();
       setSavedChallans(updatedChallans);
 
-      // Generate Word document
       await generateDoc(docData);
 
       setShowPreview(false);
@@ -266,13 +254,13 @@ const ChallanForm = () => {
     }
   };
 
-  // Clear form
   const handleClearForm = () => {
     setChallan({
       dcSequence: nextSequence,
       date: new Date().toISOString().split("T")[0],
       name: "",
       project: "",
+      projectName: "",
       client: "",
       location: "",
       hasPO: "no",
@@ -306,7 +294,6 @@ const ChallanForm = () => {
 
   return (
     <div className="challan-app-container">
-      {/* Navbar */}
       <Navbar
         bg="primary"
         variant="dark"
@@ -364,7 +351,6 @@ const ChallanForm = () => {
         </Container>
       </Navbar>
 
-      {/* Main Content */}
       {currentView === "data" ? (
         <DataView challans={savedChallans} />
       ) : currentView === "project" ? (
@@ -378,7 +364,6 @@ const ChallanForm = () => {
           )}
 
           <Form>
-            {/* Challan Information */}
             <Card className="mb-4 form-card">
               <Card.Header className="card-header-custom">
                 <h5 className="card-title">
@@ -440,6 +425,7 @@ const ChallanForm = () => {
                             setChallan((prev) => ({
                               ...prev,
                               project: "",
+                              projectName: "",
                               client: "",
                               location: "",
                               hasPO: "no",
@@ -455,6 +441,7 @@ const ChallanForm = () => {
                             setChallan((prev) => ({
                               ...prev,
                               project: projectId,
+                              projectName: selectedProject.projectName,
                               client: selectedProject.client || "",
                               location: selectedProject.location || "",
                               hasPO: selectedProject.hasPO || "no",
@@ -667,7 +654,6 @@ const ChallanForm = () => {
               </Card.Body>
             </Card>
 
-            {/* Item Details */}
             <Card className="mb-4 form-card">
               <Card.Header className="card-header-custom d-flex justify-content-between align-items-center">
                 <h5 className="card-title">
@@ -784,7 +770,6 @@ const ChallanForm = () => {
               </Card.Body>
             </Card>
 
-            {/* Form Actions */}
             <div className="d-flex justify-content-end gap-3">
               <Button variant="secondary" onClick={handleClearForm}>
                 Clear Form
@@ -795,7 +780,6 @@ const ChallanForm = () => {
             </div>
           </Form>
 
-          {/* Preview Modal */}
           <PreviewModal
             show={showPreview}
             onHide={() => setShowPreview(false)}

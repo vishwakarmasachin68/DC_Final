@@ -46,7 +46,6 @@ const DataView = ({ challans: initialChallans }) => {
   const [challans, setChallans] = useState(initialChallans || []);
   const [error, setError] = useState(null);
 
-  // Load all challans if not passed as prop
   useEffect(() => {
     if (!initialChallans) {
       const loadChallans = async () => {
@@ -72,16 +71,14 @@ const DataView = ({ challans: initialChallans }) => {
     }
   }, [initialChallans]);
 
-  // Filter challans based on search term and time range
   const filteredChallans = challans.filter(challan => {
-    // Search filter
     const matchesSearch = 
       challan.dcNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       challan.client?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       challan.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      challan.name?.toLowerCase().includes(searchTerm.toLowerCase());
+      challan.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      challan.projectName?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    // Time range filter
     const challanDate = new Date(challan.date);
     const now = new Date();
     
@@ -97,16 +94,13 @@ const DataView = ({ challans: initialChallans }) => {
     return matchesSearch && matchesTimeRange;
   });
 
-  // Process data for charts when selected challan changes
   useEffect(() => {
     if (selectedChallan?.items && selectedChallan.items.length > 0) {
-      // Items quantity chart data
       const itemsData = selectedChallan.items.map(item => ({
         name: item.assetName || 'Unnamed Asset',
         quantity: item.quantity
       }));
 
-      // Return status pie chart data
       const returnableCount = selectedChallan.items.filter(item => item.returnable === "yes").length;
       const nonReturnableCount = selectedChallan.items.length - returnableCount;
 
@@ -125,7 +119,6 @@ const DataView = ({ challans: initialChallans }) => {
     }
   }, [selectedChallan]);
 
-  // Delete a challan
   const handleDeleteChallan = async (dcNumber) => {
     if (!window.confirm('Are you sure you want to delete this challan?')) return;
     
@@ -135,7 +128,6 @@ const DataView = ({ challans: initialChallans }) => {
       const updatedChallans = await jsonStorage.getChallans();
       setChallans(updatedChallans);
       
-      // Update selected challan if it was deleted
       if (selectedChallan?.dcNumber === dcNumber) {
         setSelectedChallan(updatedChallans[0] || null);
       }
@@ -148,7 +140,6 @@ const DataView = ({ challans: initialChallans }) => {
     }
   };
 
-  // Chart options
   const barChartOptions = {
     chart: {
       type: 'bar',
@@ -283,7 +274,7 @@ const DataView = ({ challans: initialChallans }) => {
                 </Card.Body>
               </Card>
             </Col>
-            <Col md={4}>
+            {/* <Col md={4}>
               <Card>
                 <Card.Body>
                   <h6 className="text-muted">Avg. Items/Challan</h6>
@@ -295,7 +286,7 @@ const DataView = ({ challans: initialChallans }) => {
                   <Badge bg="secondary">Average</Badge>
                 </Card.Body>
               </Card>
-            </Col>
+            </Col> */}
           </Row>
 
           {/* Main Content */}
@@ -325,6 +316,7 @@ const DataView = ({ challans: initialChallans }) => {
                           <Accordion.Body className="p-2">
                             <div className="d-flex justify-content-between align-items-center">
                               <div>
+                                <div><strong>Project:</strong> {challan.projectName || '-'}</div>
                                 <div><strong>Client:</strong> {challan.client || '-'}</div>
                                 <div><strong>Location:</strong> {challan.location || '-'}</div>
                                 <div><strong>Items:</strong> {challan.items?.length || 0}</div>
@@ -415,6 +407,12 @@ const DataView = ({ challans: initialChallans }) => {
                         </Col>
                         <Col md={3}>
                           <div>
+                            <h6>Project</h6>
+                            <p>{selectedChallan.projectName || '-'}</p>
+                          </div>
+                        </Col>
+                        <Col md={3}>
+                          <div>
                             <h6>Prepared By</h6>
                             <p>{selectedChallan.name || '-'}</p>
                           </div>
@@ -425,12 +423,22 @@ const DataView = ({ challans: initialChallans }) => {
                             <p>{selectedChallan.client || '-'}</p>
                           </div>
                         </Col>
+                      </Row>
+                      <Row className="mb-4">
                         <Col md={3}>
                           <div>
                             <h6>Location</h6>
                             <p>{selectedChallan.location || '-'}</p>
                           </div>
                         </Col>
+                        {selectedChallan.hasPO === "yes" && selectedChallan.poNumber && (
+                          <Col md={3}>
+                            <div>
+                              <h6>PO Number</h6>
+                              <p>{selectedChallan.poNumber}</p>
+                            </div>
+                          </Col>
+                        )}
                       </Row>
 
                       {/* Items Table */}

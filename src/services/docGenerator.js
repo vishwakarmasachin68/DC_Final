@@ -36,7 +36,7 @@ export const generateDoc = async (challan) => {
       desc: item.description,
       qty: item.quantity,
       serial: item.serialNo,
-      return: item.returnable === "yes" ? "YES" : "NO", // Fixed to match template expectation
+      return: item.returnable === "yes" ? "YES" : "NO",
       returnDate: item.returnable === "yes" ? formatDateToReadable(item.expectedReturnDate) : 'N/A'
     }));
 
@@ -45,6 +45,7 @@ export const generateDoc = async (challan) => {
       DCNO: challan.dcNumber,
       Date: formatDateToReadable(challan.date),
       Name: challan.name,
+      Project: challan.projectName || "N/A",
       Client: challan.client,
       Location: challan.location,
       items: items
