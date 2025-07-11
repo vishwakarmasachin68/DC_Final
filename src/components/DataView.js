@@ -325,7 +325,7 @@ const DataView = ({ challans: initialChallans }) => {
                       0
                     )}
                   </h3>
-                  <Badge bg="warning">Returnable</Badge>  
+                  <Badge bg="warning">Returnable</Badge>
                 </Card.Body>
               </Card>
             </Col>
@@ -543,35 +543,35 @@ const DataView = ({ challans: initialChallans }) => {
                       </Row>
                       <Row className="mb-4">
 
-                      {/* Project Details Section */}
-                      {selectedProject && (
-                        <>
+                        {/* Project Details Section */}
+                        {selectedProject && (
+                          <>
 
-                          {selectedProject.personsInvolved?.length > 0 && (
-                            <Row className="mb-41">
-                              <Col>
-                                <Card>
-                                  <Card.Header>
-                                    <h6>Team Members</h6>
-                                  </Card.Header>
-                                  <Card.Body>
-                                    <ListGroup variant="flush">
-                                      {selectedProject.personsInvolved.map(
-                                        (person, index) => (
-                                          <ListGroup.Item key={index}>
-                                            {person ||
-                                              `Team member ${index + 1}`}
-                                          </ListGroup.Item>
-                                        )
-                                      )}
-                                    </ListGroup>
-                                  </Card.Body>
-                                </Card>
-                              </Col>
-                            </Row>
-                          )}
-                        </>
-                      )}
+                            {selectedProject.personsInvolved?.length > 0 && (
+                              <Row className="mb-41">
+                                <Col>
+                                  <Card>
+                                    <Card.Header>
+                                      <h6>Team Members</h6>
+                                    </Card.Header>
+                                    <Card.Body>
+                                      <ListGroup variant="flush">
+                                        {selectedProject.personsInvolved.map(
+                                          (person, index) => (
+                                            <ListGroup.Item key={index}>
+                                              {person ||
+                                                `Team member ${index + 1}`}
+                                            </ListGroup.Item>
+                                          )
+                                        )}
+                                      </ListGroup>
+                                    </Card.Body>
+                                  </Card>
+                                </Col>
+                              </Row>
+                            )}
+                          </>
+                        )}
                       </Row>
 
                       {/* Items Table */}
