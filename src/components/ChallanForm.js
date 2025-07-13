@@ -330,14 +330,14 @@ const ChallanForm = () => {
                 onClick={() => setCurrentView("challan")}
                 className="d-flex align-items-center"
               >
-                <i className="bi bi-house me-2"></i>Dashboard
+                <i className="bi bi-house me-2"></i>Generate Challan
               </Button>
               <Button
                 variant={currentView === "data" ? "light" : "outline-light"}
                 onClick={() => setCurrentView("data")}
                 className="d-flex align-items-center"
               >
-                <i className="bi bi-card-checklist me-2"></i>Data View
+                <i className="bi bi-card-checklist me-2"></i>Dashboard
               </Button>
               <Button
                 variant={currentView === "project" ? "light" : "outline-light"}

@@ -315,7 +315,17 @@ const DataView = ({ challans: initialChallans }) => {
             <Col md={4}>
               <Card>
                 <Card.Body>
-                  <h6 className="text-muted">Returnable Items</h6>
+                  <Row>
+                    <Col>
+                      <h6 className="text-muted">Returnable Items</h6>
+                    </Col>
+                    <Col className="text-end">
+                      <button>
+                        Track Returnable
+                        <BiPieChartAlt className="ms-2" />
+                      </button>
+                    </Col>
+                  </Row>
                   <h3>
                     {filteredChallans.reduce(
                       (sum, c) =>
@@ -542,11 +552,9 @@ const DataView = ({ challans: initialChallans }) => {
                         </Col>
                       </Row>
                       <Row className="mb-4">
-
                         {/* Project Details Section */}
                         {selectedProject && (
                           <>
-
                             {selectedProject.personsInvolved?.length > 0 && (
                               <Row className="mb-41">
                                 <Col>
