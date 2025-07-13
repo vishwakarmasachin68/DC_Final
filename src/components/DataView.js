@@ -22,9 +22,11 @@ import {
   BiCalendar,
   BiTrash,
   BiSearch,
+  BiRefresh,
 } from "react-icons/bi";
 import Chart from "react-apexcharts";
 import jsonStorage from "../services/jsonStorage";
+import ReturnableItemsModal from "./ReturnableItemsModal";
 
 const DataView = ({ challans: initialChallans }) => {
   const formatDate = (dateString) => {
@@ -48,34 +50,42 @@ const DataView = ({ challans: initialChallans }) => {
   const [error, setError] = useState(null);
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
+  const [showReturnableModal, setShowReturnableModal] = useState(false);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const loadedChallans = initialChallans || (await jsonStorage.getChallans());
+      const loadedProjects = await jsonStorage.getProjects();
+
+      setChallans(loadedChallans);
+      setProjects(loadedProjects);
+
+      if (loadedChallans.length > 0) {
+        // Try to maintain the currently selected challan if it still exists
+        const currentChallan = selectedChallan 
+          ? loadedChallans.find(c => c.dcNumber === selectedChallan.dcNumber)
+          : null;
+        
+        setSelectedChallan(currentChallan || loadedChallans[0]);
+        
+        const project = loadedProjects.find(
+          (p) => p.projectName === (currentChallan || loadedChallans[0]).projectName
+        );
+        setSelectedProject(project || null);
+      } else {
+        setSelectedChallan(null);
+        setSelectedProject(null);
+      }
+      setLoading(false);
+    } catch (err) {
+      console.error("Failed to load data:", err);
+      setError("Failed to load data. Please try again.");
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        const loadedChallans =
-          initialChallans || (await jsonStorage.getChallans());
-        const loadedProjects = await jsonStorage.getProjects();
-
-        setChallans(loadedChallans);
-        setProjects(loadedProjects);
-
-        if (loadedChallans.length > 0) {
-          setSelectedChallan(loadedChallans[0]);
-          // Find the corresponding project
-          const project = loadedProjects.find(
-            (p) => p.projectName === loadedChallans[0].projectName
-          );
-          setSelectedProject(project || null);
-        }
-        setLoading(false);
-      } catch (err) {
-        console.error("Failed to load data:", err);
-        setError("Failed to load data. Please try again.");
-        setLoading(false);
-      }
-    };
-
     loadData();
   }, [initialChallans]);
 
@@ -141,13 +151,7 @@ const DataView = ({ challans: initialChallans }) => {
     try {
       setLoading(true);
       await jsonStorage.deleteChallan(dcNumber);
-      const updatedChallans = await jsonStorage.getChallans();
-      setChallans(updatedChallans);
-
-      if (selectedChallan?.dcNumber === dcNumber) {
-        setSelectedChallan(updatedChallans[0] || null);
-      }
-
+      await loadData(); // Use the centralized loadData function
       setLoading(false);
     } catch (err) {
       console.error("Failed to delete challan:", err);
@@ -220,15 +224,24 @@ const DataView = ({ challans: initialChallans }) => {
         </Alert>
       )}
 
-      <h2 className="mb-4">
-        <BiBarChartAlt2 className="me-2" />
-        Challan Analytics Dashboard
-      </h2>
+      <Row className="mb-4 align-items-center">
+        <Col md={6}>
+          <h2 className="mb-0">
+            <BiBarChartAlt2 className="me-2" />
+            Challan Analytics Dashboard
+          </h2>
+        </Col>
+        <Col md={6} className="text-end">
+          <Button variant="outline-primary" onClick={loadData}>
+            <BiRefresh className="me-1" /> Refresh Data
+          </Button>
+        </Col>
+      </Row>
 
       {/* Search and Filter */}
       <Card className="mb-4">
         <Card.Body>
-          <Row>
+          <Row className="align-items-center">
             <Col md={6}>
               <InputGroup>
                 <InputGroup.Text>
@@ -242,7 +255,7 @@ const DataView = ({ challans: initialChallans }) => {
                 />
               </InputGroup>
             </Col>
-            <Col md={6}>
+            <Col md={6} className="d-flex justify-content-end gap-3">
               <Dropdown>
                 <Dropdown.Toggle variant="outline-secondary">
                   <BiFilterAlt className="me-1" /> Filter:{" "}
@@ -273,6 +286,14 @@ const DataView = ({ challans: initialChallans }) => {
                   </Dropdown.Item>
                 </Dropdown.Menu>
               </Dropdown>
+              
+              <Button
+                variant="primary"
+                onClick={() => setShowReturnableModal(true)}
+                className="d-flex align-items-center"
+              >
+                <BiPieChartAlt className="me-1" /> Track Returnable Items
+              </Button>
             </Col>
           </Row>
         </Card.Body>
@@ -315,17 +336,7 @@ const DataView = ({ challans: initialChallans }) => {
             <Col md={4}>
               <Card>
                 <Card.Body>
-                  <Row>
-                    <Col>
-                      <h6 className="text-muted">Returnable Items</h6>
-                    </Col>
-                    <Col className="text-end">
-                      <button>
-                        Track Returnable
-                        <BiPieChartAlt className="ms-2" />
-                      </button>
-                    </Col>
-                  </Row>
+                  <h6 className="text-muted">Returnable Items</h6>
                   <h3>
                     {filteredChallans.reduce(
                       (sum, c) =>
@@ -345,8 +356,11 @@ const DataView = ({ challans: initialChallans }) => {
           <Row>
             <Col md={4}>
               <Card className="mb-4">
-                <Card.Header>
-                  <h5>Generated Challans</h5>
+                <Card.Header className="d-flex justify-content-between align-items-center">
+                  <h5 className="mb-0">Generated Challans</h5>
+                  <Badge bg="light" text="dark" pill>
+                    {filteredChallans.length} items
+                  </Badge>
                 </Card.Header>
                 <Card.Body className="p-0">
                   <div style={{ maxHeight: "600px", overflowY: "auto" }}>
@@ -356,6 +370,7 @@ const DataView = ({ challans: initialChallans }) => {
                           key={index}
                           eventKey={index.toString()}
                           onClick={() => setSelectedChallan(challan)}
+                          active={selectedChallan?.dcNumber === challan.dcNumber}
                         >
                           <Accordion.Header>
                             <div className="d-flex justify-content-between w-100">
@@ -466,7 +481,7 @@ const DataView = ({ challans: initialChallans }) => {
                   {/* Challan Details */}
                   <Card>
                     <Card.Header className="d-flex justify-content-between align-items-center">
-                      <h5>Challan Details</h5>
+                      <h5 className="mb-0">Challan Details</h5>
                       <Badge bg="light" text="dark">
                         <BiCalendar className="me-1" />
                         {formatDate(selectedChallan.date) || "No date set"}
@@ -539,46 +554,42 @@ const DataView = ({ challans: initialChallans }) => {
                         <Col md={3}>
                           <h6>Field Supervisor</h6>
                           <p>
-                            {selectedProject.fieldSupervisor || "Not specified"}
+                            {selectedProject?.fieldSupervisor || "Not specified"}
                           </p>
                         </Col>
 
                         <Col md={6}>
                           <h6>Project Details</h6>
                           <p>
-                            {selectedProject.projectDetails ||
+                            {selectedProject?.projectDetails ||
                               "No details provided"}
                           </p>
                         </Col>
                       </Row>
                       <Row className="mb-4">
                         {/* Project Details Section */}
-                        {selectedProject && (
-                          <>
-                            {selectedProject.personsInvolved?.length > 0 && (
-                              <Row className="mb-41">
-                                <Col>
-                                  <Card>
-                                    <Card.Header>
-                                      <h6>Team Members</h6>
-                                    </Card.Header>
-                                    <Card.Body>
-                                      <ListGroup variant="flush">
-                                        {selectedProject.personsInvolved.map(
-                                          (person, index) => (
-                                            <ListGroup.Item key={index}>
-                                              {person ||
-                                                `Team member ${index + 1}`}
-                                            </ListGroup.Item>
-                                          )
-                                        )}
-                                      </ListGroup>
-                                    </Card.Body>
-                                  </Card>
-                                </Col>
-                              </Row>
-                            )}
-                          </>
+                        {selectedProject?.personsInvolved?.length > 0 && (
+                          <Row className="mb-4">
+                            <Col>
+                              <Card>
+                                <Card.Header>
+                                  <h6 className="mb-0">Team Members</h6>
+                                </Card.Header>
+                                <Card.Body>
+                                  <ListGroup variant="flush">
+                                    {selectedProject.personsInvolved.map(
+                                      (person, index) => (
+                                        <ListGroup.Item key={index}>
+                                          {person ||
+                                            `Team member ${index + 1}`}
+                                        </ListGroup.Item>
+                                      )
+                                    )}
+                                  </ListGroup>
+                                </Card.Body>
+                              </Card>
+                            </Col>
+                          </Row>
                         )}
                       </Row>
 
@@ -669,6 +680,12 @@ const DataView = ({ challans: initialChallans }) => {
           </Row>
         </>
       )}
+      <ReturnableItemsModal
+        show={showReturnableModal}
+        onHide={() => setShowReturnableModal(false)}
+        challans={filteredChallans}
+        refreshData={loadData}
+      />
     </Container>
   );
 };
