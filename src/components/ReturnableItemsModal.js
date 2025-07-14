@@ -2,23 +2,39 @@ import React, { useState } from "react";
 import { 
   Modal, 
   Button, 
-  Table, 
   Badge, 
   Alert, 
-  Container,
   Row,
   Col,
   Spinner,
+  Form,
+  ListGroup, 
   InputGroup,
-  Form
+  Card,
+  Table
 } from "react-bootstrap";
 import { 
   format, 
   differenceInDays, 
   parseISO,
-  isAfter
+  isAfter,
+  isValid
 } from "date-fns";
-import { BiCheckCircle, BiXCircle, BiCalendar } from "react-icons/bi";
+import { 
+  BiCheckCircle, 
+  BiXCircle, 
+  BiCalendar,
+  BiTime,
+  BiPackage,
+  BiBuilding,
+  BiMapPin,
+  BiClipboard,
+  BiArrowFromBottom,
+  BiSearch,
+  BiListUl,
+  BiFileText,
+  BiInfoCircle
+} from "react-icons/bi";
 import jsonStorage from "../services/jsonStorage";
 
 const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
@@ -26,7 +42,18 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [confirmReturn, setConfirmReturn] = useState(null);
-  const [returnNotes, setReturnNotes] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Safe date parsing function
+  const safeParseISO = (dateString) => {
+    if (!dateString) return null;
+    try {
+      const date = parseISO(dateString);
+      return isValid(date) ? date : null;
+    } catch (e) {
+      return null;
+    }
+  };
 
   // Get all returnable items from all challans
   const getReturnableItems = () => {
@@ -50,33 +77,67 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
 
   const returnableItems = getReturnableItems();
 
-  // Calculate status
+  // Filter items based on search term
+  const filteredItems = returnableItems.filter(item => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      item.assetName.toLowerCase().includes(searchLower) ||
+      item.challanNumber.toLowerCase().includes(searchLower) ||
+      (item.projectName && item.projectName.toLowerCase().includes(searchLower)) ||
+      (item.client && item.client.toLowerCase().includes(searchLower)) ||
+      (item.location && item.location.toLowerCase().includes(searchLower))
+    );
+  });
+
+  // Calculate status with safe date handling
   const getItemStatus = (item) => {
     if (item.returnedDate) {
       return { 
         status: "Returned", 
         variant: "success",
-        icon: <BiCheckCircle className="me-1" />
+        icon: <BiCheckCircle size={18} className="me-1" />
       };
     }
 
     const today = new Date();
-    const returnDate = parseISO(item.expectedReturnDate);
+    const returnDate = safeParseISO(item.expectedReturnDate);
+    
+    if (!returnDate) {
+      return { 
+        status: "No return date", 
+        variant: "secondary",
+        icon: <BiTime size={18} className="me-1" />
+      };
+    }
+
     const daysLeft = differenceInDays(returnDate, today);
 
     if (daysLeft < 0) {
       return { 
         status: `${Math.abs(daysLeft)} days overdue`, 
         variant: "danger",
-        icon: <BiXCircle className="me-1" />
+        icon: <BiXCircle size={18} className="me-1" />
+      };
+    } else if (daysLeft <= 3) {
+      return { 
+        status: `${daysLeft} days left`, 
+        variant: "warning",
+        icon: <BiTime size={18} className="me-1" />
       };
     } else {
       return { 
-        status: `${daysLeft} days remaining`, 
-        variant: daysLeft <= 3 ? "warning" : "primary",
-        icon: <BiCalendar className="me-1" />
+        status: `${daysLeft} days left`, 
+        variant: "primary",
+        icon: <BiCalendar size={18} className="me-1" />
       };
     }
+  };
+
+  // Format date safely
+  const safeFormatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = safeParseISO(dateString);
+    return date ? format(date, "dd MMM yyyy") : "Invalid date";
   };
 
   // Mark item as returned
@@ -86,7 +147,6 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
     setSuccess(null);
 
     try {
-      // Find the challan containing this item
       const challanToUpdate = challans.find(
         (c) => c.dcNumber === item.challanNumber
       );
@@ -95,31 +155,27 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
         throw new Error("Challan not found");
       }
 
-      // Update the specific item
       const updatedItems = challanToUpdate.items.map((i) => {
         if (i.sno === item.sno && i.assetName === item.assetName) {
           return {
             ...i,
             returnedDate: new Date().toISOString().split("T")[0],
-            returnNotes: returnNotes || "Marked as returned"
+            returnNotes: "Marked as returned"
           };
         }
         return i;
       });
 
-      // Update the challan
       const updatedChallan = {
         ...challanToUpdate,
         items: updatedItems
       };
 
-      // Save to storage
       await jsonStorage.saveChallan(updatedChallan);
       
-      setSuccess("Item marked as returned successfully!");
+      setSuccess(`${item.assetName} marked as returned successfully!`);
       setConfirmReturn(null);
-      setReturnNotes("");
-      refreshData(); // Refresh parent component data
+      refreshData();
     } catch (err) {
       console.error("Failed to mark item as returned:", err);
       setError(err.message || "Failed to update item status");
@@ -139,140 +195,223 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
     >
       <Modal.Header closeButton className="bg-primary text-white">
         <Modal.Title className="d-flex align-items-center">
-          <i className="bi bi-clock-history me-2"></i>
+          <BiArrowFromBottom size={28} className="me-3" />
           <div>
-            <h4 className="mb-0">Returnable Items Tracker</h4>
-            <small className="text-white-50">Track all pending returns</small>
+            <h3 className="mb-0">Returnable Assets Management</h3>
+            <small className="text-white-50">Track and manage all returnable assets</small>
           </div>
         </Modal.Title>
       </Modal.Header>
       
-      <Modal.Body style={{ maxHeight: "70vh", overflowY: "auto" }}>
+      <Modal.Body className="p-0" style={{ maxHeight: "70vh", overflowY: "auto" }}>
         {error && (
-          <Alert variant="danger" onClose={() => setError(null)} dismissible>
-            {error}
+          <Alert variant="danger" onClose={() => setError(null)} dismissible className="m-3">
+            <div className="d-flex align-items-center">
+              <BiXCircle size={20} className="me-2" />
+              <span>{error}</span>
+            </div>
           </Alert>
         )}
+        
         {success && (
-          <Alert variant="success" onClose={() => setSuccess(null)} dismissible>
-            {success}
+          <Alert variant="success" onClose={() => setSuccess(null)} dismissible className="m-3">
+            <div className="d-flex align-items-center">
+              <BiCheckCircle size={20} className="me-2" />
+              <span>{success}</span>
+            </div>
           </Alert>
         )}
 
-        {returnableItems.length === 0 ? (
-          <div className="text-center py-5">
-            <i className="bi bi-check-circle-fill text-success" style={{ fontSize: "3rem" }}></i>
-            <h5 className="mt-3">No pending returnable items</h5>
-            <p className="text-muted">All items have been returned</p>
-          </div>
-        ) : (
-          <Table striped bordered hover responsive className="mb-0">
-            <thead className="table-dark">
-              <tr>
-                <th width="5%">#</th>
-                <th width="15%">Challan</th>
-                <th width="15%">Project</th>
-                <th width="15%">Asset</th>
-                <th width="10%">Client</th>
-                <th width="10%">Location</th>
-                <th width="15%">Expected Return</th>
-                <th width="15%">Status</th>
-                <th width="10%">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {returnableItems.map((item, idx) => {
-                const { status, variant, icon } = getItemStatus(item);
-                const isOverdue = isAfter(new Date(), parseISO(item.expectedReturnDate)) && !item.returnedDate;
-                
-                return (
-                  <tr 
-                    key={idx} 
-                    className={isOverdue ? "table-danger" : item.returnedDate ? "table-success" : ""}
-                  >
-                    <td className="text-center">{idx + 1}</td>
-                    <td>
-                      <div className="fw-bold">{item.challanNumber}</div>
-                      <small className="text-muted">
-                        {format(parseISO(item.challanDate), "dd/MM/yyyy")}
-                      </small>
-                    </td>
-                    <td>{item.projectName || "N/A"}</td>
-                    <td>
-                      <div className="fw-bold">{item.assetName}</div>
-                      <small className="text-muted">{item.serialNo}</small>
-                    </td>
-                    <td>{item.client || "N/A"}</td>
-                    <td>{item.location || "N/A"}</td>
-                    <td>
-                      {format(parseISO(item.expectedReturnDate), "dd MMM yyyy")}
-                    </td>
-                    <td>
-                      <Badge bg={variant} className="d-flex align-items-center">
-                        {icon}
-                        {status}
-                      </Badge>
-                    </td>
-                    <td className="text-center">
-                      {!item.returnedDate && (
-                        <Button
-                          variant="outline-primary"
-                          size="sm"
-                          onClick={() => setConfirmReturn(item)}
-                          disabled={loading}
-                        >
-                          <i className="bi bi-check-circle me-1"></i> Return
-                        </Button>
-                      )}
-                      {item.returnedDate && (
-                        <small className="text-success">
-                          <i className="bi bi-check2-circle me-1"></i>
-                          Returned
-                        </small>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </Table>
-        )}
+        <Card className="border-0 shadow-sm m-3">
+          <Card.Header className="card-header-custom">
+            <h5 className="card-title d-flex align-items-center">
+              <BiListUl size={20} className="me-2" />
+              Returnable Assets Dashboard
+            </h5>
+          </Card.Header>
+          <Card.Body>
+            <Row className="align-items-center mb-3">
+              <Col md={6}>
+                <div className="d-flex align-items-center">
+                  <h5 className="mb-0 me-3">Pending Returns</h5>
+                  <Badge pill bg="primary" className="fs-6">
+                    {returnableItems.filter(i => !i.returnedDate).length} items
+                  </Badge>
+                </div>
+              </Col>
+              <Col md={6}>
+                <Form.Group controlId="searchItems">
+                  <InputGroup>
+                    <InputGroup.Text>
+                      <BiSearch />
+                    </InputGroup.Text>
+                    <Form.Control
+                      type="text"
+                      placeholder="Search by asset, challan, project..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </InputGroup>
+                </Form.Group>
+              </Col>
+            </Row>
+
+            {filteredItems.length === 0 ? (
+              <div className="text-center py-5">
+                <BiCheckCircle size={48} className="text-success mb-3" />
+                <h4 className="mb-2">No pending returnable items</h4>
+                <p className="text-muted">All assets have been returned or no items match your search</p>
+              </div>
+            ) : (
+              <div className="table-responsive">
+                <Table striped bordered hover className="mb-0">
+                  <thead className="table-header">
+                    <tr>
+                      <th>Asset</th>
+                      <th>Challan</th>
+                      <th>Project</th>
+                      <th>Client</th>
+                      <th>Status</th>
+                      <th>Due Date</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredItems.map((item, idx) => {
+                      const { status, variant, icon } = getItemStatus(item);
+                      const returnDate = safeParseISO(item.expectedReturnDate);
+                      const isOverdue = returnDate && isAfter(new Date(), returnDate) && !item.returnedDate;
+                      
+                      return (
+                        <tr key={idx} className={isOverdue ? "table-danger" : ""}>
+                          <td>
+                            <div className="d-flex align-items-center">
+                              <BiPackage size={20} className="me-2 text-primary" />
+                              <div>
+                                <h6 className="mb-0">{item.assetName}</h6>
+                                <small className="text-muted">{item.serialNo}</small>
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <div className="d-flex align-items-center">
+                              <BiClipboard size={16} className="me-2 text-muted" />
+                              <span>{item.challanNumber}</span>
+                            </div>
+                          </td>
+                          <td>
+                            <div className="d-flex align-items-center">
+                              <BiBuilding size={16} className="me-2 text-muted" />
+                              <span>{item.projectName || "N/A"}</span>
+                            </div>
+                          </td>
+                          <td>
+                            <div className="d-flex align-items-center">
+                              <BiMapPin size={16} className="me-2 text-muted" />
+                              <span>{item.client || "N/A"}</span>
+                            </div>
+                          </td>
+                          <td>
+                            <Badge bg={variant} className="d-flex align-items-center">
+                              {icon}
+                              {status}
+                            </Badge>
+                          </td>
+                          <td>
+                            <small className="text-muted">Due:</small>
+                            <div>{safeFormatDate(item.expectedReturnDate)}</div>
+                          </td>
+                          <td className="text-center">
+                            {!item.returnedDate && (
+                              <Button
+                                variant={isOverdue ? "danger" : "primary"}
+                                size="sm"
+                                onClick={() => setConfirmReturn(item)}
+                                disabled={loading}
+                              >
+                                <BiCheckCircle className="me-1" />
+                                Return
+                              </Button>
+                            )}
+                            {item.returnedDate && (
+                              <Badge bg="success" className="px-2">
+                                <BiCheckCircle className="me-1" />
+                                Returned
+                              </Badge>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </Table>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
 
         {/* Confirmation Modal */}
         <Modal
           show={!!confirmReturn}
-          onHide={() => {
-            setConfirmReturn(null);
-            setReturnNotes("");
-          }}
+          onHide={() => setConfirmReturn(null)}
           centered
+          backdrop="static"
         >
-          <Modal.Header closeButton>
-            <Modal.Title>Confirm Return</Modal.Title>
+          <Modal.Header closeButton className="bg-primary text-white">
+            <Modal.Title>Confirm Asset Return</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <p>
-              Are you sure you want to mark <strong>{confirmReturn?.assetName}</strong> from challan{" "}
-              <strong>{confirmReturn?.challanNumber}</strong> as returned?
+            <div className="text-center mb-4">
+              <BiCheckCircle size={48} className="text-primary mb-3" />
+              <h5>Confirm Return Completion</h5>
+            </div>
+            
+            <Card className="mb-4">
+              <Card.Header className="bg-light">
+                <h6 className="mb-0 d-flex align-items-center">
+                  <BiInfoCircle className="me-2" />
+                  Asset Details
+                </h6>
+              </Card.Header>
+              <Card.Body>
+                <div className="mb-3">
+                  <div className="d-flex justify-content-between mb-2">
+                    <strong>Asset:</strong>
+                    <span>{confirmReturn?.assetName}</span>
+                  </div>
+                  <div className="d-flex justify-content-between mb-2">
+                    <strong>Challan:</strong>
+                    <span>{confirmReturn?.challanNumber}</span>
+                  </div>
+                  <div className="d-flex justify-content-between mb-2">
+                    <strong>Expected Return:</strong>
+                    <span>
+                      {safeFormatDate(confirmReturn?.expectedReturnDate)}
+                    </span>
+                  </div>
+                  <div className="d-flex justify-content-between">
+                    <strong>Status:</strong>
+                    <Badge bg={
+                      confirmReturn?.returnedDate ? "success" : 
+                      isAfter(new Date(), safeParseISO(confirmReturn?.expectedReturnDate)) ? "danger" : "warning"
+                    }>
+                      {confirmReturn?.returnedDate ? "Returned" : 
+                      isAfter(new Date(), safeParseISO(confirmReturn?.expectedReturnDate)) ? "Overdue" : "Pending"}
+                    </Badge>
+                  </div>
+                </div>
+              </Card.Body>
+            </Card>
+            
+            <p className="text-center text-muted">
+              Are you sure this asset has been physically returned?
             </p>
-            <Form.Group className="mb-3">
-              <Form.Label>Return Notes (Optional)</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                placeholder="Any notes about the return condition"
-                value={returnNotes}
-                onChange={(e) => setReturnNotes(e.target.value)}
-              />
-            </Form.Group>
           </Modal.Body>
-          <Modal.Footer>
+          <Modal.Footer className="justify-content-center">
             <Button
               variant="secondary"
-              onClick={() => {
-                setConfirmReturn(null);
-                setReturnNotes("");
-              }}
+              onClick={() => setConfirmReturn(null)}
+              className="me-3"
             >
               Cancel
             </Button>
@@ -301,19 +440,25 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
         </Modal>
       </Modal.Body>
       
-      <Modal.Footer className="d-flex justify-content-between">
-        <div>
-          <Badge bg="success" className="me-2">
-            <BiCheckCircle className="me-1" /> Returned
+      <Modal.Footer className="d-flex justify-content-between border-top">
+        <div className="d-flex flex-wrap gap-2">
+          <Badge bg="success" className="d-flex align-items-center px-3 py-2">
+            <BiCheckCircle size={16} className="me-2" /> Returned
           </Badge>
-          <Badge bg="warning" className="me-2">
-            <BiCalendar className="me-1" /> Pending
+          <Badge bg="primary" className="d-flex align-items-center px-3 py-2">
+            <BiCalendar size={16} className="me-2" /> Pending
           </Badge>
-          <Badge bg="danger">
-            <BiXCircle className="me-1" /> Overdue
+          <Badge bg="warning" className="d-flex align-items-center px-3 py-2">
+            <BiTime size={16} className="me-2" /> Due Soon
+          </Badge>
+          <Badge bg="danger" className="d-flex align-items-center px-3 py-2">
+            <BiXCircle size={16} className="me-2" /> Overdue
+          </Badge>
+          <Badge bg="secondary" className="d-flex align-items-center px-3 py-2">
+            <BiTime size={16} className="me-2" /> No Date
           </Badge>
         </div>
-        <Button variant="secondary" onClick={onHide}>
+        <Button variant="outline-primary" onClick={onHide}>
           Close
         </Button>
       </Modal.Footer>

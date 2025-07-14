@@ -741,3 +741,91 @@ body {
     margin-bottom: 15px;
   }
 }
+/* Add to ChallanForm.css */
+.returnable-items-modal .modal-content {
+  border: none;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.returnable-items-modal .modal-header {
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+}
+
+.returnable-items-modal .modal-body {
+  padding: 0;
+  background-color: #f8f9fa;
+}
+
+.returnable-items-modal .modal-footer {
+  padding: 1rem 1.5rem;
+  background-color: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+}
+
+.returnable-items-modal .table {
+  margin-bottom: 0;
+}
+
+.returnable-items-modal .table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+  padding: 12px;
+  white-space: nowrap;
+}
+
+.returnable-items-modal .table td {
+  vertical-align: middle;
+  padding: 12px;
+}
+
+.returnable-items-modal .badge {
+  font-size: 0.85em;
+  padding: 0.35em 0.65em;
+}
+
+.returnable-items-modal .card-header-custom {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  padding: 1rem 1.5rem;
+  border-bottom: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .returnable-items-modal .modal-dialog {
+    margin: 0.5rem;
+    width: calc(100% - 1rem);
+  }
+  
+  .returnable-items-modal .modal-body {
+    max-height: calc(100vh - 200px);
+  }
+  
+  .returnable-items-modal .table {
+    font-size: 0.875rem;
+  }
+  
+  .returnable-items-modal .table th,
+  .returnable-items-modal .table td {
+    padding: 8px;
+  }
+  
+  .returnable-items-modal .badge {
+    font-size: 0.75em;
+  }
+  
+  .returnable-items-modal .modal-footer .d-flex {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .returnable-items-modal .modal-footer .btn {
+    width: 100%;
+  }
+}
