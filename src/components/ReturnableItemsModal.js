@@ -1,28 +1,22 @@
 import React, { useState } from "react";
-import { 
-  Modal, 
-  Button, 
-  Badge, 
-  Alert, 
+import {
+  Modal,
+  Button,
+  Badge,
+  Alert,
   Row,
   Col,
   Spinner,
   Form,
-  ListGroup, 
+  ListGroup,
   InputGroup,
   Card,
-  Table
+  Table,
 } from "react-bootstrap";
-import { 
-  format, 
-  differenceInDays, 
-  parseISO,
-  isAfter,
-  isValid
-} from "date-fns";
-import { 
-  BiCheckCircle, 
-  BiXCircle, 
+import { format, differenceInDays, parseISO, isAfter, isValid } from "date-fns";
+import {
+  BiCheckCircle,
+  BiXCircle,
   BiCalendar,
   BiTime,
   BiPackage,
@@ -33,7 +27,7 @@ import {
   BiSearch,
   BiListUl,
   BiFileText,
-  BiInfoCircle
+  BiInfoCircle,
 } from "react-icons/bi";
 import jsonStorage from "../services/jsonStorage";
 
@@ -68,7 +62,7 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
             challanDate: challan.date,
             client: challan.client,
             location: challan.location,
-            projectName: challan.projectName
+            projectName: challan.projectName,
           });
         });
     });
@@ -78,12 +72,13 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
   const returnableItems = getReturnableItems();
 
   // Filter items based on search term
-  const filteredItems = returnableItems.filter(item => {
+  const filteredItems = returnableItems.filter((item) => {
     const searchLower = searchTerm.toLowerCase();
     return (
       item.assetName.toLowerCase().includes(searchLower) ||
       item.challanNumber.toLowerCase().includes(searchLower) ||
-      (item.projectName && item.projectName.toLowerCase().includes(searchLower)) ||
+      (item.projectName &&
+        item.projectName.toLowerCase().includes(searchLower)) ||
       (item.client && item.client.toLowerCase().includes(searchLower)) ||
       (item.location && item.location.toLowerCase().includes(searchLower))
     );
@@ -92,43 +87,43 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
   // Calculate status with safe date handling
   const getItemStatus = (item) => {
     if (item.returnedDate) {
-      return { 
-        status: "Returned", 
+      return {
+        status: "Returned",
         variant: "success",
-        icon: <BiCheckCircle size={18} className="me-1" />
+        icon: <BiCheckCircle size={18} className="me-1" />,
       };
     }
 
     const today = new Date();
     const returnDate = safeParseISO(item.expectedReturnDate);
-    
+
     if (!returnDate) {
-      return { 
-        status: "No return date", 
+      return {
+        status: "No return date",
         variant: "secondary",
-        icon: <BiTime size={18} className="me-1" />
+        icon: <BiTime size={18} className="me-1" />,
       };
     }
 
     const daysLeft = differenceInDays(returnDate, today);
 
     if (daysLeft < 0) {
-      return { 
-        status: `${Math.abs(daysLeft)} days overdue`, 
+      return {
+        status: `${Math.abs(daysLeft)} days overdue`,
         variant: "danger",
-        icon: <BiXCircle size={18} className="me-1" />
+        icon: <BiXCircle size={18} className="me-1" />,
       };
     } else if (daysLeft <= 3) {
-      return { 
-        status: `${daysLeft} days left`, 
+      return {
+        status: `${daysLeft} days left`,
         variant: "warning",
-        icon: <BiTime size={18} className="me-1" />
+        icon: <BiTime size={18} className="me-1" />,
       };
     } else {
-      return { 
-        status: `${daysLeft} days left`, 
+      return {
+        status: `${daysLeft} days left`,
         variant: "primary",
-        icon: <BiCalendar size={18} className="me-1" />
+        icon: <BiCalendar size={18} className="me-1" />,
       };
     }
   };
@@ -160,7 +155,7 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
           return {
             ...i,
             returnedDate: new Date().toISOString().split("T")[0],
-            returnNotes: "Marked as returned"
+            returnNotes: "Marked as returned",
           };
         }
         return i;
@@ -168,11 +163,11 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
 
       const updatedChallan = {
         ...challanToUpdate,
-        items: updatedItems
+        items: updatedItems,
       };
 
       await jsonStorage.saveChallan(updatedChallan);
-      
+
       setSuccess(`${item.assetName} marked as returned successfully!`);
       setConfirmReturn(null);
       refreshData();
@@ -185,11 +180,11 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
   };
 
   return (
-    <Modal 
-      show={show} 
-      onHide={onHide} 
-      size="xl" 
-      centered 
+    <Modal
+      show={show}
+      onHide={onHide}
+      size="xl"
+      centered
       backdrop="static"
       className="returnable-items-modal"
     >
@@ -198,23 +193,38 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
           <BiArrowFromBottom size={28} className="me-3" />
           <div>
             <h3 className="mb-0">Returnable Assets Management</h3>
-            <small className="text-white-50">Track and manage all returnable assets</small>
+            <small className="text-white-50">
+              Track and manage all returnable assets
+            </small>
           </div>
         </Modal.Title>
       </Modal.Header>
-      
-      <Modal.Body className="p-0" style={{ maxHeight: "70vh", overflowY: "auto" }}>
+
+      <Modal.Body
+        className="p-0"
+        style={{ maxHeight: "70vh", overflowY: "auto" }}
+      >
         {error && (
-          <Alert variant="danger" onClose={() => setError(null)} dismissible className="m-3">
+          <Alert
+            variant="danger"
+            onClose={() => setError(null)}
+            dismissible
+            className="m-3"
+          >
             <div className="d-flex align-items-center">
               <BiXCircle size={20} className="me-2" />
               <span>{error}</span>
             </div>
           </Alert>
         )}
-        
+
         {success && (
-          <Alert variant="success" onClose={() => setSuccess(null)} dismissible className="m-3">
+          <Alert
+            variant="success"
+            onClose={() => setSuccess(null)}
+            dismissible
+            className="m-3"
+          >
             <div className="d-flex align-items-center">
               <BiCheckCircle size={20} className="me-2" />
               <span>{success}</span>
@@ -235,7 +245,8 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
                 <div className="d-flex align-items-center">
                   <h5 className="mb-0 me-3">Pending Returns</h5>
                   <Badge pill bg="primary" className="fs-6">
-                    {returnableItems.filter(i => !i.returnedDate).length} items
+                    {returnableItems.filter((i) => !i.returnedDate).length}{" "}
+                    items
                   </Badge>
                 </div>
               </Col>
@@ -260,7 +271,9 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
               <div className="text-center py-5">
                 <BiCheckCircle size={48} className="text-success mb-3" />
                 <h4 className="mb-2">No pending returnable items</h4>
-                <p className="text-muted">All assets have been returned or no items match your search</p>
+                <p className="text-muted">
+                  All assets have been returned or no items match your search
+                </p>
               </div>
             ) : (
               <div className="table-responsive">
@@ -280,28 +293,45 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
                     {filteredItems.map((item, idx) => {
                       const { status, variant, icon } = getItemStatus(item);
                       const returnDate = safeParseISO(item.expectedReturnDate);
-                      const isOverdue = returnDate && isAfter(new Date(), returnDate) && !item.returnedDate;
-                      
+                      const isOverdue =
+                        returnDate &&
+                        isAfter(new Date(), returnDate) &&
+                        !item.returnedDate;
+
                       return (
-                        <tr key={idx} className={isOverdue ? "table-danger" : ""}>
+                        <tr
+                          key={idx}
+                          className={isOverdue ? "table-danger" : ""}
+                        >
                           <td>
                             <div className="d-flex align-items-center">
-                              <BiPackage size={20} className="me-2 text-primary" />
+                              <BiPackage
+                                size={20}
+                                className="me-2 text-primary"
+                              />
                               <div>
                                 <h6 className="mb-0">{item.assetName}</h6>
-                                <small className="text-muted">{item.serialNo}</small>
+                                <small className="text-muted">
+                                  {item.serialNo}
+                                </small>
                               </div>
                             </div>
                           </td>
                           <td>
                             <div className="d-flex align-items-center">
-                              <BiClipboard size={16} className="me-2 text-muted" />
+                              <BiClipboard
+                                size={16}
+                                className="me-2 text-muted"
+                              />
                               <span>{item.challanNumber}</span>
                             </div>
                           </td>
                           <td>
                             <div className="d-flex align-items-center">
-                              <BiBuilding size={16} className="me-2 text-muted" />
+                              <BiBuilding
+                                size={16}
+                                className="me-2 text-muted"
+                              />
                               <span>{item.projectName || "N/A"}</span>
                             </div>
                           </td>
@@ -312,7 +342,10 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
                             </div>
                           </td>
                           <td>
-                            <Badge bg={variant} className="d-flex align-items-center">
+                            <Badge
+                              bg={variant}
+                              className="d-flex align-items-center"
+                            >
                               {icon}
                               {status}
                             </Badge>
@@ -365,7 +398,7 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
               <BiCheckCircle size={48} className="text-primary mb-3" />
               <h5>Confirm Return Completion</h5>
             </div>
-            
+
             <Card className="mb-4">
               <Card.Header className="bg-light">
                 <h6 className="mb-0 d-flex align-items-center">
@@ -391,18 +424,32 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
                   </div>
                   <div className="d-flex justify-content-between">
                     <strong>Status:</strong>
-                    <Badge bg={
-                      confirmReturn?.returnedDate ? "success" : 
-                      isAfter(new Date(), safeParseISO(confirmReturn?.expectedReturnDate)) ? "danger" : "warning"
-                    }>
-                      {confirmReturn?.returnedDate ? "Returned" : 
-                      isAfter(new Date(), safeParseISO(confirmReturn?.expectedReturnDate)) ? "Overdue" : "Pending"}
+                    <Badge
+                      bg={
+                        confirmReturn?.returnedDate
+                          ? "success"
+                          : isAfter(
+                              new Date(),
+                              safeParseISO(confirmReturn?.expectedReturnDate)
+                            )
+                          ? "danger"
+                          : "warning"
+                      }
+                    >
+                      {confirmReturn?.returnedDate
+                        ? "Returned"
+                        : isAfter(
+                            new Date(),
+                            safeParseISO(confirmReturn?.expectedReturnDate)
+                          )
+                        ? "Overdue"
+                        : "Pending"}
                     </Badge>
                   </div>
                 </div>
               </Card.Body>
             </Card>
-            
+
             <p className="text-center text-muted">
               Are you sure this asset has been physically returned?
             </p>
@@ -439,7 +486,7 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
           </Modal.Footer>
         </Modal>
       </Modal.Body>
-      
+
       <Modal.Footer className="d-flex justify-content-between border-top">
         <div className="d-flex flex-wrap gap-2">
           <Badge bg="success" className="d-flex align-items-center px-3 py-2">
