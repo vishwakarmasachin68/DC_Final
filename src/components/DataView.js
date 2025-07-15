@@ -55,7 +55,8 @@ const DataView = ({ challans: initialChallans }) => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const loadedChallans = initialChallans || (await jsonStorage.getChallans());
+      const loadedChallans =
+        initialChallans || (await jsonStorage.getChallans());
       const loadedProjects = await jsonStorage.getProjects();
 
       setChallans(loadedChallans);
@@ -63,14 +64,15 @@ const DataView = ({ challans: initialChallans }) => {
 
       if (loadedChallans.length > 0) {
         // Try to maintain the currently selected challan if it still exists
-        const currentChallan = selectedChallan 
-          ? loadedChallans.find(c => c.dcNumber === selectedChallan.dcNumber)
+        const currentChallan = selectedChallan
+          ? loadedChallans.find((c) => c.dcNumber === selectedChallan.dcNumber)
           : null;
-        
+
         setSelectedChallan(currentChallan || loadedChallans[0]);
-        
+
         const project = loadedProjects.find(
-          (p) => p.projectName === (currentChallan || loadedChallans[0]).projectName
+          (p) =>
+            p.projectName === (currentChallan || loadedChallans[0]).projectName
         );
         setSelectedProject(project || null);
       } else {
@@ -286,7 +288,7 @@ const DataView = ({ challans: initialChallans }) => {
                   </Dropdown.Item>
                 </Dropdown.Menu>
               </Dropdown>
-              
+
               <Button
                 variant="primary"
                 onClick={() => setShowReturnableModal(true)}
@@ -370,7 +372,9 @@ const DataView = ({ challans: initialChallans }) => {
                           key={index}
                           eventKey={index.toString()}
                           onClick={() => setSelectedChallan(challan)}
-                          active={selectedChallan?.dcNumber === challan.dcNumber}
+                          active={
+                            selectedChallan?.dcNumber === challan.dcNumber
+                          }
                         >
                           <Accordion.Header>
                             <div className="d-flex justify-content-between w-100">
@@ -554,7 +558,8 @@ const DataView = ({ challans: initialChallans }) => {
                         <Col md={3}>
                           <h6>Field Supervisor</h6>
                           <p>
-                            {selectedProject?.fieldSupervisor || "Not specified"}
+                            {selectedProject?.fieldSupervisor ||
+                              "Not specified"}
                           </p>
                         </Col>
 
@@ -580,8 +585,7 @@ const DataView = ({ challans: initialChallans }) => {
                                     {selectedProject.personsInvolved.map(
                                       (person, index) => (
                                         <ListGroup.Item key={index}>
-                                          {person ||
-                                            `Team member ${index + 1}`}
+                                          {person || `Team member ${index + 1}`}
                                         </ListGroup.Item>
                                       )
                                     )}
