@@ -1,6 +1,6 @@
-import React from 'react';
-import ChallanForm from './components/ChallanForm';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import React from "react";
+import ChallanForm from "./components/ChallanForm";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 function App() {
   return (
