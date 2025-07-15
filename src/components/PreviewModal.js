@@ -1,14 +1,14 @@
 import React from "react";
 import { Modal, Button, Card, Table, Badge, Spinner } from "react-bootstrap";
 
-const PreviewModal = ({ 
-  show, 
-  onHide, 
-  challan, 
-  dcNumber, 
-  onPrint, 
-  onSave, 
-  loading 
+const PreviewModal = ({
+  show,
+  onHide,
+  challan,
+  dcNumber,
+  onPrint,
+  onSave,
+  loading,
 }) => {
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -54,7 +54,8 @@ const PreviewModal = ({
                   <strong>Date:</strong> {formatDate(challan.date)}
                 </p>
                 <p>
-                  <strong>Prepared By:</strong> {challan.name || "Not specified"}
+                  <strong>Prepared By:</strong>{" "}
+                  {challan.name || "Not specified"}
                 </p>
               </div>
               <div className="col-md-6">
@@ -81,7 +82,13 @@ const PreviewModal = ({
             </h5>
           </Card.Header>
           <Card.Body className="p-0">
-            <Table striped bordered hover responsive className="mb-0 items-table">
+            <Table
+              striped
+              bordered
+              hover
+              responsive
+              className="mb-0 items-table"
+            >
               <thead className="table-header">
                 <tr>
                   <th>#</th>
@@ -129,9 +136,9 @@ const PreviewModal = ({
           <i className="bi bi-arrow-left me-2"></i>Back to Edit
         </Button>
         <div>
-          <Button 
-            variant="success" 
-            onClick={onSave} 
+          <Button
+            variant="success"
+            onClick={onSave}
             className="me-2"
             disabled={loading}
           >
