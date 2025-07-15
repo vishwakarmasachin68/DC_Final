@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Form, 
-  Button, 
-  Card, 
-  Alert, 
-  Row, 
-  Col, 
-  InputGroup, 
-  Container, 
+import React, { useState, useEffect } from "react";
+import {
+  Form,
+  Button,
+  Card,
+  Alert,
+  Row,
+  Col,
+  InputGroup,
+  Container,
   Table,
-  Spinner
-} from 'react-bootstrap';
-import jsonStorage from '../services/jsonStorage';
-import '../styles/ProjectForm.css';
+  Spinner,
+} from "react-bootstrap";
+import jsonStorage from "../services/jsonStorage";
+import "../styles/ProjectForm.css";
 
 const initialProjectState = {
   location: "",
@@ -48,7 +48,7 @@ const ProjectForm = () => {
         const projects = await jsonStorage.getProjects();
         const clients = await jsonStorage.getClients();
         const locations = await jsonStorage.getLocations();
-        
+
         setProjectsList(projects);
         setClients(clients);
         setLocations(locations);
@@ -59,14 +59,14 @@ const ProjectForm = () => {
         setLoading(false);
       }
     };
-    
+
     loadData();
   }, []);
 
   // Handle form field changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setProject(prev => ({ ...prev, [name]: value }));
+    setProject((prev) => ({ ...prev, [name]: value }));
     setError(null);
   };
 
@@ -74,22 +74,24 @@ const ProjectForm = () => {
   const handlePersonChange = (index, value) => {
     const updatedPersons = [...project.personsInvolved];
     updatedPersons[index] = value;
-    setProject(prev => ({ ...prev, personsInvolved: updatedPersons }));
+    setProject((prev) => ({ ...prev, personsInvolved: updatedPersons }));
   };
 
   // Add new team member field
   const addPersonField = () => {
-    setProject(prev => ({
+    setProject((prev) => ({
       ...prev,
-      personsInvolved: [...prev.personsInvolved, ""]
+      personsInvolved: [...prev.personsInvolved, ""],
     }));
   };
 
   // Remove team member field
   const removePersonField = (index) => {
     if (project.personsInvolved.length <= 1) return;
-    const updatedPersons = project.personsInvolved.filter((_, i) => i !== index);
-    setProject(prev => ({ ...prev, personsInvolved: updatedPersons }));
+    const updatedPersons = project.personsInvolved.filter(
+      (_, i) => i !== index
+    );
+    setProject((prev) => ({ ...prev, personsInvolved: updatedPersons }));
   };
 
   // Form validation
@@ -107,13 +109,14 @@ const ProjectForm = () => {
 
   // Load project for editing
   const loadProjectForEdit = (projectId) => {
-    const projectToEdit = projectsList.find(p => p.id === projectId);
+    const projectToEdit = projectsList.find((p) => p.id === projectId);
     if (projectToEdit) {
       setProject({
         ...projectToEdit,
-        personsInvolved: projectToEdit.personsInvolved?.length > 0 
-          ? projectToEdit.personsInvolved 
-          : [""]
+        personsInvolved:
+          projectToEdit.personsInvolved?.length > 0
+            ? projectToEdit.personsInvolved
+            : [""],
       });
       setEditMode(true);
       setSelectedProjectId(projectId);
@@ -135,16 +138,16 @@ const ProjectForm = () => {
       } else {
         await jsonStorage.saveProject(project);
       }
-      
+
       // Refresh data
       const projects = await jsonStorage.getProjects();
       const clients = await jsonStorage.getClients();
       const locations = await jsonStorage.getLocations();
-      
+
       setProjectsList(projects);
       setClients(clients);
       setLocations(locations);
-      
+
       setSuccess(true);
       handleClearForm();
     } catch (err) {
@@ -165,13 +168,14 @@ const ProjectForm = () => {
 
   // Delete project
   const handleDeleteProject = async (projectId) => {
-    if (!window.confirm("Are you sure you want to delete this project?")) return;
-    
+    if (!window.confirm("Are you sure you want to delete this project?"))
+      return;
+
     try {
       await jsonStorage.deleteProject(projectId);
       const projects = await jsonStorage.getProjects();
       setProjectsList(projects);
-      
+
       if (selectedProjectId === projectId) {
         handleClearForm();
       }
@@ -184,12 +188,12 @@ const ProjectForm = () => {
   // Save new client
   const saveNewClient = async () => {
     if (!newClient.trim()) return;
-    
+
     try {
       await jsonStorage.saveClient(newClient.trim());
       const clients = await jsonStorage.getClients();
       setClients(clients);
-      setProject(prev => ({ ...prev, client: newClient.trim() }));
+      setProject((prev) => ({ ...prev, client: newClient.trim() }));
       setShowNewClientInput(false);
       setNewClient("");
     } catch (err) {
@@ -201,12 +205,12 @@ const ProjectForm = () => {
   // Save new location
   const saveNewLocation = async () => {
     if (!newLocation.trim()) return;
-    
+
     try {
       await jsonStorage.saveLocation(newLocation.trim());
       const locations = await jsonStorage.getLocations();
       setLocations(locations);
-      setProject(prev => ({ ...prev, location: newLocation.trim() }));
+      setProject((prev) => ({ ...prev, location: newLocation.trim() }));
       setShowNewLocationInput(false);
       setNewLocation("");
     } catch (err) {
@@ -220,10 +224,10 @@ const ProjectForm = () => {
     const value = e.target.value;
     if (value === "new") {
       setShowNewClientInput(true);
-      setProject(prev => ({ ...prev, client: "" }));
+      setProject((prev) => ({ ...prev, client: "" }));
     } else {
       setShowNewClientInput(false);
-      setProject(prev => ({ ...prev, client: value }));
+      setProject((prev) => ({ ...prev, client: value }));
     }
   };
 
@@ -232,10 +236,10 @@ const ProjectForm = () => {
     const value = e.target.value;
     if (value === "new") {
       setShowNewLocationInput(true);
-      setProject(prev => ({ ...prev, location: "" }));
+      setProject((prev) => ({ ...prev, location: "" }));
     } else {
       setShowNewLocationInput(false);
-      setProject(prev => ({ ...prev, location: value }));
+      setProject((prev) => ({ ...prev, location: value }));
     }
   };
 
@@ -286,7 +290,10 @@ const ProjectForm = () => {
                       <Button variant="outline-success" onClick={saveNewClient}>
                         Save
                       </Button>
-                      <Button variant="outline-secondary" onClick={() => setShowNewClientInput(false)}>
+                      <Button
+                        variant="outline-secondary"
+                        onClick={() => setShowNewClientInput(false)}
+                      >
                         Cancel
                       </Button>
                     </InputGroup>
@@ -297,7 +304,9 @@ const ProjectForm = () => {
                     >
                       <option value="">Select a client</option>
                       {clients.map((client, index) => (
-                        <option key={index} value={client}>{client}</option>
+                        <option key={index} value={client}>
+                          {client}
+                        </option>
                       ))}
                       <option value="new">+ Add New Client</option>
                     </Form.Select>
@@ -317,10 +326,16 @@ const ProjectForm = () => {
                         onChange={(e) => setNewLocation(e.target.value)}
                         placeholder="Enter new location"
                       />
-                      <Button variant="outline-success" onClick={saveNewLocation}>
+                      <Button
+                        variant="outline-success"
+                        onClick={saveNewLocation}
+                      >
                         Save
                       </Button>
-                      <Button variant="outline-secondary" onClick={() => setShowNewLocationInput(false)}>
+                      <Button
+                        variant="outline-secondary"
+                        onClick={() => setShowNewLocationInput(false)}
+                      >
                         Cancel
                       </Button>
                     </InputGroup>
@@ -331,7 +346,9 @@ const ProjectForm = () => {
                     >
                       <option value="">Select a location</option>
                       {locations.map((location, index) => (
-                        <option key={index} value={location}>{location}</option>
+                        <option key={index} value={location}>
+                          {location}
+                        </option>
                       ))}
                       <option value="new">+ Add New Location</option>
                     </Form.Select>
@@ -389,7 +406,9 @@ const ProjectForm = () => {
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Project Name <span className="text-danger">*</span></Form.Label>
+                  <Form.Label>
+                    Project Name <span className="text-danger">*</span>
+                  </Form.Label>
                   <Form.Control
                     type="text"
                     name="projectName"
@@ -403,7 +422,9 @@ const ProjectForm = () => {
 
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Field Supervisor <span className="text-danger">*</span></Form.Label>
+                  <Form.Label>
+                    Field Supervisor <span className="text-danger">*</span>
+                  </Form.Label>
                   <Form.Control
                     type="text"
                     name="fieldSupervisor"
@@ -437,9 +458,10 @@ const ProjectForm = () => {
                   Team Members
                 </h5>
                 <Button
-                variant="btn btn-primary" 
-                size="sm" 
-                onClick={addPersonField}>
+                  variant="btn btn-primary"
+                  size="sm"
+                  onClick={addPersonField}
+                >
                   <i className="bi bi-plus-circle me-1"></i>Add Member
                 </Button>
               </Card.Header>
@@ -451,12 +473,14 @@ const ProjectForm = () => {
                         <Form.Control
                           type="text"
                           value={person}
-                          onChange={(e) => handlePersonChange(index, e.target.value)}
+                          onChange={(e) =>
+                            handlePersonChange(index, e.target.value)
+                          }
                           placeholder={`Team member #${index + 1}`}
                         />
                         {project.personsInvolved.length > 1 && (
-                          <Button 
-                            variant="outline-danger" 
+                          <Button
+                            variant="outline-danger"
                             onClick={() => removePersonField(index)}
                           >
                             <i className="bi bi-trash"></i>
@@ -471,7 +495,11 @@ const ProjectForm = () => {
 
             {/* Form Actions */}
             <div className="form-actions">
-              <Button variant="outline-secondary" onClick={handleClearForm} className="me-3">
+              <Button
+                variant="outline-secondary"
+                onClick={handleClearForm}
+                className="me-3"
+              >
                 <i className="bi bi-x-circle me-2"></i>Clear Form
               </Button>
               <Button variant="primary" type="submit">
@@ -500,8 +528,13 @@ const ProjectForm = () => {
             </div>
           ) : projectsList.length === 0 ? (
             <div className="text-center py-4">
-              <i className="bi bi-folder-x" style={{ fontSize: "3rem", color: "#6c757d" }}></i>
-              <p className="mt-3">No projects found. Create your first project!</p>
+              <i
+                className="bi bi-folder-x"
+                style={{ fontSize: "3rem", color: "#6c757d" }}
+              ></i>
+              <p className="mt-3">
+                No projects found. Create your first project!
+              </p>
             </div>
           ) : (
             <Table striped bordered hover>
