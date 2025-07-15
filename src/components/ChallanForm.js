@@ -57,18 +57,18 @@ const ChallanForm = () => {
         setClients(clients);
         setLocations(locations);
         setSavedChallans(challans);
-        
+
         if (challans.length > 0) {
-          const sequences = challans.map(c => {
-            const parts = c.dcNumber?.split('/') || [];
+          const sequences = challans.map((c) => {
+            const parts = c.dcNumber?.split("/") || [];
             return parts.length > 2 ? parseInt(parts[2]) : 0;
           });
           const maxSequence = Math.max(...sequences);
-          setNextSequence(String(maxSequence + 1).padStart(3, '0'));
+          setNextSequence(String(maxSequence + 1).padStart(3, "0"));
         } else {
           setNextSequence("001");
         }
-        
+
         setLoading(false);
       } catch (err) {
         console.error("Failed to load data:", err);
@@ -85,7 +85,7 @@ const ChallanForm = () => {
     const middle =
       challan.hasPO === "yes" && challan.poNumber
         ? challan.poNumber
-        : formatDate(challan.date).replace(/\//g, '');
+        : formatDate(challan.date).replace(/\//g, "");
     return `${prefix}${middle}/${nextSequence}`;
   };
 
@@ -113,9 +113,9 @@ const ChallanForm = () => {
   });
 
   useEffect(() => {
-    setChallan(prev => ({
+    setChallan((prev) => ({
       ...prev,
-      dcSequence: nextSequence
+      dcSequence: nextSequence,
     }));
   }, [nextSequence]);
 
@@ -214,7 +214,7 @@ const ChallanForm = () => {
     setGenerating(true);
     try {
       const dcNumber = getDcNumber();
-      const selectedProject = projects.find(p => p.id === challan.project);
+      const selectedProject = projects.find((p) => p.id === challan.project);
       const docData = {
         ...challan,
         dcNumber,
@@ -228,13 +228,13 @@ const ChallanForm = () => {
       };
 
       await jsonStorage.saveChallan(docData);
-      
-      const newSequence = String(parseInt(nextSequence) + 1).padStart(3, '0');
+
+      const newSequence = String(parseInt(nextSequence) + 1).padStart(3, "0");
       setNextSequence(newSequence);
-      
-      setChallan(prev => ({
+
+      setChallan((prev) => ({
         ...prev,
-        dcSequence: newSequence
+        dcSequence: newSequence,
       }));
 
       const updatedChallans = await jsonStorage.getChallans();
@@ -380,7 +380,7 @@ const ChallanForm = () => {
                         <InputGroup.Text>
                           {challan.hasPO === "yes" && challan.poNumber
                             ? challan.poNumber
-                            : formatDate(challan.date).replace(/\//g, '')}
+                            : formatDate(challan.date).replace(/\//g, "")}
                         </InputGroup.Text>
                         <InputGroup.Text>/</InputGroup.Text>
                         <Form.Control
