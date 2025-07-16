@@ -55,8 +55,7 @@ const DataView = ({ challans: initialChallans }) => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const loadedChallans =
-        initialChallans || (await jsonStorage.getChallans());
+      const loadedChallans = await jsonStorage.getChallans();
       const loadedProjects = await jsonStorage.getProjects();
 
       setChallans(loadedChallans);
@@ -89,7 +88,7 @@ const DataView = ({ challans: initialChallans }) => {
 
   useEffect(() => {
     loadData();
-  }, [initialChallans]);
+  }, []);
 
   useEffect(() => {
     if (selectedChallan) {
@@ -153,7 +152,7 @@ const DataView = ({ challans: initialChallans }) => {
     try {
       setLoading(true);
       await jsonStorage.deleteChallan(dcNumber);
-      await loadData(); // Use the centralized loadData function
+      await loadData();
       setLoading(false);
     } catch (err) {
       console.error("Failed to delete challan:", err);
