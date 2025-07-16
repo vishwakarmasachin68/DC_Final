@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   Button,
@@ -37,6 +37,7 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
   const [success, setSuccess] = useState(null);
   const [confirmReturn, setConfirmReturn] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [returnableItems, setReturnableItems] = useState([]);
 
   // Safe date parsing function
   const safeParseISO = (dateString) => {
@@ -51,12 +52,12 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
 
   // Get all returnable items from all challans
   const getReturnableItems = () => {
-    const returnableItems = [];
+    const items = [];
     challans.forEach((challan) => {
       challan.items
         .filter((item) => item.returnable === "yes")
         .forEach((item) => {
-          returnableItems.push({
+          items.push({
             ...item,
             challanNumber: challan.dcNumber,
             challanDate: challan.date,
@@ -66,17 +67,23 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
           });
         });
     });
-    return returnableItems;
+    return items;
   };
 
-  const returnableItems = getReturnableItems();
+  // Update returnable items when challans or show changes
+  useEffect(() => {
+    if (show) {
+      setReturnableItems(getReturnableItems());
+    }
+  }, [challans, show]);
 
   // Filter items based on search term
   const filteredItems = returnableItems.filter((item) => {
     const searchLower = searchTerm.toLowerCase();
     return (
       item.assetName.toLowerCase().includes(searchLower) ||
-      item.challanNumber.toLowerCase().includes(searchLower) ||
+      (item.challanNumber &&
+        item.challanNumber.toLowerCase().includes(searchLower)) ||
       (item.projectName &&
         item.projectName.toLowerCase().includes(searchLower)) ||
       (item.client && item.client.toLowerCase().includes(searchLower)) ||
@@ -168,8 +175,26 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
 
       await jsonStorage.saveChallan(updatedChallan);
 
+      // Update the local state immediately
+      const updatedReturnableItems = returnableItems.map((ri) => {
+        if (
+          ri.challanNumber === item.challanNumber &&
+          ri.sno === item.sno &&
+          ri.assetName === item.assetName
+        ) {
+          return {
+            ...ri,
+            returnedDate: new Date().toISOString().split("T")[0],
+          };
+        }
+        return ri;
+      });
+
+      setReturnableItems(updatedReturnableItems);
       setSuccess(`${item.assetName} marked as returned successfully!`);
       setConfirmReturn(null);
+
+      // Refresh parent component data
       refreshData();
     } catch (err) {
       console.error("Failed to mark item as returned:", err);
@@ -500,9 +525,6 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
           </Badge>
           <Badge bg="danger" className="d-flex align-items-center px-3 py-2">
             <BiXCircle size={16} className="me-2" /> Overdue
-          </Badge>
-          <Badge bg="secondary" className="d-flex align-items-center px-3 py-2">
-            <BiTime size={16} className="me-2" /> No Date
           </Badge>
         </div>
         <Button variant="outline-primary" onClick={onHide}>
