@@ -337,17 +337,36 @@ const DataView = ({ challans: initialChallans }) => {
             <Col md={4}>
               <Card>
                 <Card.Body>
-                  <h6 className="text-muted">Returnable Items</h6>
-                  <h3>
-                    {filteredChallans.reduce(
-                      (sum, c) =>
-                        sum +
-                        (c.items?.filter((item) => item.returnable === "yes")
-                          .length || 0),
-                      0
-                    )}
-                  </h3>
-                  <Badge bg="warning">Returnable</Badge>
+                  <Row>
+                    <Col >
+                      <h6 className="text-muted">Returnable Items</h6>
+                      <h3>
+                        {filteredChallans.reduce(
+                          (sum, c) =>
+                            sum +
+                            (c.items?.filter(
+                              (item) => item.returnable === "yes"
+                            ).length || 0),
+                          0
+                        )}
+                      </h3>
+                      <Badge bg="warning">Returnable</Badge>
+                    </Col>
+                    <Col>
+                      <h6 className="text-muted">Non Returnable Items</h6>
+                      <h3>
+                        {filteredChallans.reduce(
+                          (sum, c) =>
+                            sum +
+                            (c.items?.filter(
+                              (item) => item.returnable !== "yes"
+                            ).length || 0),
+                          0
+                        )}
+                      </h3>
+                      <Badge bg="danger">Non Returnable</Badge>
+                    </Col>
+                  </Row>
                 </Card.Body>
               </Card>
             </Col>
