@@ -9,7 +9,6 @@ import {
   InputGroup,
   Container,
   Table,
-  Spinner,
 } from "react-bootstrap";
 import jsonStorage from "../services/jsonStorage";
 import "../styles/ProjectForm.css";
@@ -25,7 +24,7 @@ const initialProjectState = {
   fieldSupervisor: "",
 };
 
-const ProjectForm = () => {
+const ProjectForm = ({ onProjectUpdate }) => {
   const [clients, setClients] = useState([]);
   const [locations, setLocations] = useState([]);
   const [showNewClientInput, setShowNewClientInput] = useState(false);
@@ -148,6 +147,11 @@ const ProjectForm = () => {
       setClients(clients);
       setLocations(locations);
 
+      // Notify parent component of project update
+      if (onProjectUpdate) {
+        onProjectUpdate();
+      }
+
       setSuccess(true);
       handleClearForm();
     } catch (err) {
@@ -175,6 +179,11 @@ const ProjectForm = () => {
       await jsonStorage.deleteProject(projectId);
       const projects = await jsonStorage.getProjects();
       setProjectsList(projects);
+
+      // Notify parent component of project update
+      if (onProjectUpdate) {
+        onProjectUpdate();
+      }
 
       if (selectedProjectId === projectId) {
         handleClearForm();
