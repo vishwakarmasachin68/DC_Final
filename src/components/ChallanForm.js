@@ -43,42 +43,48 @@ const ChallanForm = () => {
   const [generating, setGenerating] = useState(false);
   const [nextSequence, setNextSequence] = useState("001");
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [projects, clients, locations, challans] = await Promise.all([
-          jsonStorage.getProjects(),
-          jsonStorage.getClients(),
-          jsonStorage.getLocations(),
-          jsonStorage.getChallans(),
-        ]);
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [projects, clients, locations, challans] = await Promise.all([
+        jsonStorage.getProjects(),
+        jsonStorage.getClients(),
+        jsonStorage.getLocations(),
+        jsonStorage.getChallans(),
+      ]);
 
-        setProjects(projects);
-        setClients(clients);
-        setLocations(locations);
-        setSavedChallans(challans);
+      setProjects(projects);
+      setClients(clients);
+      setLocations(locations);
+      setSavedChallans(challans);
 
-        if (challans.length > 0) {
-          const sequences = challans.map((c) => {
-            const parts = c.dcNumber?.split("/") || [];
-            return parts.length > 2 ? parseInt(parts[2]) : 0;
-          });
-          const maxSequence = Math.max(...sequences);
-          setNextSequence(String(maxSequence + 1).padStart(3, "0"));
-        } else {
-          setNextSequence("001");
-        }
-
-        setLoading(false);
-      } catch (err) {
-        console.error("Failed to load data:", err);
-        setError("Failed to load data. Please refresh the page.");
-        setLoading(false);
+      if (challans.length > 0) {
+        const sequences = challans.map((c) => {
+          const parts = c.dcNumber?.split("/") || [];
+          return parts.length > 2 ? parseInt(parts[2]) : 0;
+        });
+        const maxSequence = Math.max(...sequences);
+        setNextSequence(String(maxSequence + 1).padStart(3, "0"));
+      } else {
+        setNextSequence("001");
       }
-    };
 
+      setLoading(false);
+    } catch (err) {
+      console.error("Failed to load data:", err);
+      setError("Failed to load data. Please refresh the page.");
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadData();
   }, []);
+
+  const handleProjectUpdate = async () => {
+    const updatedProjects = await jsonStorage.getProjects();
+    setProjects(updatedProjects);
+  };
 
   const getDcNumber = () => {
     const prefix = "DSI/";
@@ -354,7 +360,7 @@ const ChallanForm = () => {
       {currentView === "data" ? (
         <DataView challans={savedChallans} />
       ) : currentView === "project" ? (
-        <ProjectForm />
+        <ProjectForm onProjectUpdate={handleProjectUpdate} />
       ) : (
         <Container fluid className="main-content-container py-4">
           {error && (
