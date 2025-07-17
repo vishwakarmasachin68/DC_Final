@@ -23,6 +23,7 @@ import {
   BiTrash,
   BiSearch,
   BiRefresh,
+  BiArrowFromBottom,
 } from "react-icons/bi";
 import Chart from "react-apexcharts";
 import jsonStorage from "../services/jsonStorage";
@@ -293,7 +294,7 @@ const DataView = ({ challans: initialChallans }) => {
                 onClick={() => setShowReturnableModal(true)}
                 className="d-flex align-items-center"
               >
-                <BiPieChartAlt className="me-1" /> Track Returnable Items
+                <BiArrowFromBottom className="me-1" /> Track Returnable Items
               </Button>
             </Col>
           </Row>
@@ -338,7 +339,7 @@ const DataView = ({ challans: initialChallans }) => {
               <Card>
                 <Card.Body>
                   <Row>
-                    <Col >
+                    <Col>
                       <h6 className="text-muted">Returnable Items</h6>
                       <h3>
                         {filteredChallans.reduce(
