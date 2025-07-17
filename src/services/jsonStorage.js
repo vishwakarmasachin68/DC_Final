@@ -3,26 +3,26 @@
 const jsonStorage = {
   // Initialize with default data structure
   async initialize() {
-    if (!localStorage.getItem('appData')) {
+    if (!localStorage.getItem("appData")) {
       const defaultData = {
         projects: [],
         clients: [],
         locations: [],
-        challans: []
+        challans: [],
       };
-      localStorage.setItem('appData', JSON.stringify(defaultData));
+      localStorage.setItem("appData", JSON.stringify(defaultData));
     }
   },
 
   // Get all data
   async getAllData() {
     await this.initialize();
-    return JSON.parse(localStorage.getItem('appData'));
+    return JSON.parse(localStorage.getItem("appData"));
   },
 
   // Save all data
   async saveAllData(data) {
-    localStorage.setItem('appData', JSON.stringify(data));
+    localStorage.setItem("appData", JSON.stringify(data));
     return true;
   },
 
@@ -42,7 +42,7 @@ const jsonStorage = {
 
   async updateProject(id, updatedProject) {
     const data = await this.getAllData();
-    data.projects = (data.projects || []).map(p => 
+    data.projects = (data.projects || []).map((p) =>
       p.id === id ? { ...updatedProject, id } : p
     );
     await this.saveAllData(data);
@@ -51,7 +51,7 @@ const jsonStorage = {
 
   async deleteProject(id) {
     const data = await this.getAllData();
-    data.projects = (data.projects || []).filter(p => p.id !== id);
+    data.projects = (data.projects || []).filter((p) => p.id !== id);
     await this.saveAllData(data);
     return true;
   },
@@ -94,21 +94,25 @@ const jsonStorage = {
 
   async saveChallan(challan) {
     const data = await this.getAllData();
-    const existingIndex = (data.challans || []).findIndex(c => c.dcNumber === challan.dcNumber);
-    
+    const existingIndex = (data.challans || []).findIndex(
+      (c) => c.dcNumber === challan.dcNumber
+    );
+
     if (existingIndex >= 0) {
       data.challans[existingIndex] = challan;
     } else {
       data.challans = [...(data.challans || []), challan];
     }
-    
+
     await this.saveAllData(data);
     return challan;
   },
 
   async deleteChallan(dcNumber) {
     const data = await this.getAllData();
-    data.challans = (data.challans || []).filter(c => c.dcNumber !== dcNumber);
+    data.challans = (data.challans || []).filter(
+      (c) => c.dcNumber !== dcNumber
+    );
     await this.saveAllData(data);
     return true;
   },
