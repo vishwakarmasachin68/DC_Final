@@ -400,16 +400,17 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
                                 size={16}
                                 className="me-2 text-muted"
                               />
-                              <span>{challanData.challan.projectName || "N/A"}</span>
+                              <span>
+                                {challanData.challan.projectName || "N/A"}
+                              </span>
                             </div>
                           </Col>
                           <Col md={3}>
                             <div className="d-flex align-items-center">
-                              <BiMapPin
-                                size={16}
-                                className="me-2 text-muted"
-                              />
-                              <span>{challanData.challan.location || "N/A"}</span>
+                              <BiMapPin size={16} className="me-2 text-muted" />
+                              <span>
+                                {challanData.challan.location || "N/A"}
+                              </span>
                             </div>
                           </Col>
                           <Col md={2} className="text-end">
@@ -424,7 +425,8 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
                                 }
                                 className="me-2"
                               >
-                                {summary.pendingItems}/{summary.totalItems} pending
+                                {summary.pendingItems}/{summary.totalItems}{" "}
+                                pending
                               </Badge>
                               {/* {isExpanded ? (<BiChevronUp size={20} />) : (<BiChevronDown size={20} /> )} */}
                             </div>
@@ -466,7 +468,9 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
                                         className="me-2 text-primary"
                                       />
                                       <div>
-                                        <h6 className="mb-0">{item.assetName}</h6>
+                                        <h6 className="mb-0">
+                                          {item.assetName}
+                                        </h6>
                                         <small className="text-muted">
                                           {item.description}
                                         </small>
