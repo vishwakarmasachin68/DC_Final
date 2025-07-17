@@ -12,6 +12,7 @@ import {
   InputGroup,
   Card,
   Table,
+  Accordion,
 } from "react-bootstrap";
 import { format, differenceInDays, parseISO, isAfter, isValid } from "date-fns";
 import {
@@ -28,6 +29,8 @@ import {
   BiListUl,
   BiFileText,
   BiInfoCircle,
+  BiChevronDown,
+  BiChevronUp,
 } from "react-icons/bi";
 import jsonStorage from "../services/jsonStorage";
 
@@ -38,6 +41,7 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
   const [confirmReturn, setConfirmReturn] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [returnableItems, setReturnableItems] = useState([]);
+  const [expandedChallans, setExpandedChallans] = useState({});
 
   // Safe date parsing function
   const safeParseISO = (dateString) => {
@@ -48,6 +52,27 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
     } catch (e) {
       return null;
     }
+  };
+
+  // Group items by challan
+  const groupItemsByChallan = (items) => {
+    const grouped = {};
+    items.forEach((item) => {
+      if (!grouped[item.challanNumber]) {
+        grouped[item.challanNumber] = {
+          challan: {
+            dcNumber: item.challanNumber,
+            date: item.challanDate,
+            client: item.client,
+            location: item.location,
+            projectName: item.projectName,
+          },
+          items: [],
+        };
+      }
+      grouped[item.challanNumber].items.push(item);
+    });
+    return grouped;
   };
 
   // Get all returnable items from all challans
@@ -73,9 +98,24 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
   // Update returnable items when challans or show changes
   useEffect(() => {
     if (show) {
-      setReturnableItems(getReturnableItems());
+      const items = getReturnableItems();
+      setReturnableItems(items);
+      // Initialize expanded state for all challans as collapsed
+      const initialExpandedState = {};
+      Object.keys(groupItemsByChallan(items)).forEach((dcNumber) => {
+        initialExpandedState[dcNumber] = false;
+      });
+      setExpandedChallans(initialExpandedState);
     }
   }, [challans, show]);
+
+  // Toggle expansion of a challan
+  const toggleChallanExpansion = (dcNumber) => {
+    setExpandedChallans((prev) => ({
+      ...prev,
+      [dcNumber]: !prev[dcNumber],
+    }));
+  };
 
   // Filter items based on search term
   const filteredItems = returnableItems.filter((item) => {
@@ -204,6 +244,37 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
     }
   };
 
+  // Calculate summary for a challan
+  const calculateChallanSummary = (items) => {
+    const totalItems = items.length;
+    const returnedItems = items.filter((i) => i.returnedDate).length;
+    const pendingItems = totalItems - returnedItems;
+
+    const overdueItems = items.filter((item) => {
+      if (item.returnedDate) return false;
+      const returnDate = safeParseISO(item.expectedReturnDate);
+      return returnDate && isAfter(new Date(), returnDate);
+    }).length;
+
+    const dueSoonItems = items.filter((item) => {
+      if (item.returnedDate) return false;
+      const returnDate = safeParseISO(item.expectedReturnDate);
+      if (!returnDate) return false;
+      const daysLeft = differenceInDays(returnDate, new Date());
+      return daysLeft > 0 && daysLeft <= 3;
+    }).length;
+
+    return {
+      totalItems,
+      returnedItems,
+      pendingItems,
+      overdueItems,
+      dueSoonItems,
+    };
+  };
+
+  const groupedItems = groupItemsByChallan(filteredItems);
+
   return (
     <Modal
       show={show}
@@ -259,21 +330,12 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
 
         <Card className="border-0 shadow-sm m-3">
           <Card.Header className="card-header-custom">
-            <h5 className="card-title d-flex align-items-center">
-              <BiListUl size={20} className="me-2" />
-              Returnable Assets Dashboard
-            </h5>
-          </Card.Header>
-          <Card.Body>
-            <Row className="align-items-center mb-3">
+            <Row className="align-items-center">
               <Col md={6}>
-                <div className="d-flex align-items-center">
-                  <h5 className="mb-0 me-3">Pending Returns</h5>
-                  <Badge pill bg="primary" className="fs-6">
-                    {returnableItems.filter((i) => !i.returnedDate).length}{" "}
-                    items
-                  </Badge>
-                </div>
+                <h5 className="card-title d-flex align-items-center mb-0">
+                  <BiListUl size={20} className="me-2" />
+                  Returnable Assets Dashboard
+                </h5>
               </Col>
               <Col md={6}>
                 <Form.Group controlId="searchItems">
@@ -291,8 +353,9 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
                 </Form.Group>
               </Col>
             </Row>
-
-            {filteredItems.length === 0 ? (
+          </Card.Header>
+          <Card.Body>
+            {Object.keys(groupedItems).length === 0 ? (
               <div className="text-center py-5">
                 <BiCheckCircle size={48} className="text-success mb-3" />
                 <h4 className="mb-2">No pending returnable items</h4>
@@ -301,109 +364,159 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
                 </p>
               </div>
             ) : (
-              <div className="table-responsive">
-                <Table striped bordered hover className="mb-0">
-                  <thead className="table-header">
-                    <tr>
-                      <th>Asset</th>
-                      <th>Challan</th>
-                      <th>Project</th>
-                      <th>Client</th>
-                      <th>Status</th>
-                      <th>Due Date</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredItems.map((item, idx) => {
-                      const { status, variant, icon } = getItemStatus(item);
-                      const returnDate = safeParseISO(item.expectedReturnDate);
-                      const isOverdue =
-                        returnDate &&
-                        isAfter(new Date(), returnDate) &&
-                        !item.returnedDate;
+              <Accordion flush>
+                {Object.entries(groupedItems).map(([dcNumber, challanData]) => {
+                  const summary = calculateChallanSummary(challanData.items);
+                  const isExpanded = expandedChallans[dcNumber];
 
-                      return (
-                        <tr
-                          key={idx}
-                          className={isOverdue ? "table-danger" : ""}
-                        >
-                          <td>
+                  return (
+                    <Accordion.Item
+                      key={dcNumber}
+                      eventKey={dcNumber}
+                      className="mb-3 border rounded-3"
+                    >
+                      <Accordion.Header
+                        onClick={() => toggleChallanExpansion(dcNumber)}
+                        className="p-3"
+                      >
+                        <Row className="w-100 align-items-center">
+                          <Col md={4}>
                             <div className="d-flex align-items-center">
-                              <BiPackage
+                              <BiClipboard
                                 size={20}
                                 className="me-2 text-primary"
                               />
                               <div>
-                                <h6 className="mb-0">{item.assetName}</h6>
+                                <h6 className="mb-0">{dcNumber}</h6>
                                 <small className="text-muted">
-                                  {item.serialNo}
+                                  {safeFormatDate(challanData.challan.date)}
                                 </small>
                               </div>
                             </div>
-                          </td>
-                          <td>
-                            <div className="d-flex align-items-center">
-                              <BiClipboard
-                                size={16}
-                                className="me-2 text-muted"
-                              />
-                              <span>{item.challanNumber}</span>
-                            </div>
-                          </td>
-                          <td>
+                          </Col>
+                          <Col md={3}>
                             <div className="d-flex align-items-center">
                               <BiBuilding
                                 size={16}
                                 className="me-2 text-muted"
                               />
-                              <span>{item.projectName || "N/A"}</span>
+                              <span>{challanData.challan.projectName || "N/A"}</span>
                             </div>
-                          </td>
-                          <td>
+                          </Col>
+                          <Col md={3}>
                             <div className="d-flex align-items-center">
-                              <BiMapPin size={16} className="me-2 text-muted" />
-                              <span>{item.client || "N/A"}</span>
+                              <BiMapPin
+                                size={16}
+                                className="me-2 text-muted"
+                              />
+                              <span>{challanData.challan.location || "N/A"}</span>
                             </div>
-                          </td>
-                          <td>
-                            <Badge
-                              bg={variant}
-                              className="d-flex align-items-center"
-                            >
-                              {icon}
-                              {status}
-                            </Badge>
-                          </td>
-                          <td>
-                            <small className="text-muted">Due:</small>
-                            <div>{safeFormatDate(item.expectedReturnDate)}</div>
-                          </td>
-                          <td className="text-center">
-                            {!item.returnedDate && (
-                              <Button
-                                variant={isOverdue ? "danger" : "primary"}
-                                size="sm"
-                                onClick={() => setConfirmReturn(item)}
-                                disabled={loading}
+                          </Col>
+                          <Col md={2} className="text-end">
+                            <div className="d-flex align-items-center justify-content-end">
+                              <Badge
+                                bg={
+                                  summary.overdueItems > 0
+                                    ? "danger"
+                                    : summary.dueSoonItems > 0
+                                    ? "warning"
+                                    : "primary"
+                                }
+                                className="me-2"
                               >
-                                <BiCheckCircle className="me-1" />
-                                Return
-                              </Button>
-                            )}
-                            {item.returnedDate && (
-                              <Badge bg="success" className="px-2">
-                                <BiCheckCircle className="me-1" />
-                                Returned
+                                {summary.pendingItems}/{summary.totalItems} pending
                               </Badge>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </Table>
-              </div>
+                              {/* {isExpanded ? (<BiChevronUp size={20} />) : (<BiChevronDown size={20} /> )} */}
+                            </div>
+                          </Col>
+                        </Row>
+                      </Accordion.Header>
+                      <Accordion.Body className="p-0">
+                        <Table striped bordered hover className="mb-0">
+                          <thead className="table-header">
+                            <tr>
+                              <th>Asset</th>
+                              <th>Serial No</th>
+                              <th>Status</th>
+                              <th>Due Date</th>
+                              <th>Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {challanData.items.map((item, idx) => {
+                              const { status, variant, icon } =
+                                getItemStatus(item);
+                              const returnDate = safeParseISO(
+                                item.expectedReturnDate
+                              );
+                              const isOverdue =
+                                returnDate &&
+                                isAfter(new Date(), returnDate) &&
+                                !item.returnedDate;
+
+                              return (
+                                <tr
+                                  key={idx}
+                                  className={isOverdue ? "table-danger" : ""}
+                                >
+                                  <td>
+                                    <div className="d-flex align-items-center">
+                                      <BiPackage
+                                        size={20}
+                                        className="me-2 text-primary"
+                                      />
+                                      <div>
+                                        <h6 className="mb-0">{item.assetName}</h6>
+                                        <small className="text-muted">
+                                          {item.description}
+                                        </small>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td>{item.serialNo || "N/A"}</td>
+                                  <td>
+                                    <Badge
+                                      bg={variant}
+                                      className="d-flex align-items-center"
+                                    >
+                                      {icon}
+                                      {status}
+                                    </Badge>
+                                  </td>
+                                  <td>
+                                    {safeFormatDate(item.expectedReturnDate)}
+                                  </td>
+                                  <td className="text-center">
+                                    {!item.returnedDate && (
+                                      <Button
+                                        variant={
+                                          isOverdue ? "danger" : "primary"
+                                        }
+                                        size="sm"
+                                        onClick={() => setConfirmReturn(item)}
+                                        disabled={loading}
+                                      >
+                                        <BiCheckCircle className="me-1" />
+                                        Mark Returned
+                                      </Button>
+                                    )}
+                                    {item.returnedDate && (
+                                      <Badge bg="success" className="px-2">
+                                        <BiCheckCircle className="me-1" />
+                                        Returned
+                                      </Badge>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </Table>
+                      </Accordion.Body>
+                    </Accordion.Item>
+                  );
+                })}
+              </Accordion>
             )}
           </Card.Body>
         </Card>
