@@ -345,7 +345,7 @@ const ChallanForm = () => {
               >
                 <i className="bi bi-house me-2"></i>Generate Challan
               </Button>
-              
+
               <Button
                 variant={currentView === "project" ? "light" : "outline-light"}
                 onClick={() => setCurrentView("project")}
@@ -428,6 +428,10 @@ const ChallanForm = () => {
                         value={challan.project}
                         onChange={(e) => {
                           const projectId = e.target.value;
+                          if (projectId === "add") {
+                            setCurrentView("project");
+                            return;
+                          }
                           if (!projectId) {
                             setChallan((prev) => ({
                               ...prev,
@@ -458,6 +462,7 @@ const ChallanForm = () => {
                         }}
                       >
                         <option value="">Select a project</option>
+                        <option value="add">+ Add Projects</option>
                         {projects.map((project) => (
                           <option key={project.id} value={project.id}>
                             {project.projectName}
