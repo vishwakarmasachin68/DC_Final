@@ -233,11 +233,11 @@ const DataView = ({ challans: initialChallans }) => {
             Challan Analytics Dashboard
           </h2>
         </Col>
-        <Col md={6} className="text-end">
+        {/* <Col md={6} className="text-end">
           <Button variant="outline-primary" onClick={loadData}>
             <BiRefresh className="me-1" /> Refresh Data
           </Button>
-        </Col>
+        </Col> */}
       </Row>
 
       {/* Search and Filter */}
