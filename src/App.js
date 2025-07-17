@@ -1,13 +1,37 @@
-import React from "react";
+import React, { useState } from "react";
+import { Routes, Route } from "react-router-dom";
 import ChallanForm from "./components/ChallanForm";
+import DataView from "./components/DataView";
+import ProjectForm from "./components/ProjectForm";
 import "bootstrap/dist/css/bootstrap.min.css";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 
 function App() {
+  const [savedChallans, setSavedChallans] = useState([]);
+
   return (
     <div className="App">
-      <ChallanForm />
+      <Navbar />
+      <div className="main-content">
+        <Routes>
+          <Route 
+            path="/" 
+            element={<DataView challans={savedChallans} />} 
+          />
+          <Route 
+            path="/challan" 
+            element={
+              <ChallanForm 
+                onSave={(newChallan) => setSavedChallans([...savedChallans, newChallan])} 
+              />
+            } 
+          />
+          <Route path="/projects" element={<ProjectForm />} />
+        </Routes>
+      </div>
+      <Footer />
     </div>
   );
 }
-
 export default App;

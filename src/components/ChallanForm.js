@@ -7,19 +7,20 @@ import {
   Col,
   Card,
   Alert,
-  Navbar,
-  Container,
   InputGroup,
   Spinner,
+  Container,
 } from "react-bootstrap";
-import DataView from "./DataView";
+import { useNavigate } from "react-router-dom";
 import PreviewModal from "./PreviewModal";
-import ProjectForm from "./ProjectForm";
 import jsonStorage from "../services/jsonStorage";
 import { generateDoc } from "../services/docGenerator";
 import "../styles/ChallanForm.css";
+import { BrowserRouter } from 'react-router-dom';
+import Navbar from "./Navbar";
 
-const ChallanForm = () => {
+const ChallanForm = ({ onSave }) => {
+  const navigate = useNavigate();
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, "0");
@@ -36,9 +37,7 @@ const ChallanForm = () => {
   const [newClient, setNewClient] = useState("");
   const [newLocation, setNewLocation] = useState("");
   const [loading, setLoading] = useState(true);
-  const [savedChallans, setSavedChallans] = useState([]);
   const [error, setError] = useState(null);
-  const [currentView, setCurrentView] = useState("challan");
   const [showPreview, setShowPreview] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [nextSequence, setNextSequence] = useState("001");
@@ -56,7 +55,6 @@ const ChallanForm = () => {
       setProjects(projects);
       setClients(clients);
       setLocations(locations);
-      setSavedChallans(challans);
 
       if (challans.length > 0) {
         const sequences = challans.map((c) => {
@@ -234,6 +232,9 @@ const ChallanForm = () => {
       };
 
       await jsonStorage.saveChallan(docData);
+      if (onSave) {
+        onSave(docData);
+      }
 
       const newSequence = String(parseInt(nextSequence) + 1).padStart(3, "0");
       setNextSequence(newSequence);
@@ -243,13 +244,11 @@ const ChallanForm = () => {
         dcSequence: newSequence,
       }));
 
-      const updatedChallans = await jsonStorage.getChallans();
-      setSavedChallans(updatedChallans);
-
       await generateDoc(docData);
 
       setShowPreview(false);
       setError(null);
+      navigate("/"); // Redirect to dashboard after save
     } catch (err) {
       console.error("Failed to save/generate challan:", err);
       setError(
@@ -299,519 +298,445 @@ const ChallanForm = () => {
   }
 
   return (
-    <div className="challan-app-container">
-      <Navbar
-        bg="primary"
-        variant="dark"
-        expand="lg"
-        className="app-navbar py-2"
-      >
-        <Container
-          fluid
-          className="d-flex justify-content-between align-items-center position-relative"
-        >
-          <div className="d-flex align-items-center">
-            <Navbar.Brand href="#" className="d-flex align-items-center">
-              <a href="/">
-                <img
-                  src="/deevia-logo.png"
-                  alt="Deevia Software"
-                  height="50"
-                  className="navbar-logo me-2"
-                />
-              </a>
-            </Navbar.Brand>
-          </div>
+    <Container fluid className="main-content-container py-4">
+      {error && (
+        <Alert variant="danger" dismissible onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
 
-          <div className="position-absolute top-50 start-50 translate-middle text-center">
-            <span className="navbar-brand-title text-white fs-2 fw-semibold">
-              Delivery Challan Generator
-            </span>
-          </div>
+      <Form>
+        <Card className="mb-4 form-card">
+          <Card.Header className="card-header-custom">
+            <h5 className="card-title">
+              <i className="bi bi-file-text me-2"></i>Challan Information
+            </h5>
+          </Card.Header>
+          <Card.Body>
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>DC Number</Form.Label>
+                  <InputGroup>
+                    <InputGroup.Text>DSI/</InputGroup.Text>
+                    <InputGroup.Text>
+                      {challan.hasPO === "yes" && challan.poNumber
+                        ? challan.poNumber
+                        : formatDate(challan.date).replace(/\//g, "")}
+                    </InputGroup.Text>
+                    <InputGroup.Text>/</InputGroup.Text>
+                    <Form.Control
+                      type="text"
+                      name="dcSequence"
+                      value={challan.dcSequence}
+                      onChange={handleInputChange}
+                      placeholder="001"
+                      required
+                      maxLength={3}
+                    />
+                  </InputGroup>
+                  <div className="mt-2">
+                    Full DC Number: <strong>{getDcNumber()}</strong>
+                  </div>
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Date</Form.Label>
+                  <Form.Control
+                    type="date"
+                    name="date"
+                    value={challan.date}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
 
-          <div className="d-flex align-items-center ms-auto">
-            <div className="d-flex gap-2">
-              <Button
-                variant={currentView === "data" ? "light" : "outline-light"}
-                onClick={() => setCurrentView("data")}
-                className="d-flex align-items-center"
-              >
-                <i className="bi bi-card-checklist me-2"></i>Dashboard
-              </Button>
-              <Button
-                variant={currentView === "challan" ? "light" : "outline-light"}
-                onClick={() => setCurrentView("challan")}
-                className="d-flex align-items-center"
-              >
-                <i className="bi bi-house me-2"></i>Generate Challan
-              </Button>
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Project</Form.Label>
+                  <Form.Select
+                    name="project"
+                    value={challan.project}
+                    onChange={(e) => {
+                      const projectId = e.target.value;
+                      if (projectId === "add") {
+                        navigate("/projects");
+                        return;
+                      }
+                      if (!projectId) {
+                        setChallan((prev) => ({
+                          ...prev,
+                          project: "",
+                          projectName: "",
+                          client: "",
+                          location: "",
+                          hasPO: "no",
+                          poNumber: "",
+                        }));
+                        return;
+                      }
 
-              <Button
-                variant={currentView === "project" ? "light" : "outline-light"}
-                onClick={() => setCurrentView("project")}
-                className="d-flex align-items-center"
-              >
-                <i className="bi bi-folder-plus me-2"></i> Manage Project
-              </Button>
-            </div>
-          </div>
-        </Container>
-      </Navbar>
+                      const selectedProject = projects.find(
+                        (p) => p.id === projectId
+                      );
+                      if (selectedProject) {
+                        setChallan((prev) => ({
+                          ...prev,
+                          project: projectId,
+                          projectName: selectedProject.projectName,
+                          client: selectedProject.client || "",
+                          location: selectedProject.location || "",
+                          hasPO: selectedProject.hasPO || "no",
+                          poNumber: selectedProject.poNumber || "",
+                        }));
+                      }
+                    }}
+                  >
+                    <option value="">Select a project</option>
+                    <option value="add">+ Add Projects</option>
+                    {projects.map((project) => (
+                      <option key={project.id} value={project.id}>
+                        {project.projectName}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Name</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="name"
+                    value={challan.name}
+                    onChange={handleInputChange}
+                    placeholder="Enter Name"
+                    required
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
 
-      {currentView === "data" ? (
-        <DataView challans={savedChallans} />
-      ) : currentView === "project" ? (
-        <ProjectForm onProjectUpdate={handleProjectUpdate} />
-      ) : (
-        <Container fluid className="main-content-container py-4">
-          {error && (
-            <Alert variant="danger" dismissible onClose={() => setError(null)}>
-              {error}
-            </Alert>
-          )}
-
-          <Form>
-            <Card className="mb-4 form-card">
-              <Card.Header className="card-header-custom">
-                <h5 className="card-title">
-                  <i className="bi bi-file-text me-2"></i>Challan Information
-                </h5>
-              </Card.Header>
-              <Card.Body>
-                <Row>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>DC Number</Form.Label>
-                      <InputGroup>
-                        <InputGroup.Text>DSI/</InputGroup.Text>
-                        <InputGroup.Text>
-                          {challan.hasPO === "yes" && challan.poNumber
-                            ? challan.poNumber
-                            : formatDate(challan.date).replace(/\//g, "")}
-                        </InputGroup.Text>
-                        <InputGroup.Text>/</InputGroup.Text>
-                        <Form.Control
-                          type="text"
-                          name="dcSequence"
-                          value={challan.dcSequence}
-                          onChange={handleInputChange}
-                          placeholder="001"
-                          required
-                          maxLength={3}
-                        />
-                      </InputGroup>
-                      <div className="mt-2">
-                        Full DC Number: <strong>{getDcNumber()}</strong>
-                      </div>
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Date</Form.Label>
-                      <Form.Control
-                        type="date"
-                        name="date"
-                        value={challan.date}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </Form.Group>
-                  </Col>
-                </Row>
-
-                <Row>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Project</Form.Label>
-                      <Form.Select
-                        name="project"
-                        value={challan.project}
-                        onChange={(e) => {
-                          const projectId = e.target.value;
-                          if (projectId === "add") {
-                            setCurrentView("project");
-                            return;
-                          }
-                          if (!projectId) {
-                            setChallan((prev) => ({
-                              ...prev,
-                              project: "",
-                              projectName: "",
-                              client: "",
-                              location: "",
-                              hasPO: "no",
-                              poNumber: "",
-                            }));
-                            return;
-                          }
-
-                          const selectedProject = projects.find(
-                            (p) => p.id === projectId
-                          );
-                          if (selectedProject) {
-                            setChallan((prev) => ({
-                              ...prev,
-                              project: projectId,
-                              projectName: selectedProject.projectName,
-                              client: selectedProject.client || "",
-                              location: selectedProject.location || "",
-                              hasPO: selectedProject.hasPO || "no",
-                              poNumber: selectedProject.poNumber || "",
-                            }));
-                          }
-                        }}
-                      >
-                        <option value="">Select a project</option>
-                        <option value="add">+ Add Projects</option>
-                        {projects.map((project) => (
-                          <option key={project.id} value={project.id}>
-                            {project.projectName}
-                          </option>
-                        ))}
-                      </Form.Select>
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Name</Form.Label>
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Client</Form.Label>
+                  {showNewClientInput ? (
+                    <InputGroup>
                       <Form.Control
                         type="text"
-                        name="name"
-                        value={challan.name}
-                        onChange={handleInputChange}
-                        placeholder="Enter Name"
-                        required
+                        value={newClient}
+                        onChange={(e) => setNewClient(e.target.value)}
+                        placeholder="Enter new client"
                       />
-                    </Form.Group>
-                  </Col>
-                </Row>
-
-                <Row>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Client</Form.Label>
-                      {showNewClientInput ? (
-                        <InputGroup>
-                          <Form.Control
-                            type="text"
-                            value={newClient}
-                            onChange={(e) => setNewClient(e.target.value)}
-                            placeholder="Enter new client"
-                          />
-                          <Button
-                            variant="success"
-                            onClick={async () => {
-                              if (!newClient.trim()) return;
-                              await jsonStorage.saveClient(newClient.trim());
-                              const clients = await jsonStorage.getClients();
-                              setClients(clients);
-                              setChallan((prev) => ({
-                                ...prev,
-                                client: newClient.trim(),
-                              }));
-                              setShowNewClientInput(false);
-                              setNewClient("");
-                            }}
-                          >
-                            Save
-                          </Button>
-                          <Button
-                            variant="secondary"
-                            onClick={() => setShowNewClientInput(false)}
-                          >
-                            Cancel
-                          </Button>
-                        </InputGroup>
-                      ) : (
-                        <Form.Select
-                          value={challan.client || ""}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            if (value === "new") {
-                              setShowNewClientInput(true);
-                              setChallan((prev) => ({ ...prev, client: "" }));
-                            } else {
-                              setShowNewClientInput(false);
-                              setChallan((prev) => ({
-                                ...prev,
-                                client: value,
-                              }));
-                            }
-                          }}
-                          required
-                        >
-                          <option value="">Select a client</option>
-                          {clients.map((client, index) => (
-                            <option key={index} value={client}>
-                              {client}
-                            </option>
-                          ))}
-                          <option value="new">+ Add New Client</option>
-                        </Form.Select>
-                      )}
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Location</Form.Label>
-                      {showNewLocationInput ? (
-                        <InputGroup>
-                          <Form.Control
-                            type="text"
-                            value={newLocation}
-                            onChange={(e) => setNewLocation(e.target.value)}
-                            placeholder="Enter new location"
-                          />
-                          <Button
-                            variant="success"
-                            onClick={async () => {
-                              if (!newLocation.trim()) return;
-                              await jsonStorage.saveLocation(
-                                newLocation.trim()
-                              );
-                              const locations =
-                                await jsonStorage.getLocations();
-                              setLocations(locations);
-                              setChallan((prev) => ({
-                                ...prev,
-                                location: newLocation.trim(),
-                              }));
-                              setShowNewLocationInput(false);
-                              setNewLocation("");
-                            }}
-                          >
-                            Save
-                          </Button>
-                          <Button
-                            variant="secondary"
-                            onClick={() => setShowNewLocationInput(false)}
-                          >
-                            Cancel
-                          </Button>
-                        </InputGroup>
-                      ) : (
-                        <Form.Select
-                          value={challan.location || ""}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            if (value === "new") {
-                              setShowNewLocationInput(true);
-                              setChallan((prev) => ({ ...prev, location: "" }));
-                            } else {
-                              setShowNewLocationInput(false);
-                              setChallan((prev) => ({
-                                ...prev,
-                                location: value,
-                              }));
-                            }
-                          }}
-                          required
-                        >
-                          <option value="">Select a location</option>
-                          {locations.map((location, index) => (
-                            <option key={index} value={location}>
-                              {location}
-                            </option>
-                          ))}
-                          <option value="new">+ Add New Location</option>
-                        </Form.Select>
-                      )}
-                    </Form.Group>
-                  </Col>
-                </Row>
-
-                <Row>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Has PO Number?</Form.Label>
-                      <div className="d-flex">
-                        <Form.Check
-                          type="radio"
-                          label="Yes"
-                          name="hasPO"
-                          id="hasPO-yes"
-                          value="yes"
-                          checked={challan.hasPO === "yes"}
-                          onChange={handleInputChange}
-                          className="me-3"
-                        />
-                        <Form.Check
-                          type="radio"
-                          label="No"
-                          name="hasPO"
-                          id="hasPO-no"
-                          value="no"
-                          checked={challan.hasPO === "no"}
-                          onChange={handleInputChange}
-                        />
-                      </div>
-                    </Form.Group>
-                  </Col>
-                  {challan.hasPO === "yes" && (
-                    <Col md={6}>
-                      <Form.Group className="mb-3">
-                        <Form.Label>PO Number</Form.Label>
-                        <Form.Control
-                          type="text"
-                          name="poNumber"
-                          value={challan.poNumber}
-                          onChange={handleInputChange}
-                          placeholder="Enter PO Number"
-                          required
-                        />
-                      </Form.Group>
-                    </Col>
+                      <Button
+                        variant="success"
+                        onClick={async () => {
+                          if (!newClient.trim()) return;
+                          await jsonStorage.saveClient(newClient.trim());
+                          const clients = await jsonStorage.getClients();
+                          setClients(clients);
+                          setChallan((prev) => ({
+                            ...prev,
+                            client: newClient.trim(),
+                          }));
+                          setShowNewClientInput(false);
+                          setNewClient("");
+                        }}
+                      >
+                        Save
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={() => setShowNewClientInput(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </InputGroup>
+                  ) : (
+                    <Form.Select
+                      value={challan.client || ""}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "new") {
+                          setShowNewClientInput(true);
+                          setChallan((prev) => ({ ...prev, client: "" }));
+                        } else {
+                          setShowNewClientInput(false);
+                          setChallan((prev) => ({
+                            ...prev,
+                            client: value,
+                          }));
+                        }
+                      }}
+                      required
+                    >
+                      <option value="">Select a client</option>
+                      {clients.map((client, index) => (
+                        <option key={index} value={client}>
+                          {client}
+                        </option>
+                      ))}
+                      <option value="new">+ Add New Client</option>
+                    </Form.Select>
                   )}
-                </Row>
-              </Card.Body>
-            </Card>
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Location</Form.Label>
+                  {showNewLocationInput ? (
+                    <InputGroup>
+                      <Form.Control
+                        type="text"
+                        value={newLocation}
+                        onChange={(e) => setNewLocation(e.target.value)}
+                        placeholder="Enter new location"
+                      />
+                      <Button
+                        variant="success"
+                        onClick={async () => {
+                          if (!newLocation.trim()) return;
+                          await jsonStorage.saveLocation(
+                            newLocation.trim()
+                          );
+                          const locations =
+                            await jsonStorage.getLocations();
+                          setLocations(locations);
+                          setChallan((prev) => ({
+                            ...prev,
+                            location: newLocation.trim(),
+                          }));
+                          setShowNewLocationInput(false);
+                          setNewLocation("");
+                        }}
+                      >
+                        Save
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={() => setShowNewLocationInput(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </InputGroup>
+                  ) : (
+                    <Form.Select
+                      value={challan.location || ""}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "new") {
+                          setShowNewLocationInput(true);
+                          setChallan((prev) => ({ ...prev, location: "" }));
+                        } else {
+                          setShowNewLocationInput(false);
+                          setChallan((prev) => ({
+                            ...prev,
+                            location: value,
+                          }));
+                        }
+                      }}
+                      required
+                    >
+                      <option value="">Select a location</option>
+                      {locations.map((location, index) => (
+                        <option key={index} value={location}>
+                          {location}
+                        </option>
+                      ))}
+                      <option value="new">+ Add New Location</option>
+                    </Form.Select>
+                  )}
+                </Form.Group>
+              </Col>
+            </Row>
 
-            <Card className="mb-4 form-card">
-              <Card.Header className="card-header-custom d-flex justify-content-between align-items-center">
-                <h5 className="card-title">
-                  <i className="bi bi-list-ul me-2"></i>Item Details
-                </h5>
-                <div>
-                  <Button
-                    variant="outline-success"
-                    size="sm"
-                    onClick={addItem}
-                    className="me-2"
-                    style={{ color: "greenyellow" }}
-                  >
-                    <i className="bi bi-plus-circle me-1"></i>Add Item
-                  </Button>
-                  <Button
-                    variant="outline-danger"
-                    size="sm"
-                    onClick={() => removeItem(challan.items.length - 1)}
-                    disabled={challan.items.length <= 1}
-                  >
-                    <i className="bi bi-dash-circle me-1"></i>Remove Item
-                  </Button>
-                </div>
-              </Card.Header>
-              <Card.Body className="p-0">
-                <Table bordered hover className="mb-0">
-                  <thead>
-                    <tr>
-                      <th width="5%">#</th>
-                      <th width="20%">Asset Name</th>
-                      <th width="25%">Description</th>
-                      <th width="10%">Qty</th>
-                      <th width="15%">Serial No</th>
-                      <th width="10%">Returnable</th>
-                      {challan.items.some(
-                        (item) => item.returnable === "yes"
-                      ) && <th width="15%">Expected Return Date</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {challan.items.map((item, idx) => (
-                      <tr key={idx}>
-                        <td className="text-center">{item.sno}</td>
-                        <td>
-                          <Form.Control
-                            type="text"
-                            name="assetName"
-                            value={item.assetName}
-                            onChange={(e) => handleItemChange(idx, e)}
-                            required
-                            placeholder="Enter asset name"
-                          />
-                        </td>
-                        <td>
-                          <Form.Control
-                            type="text"
-                            name="description"
-                            value={item.description}
-                            onChange={(e) => handleItemChange(idx, e)}
-                            required
-                            placeholder="Enter description"
-                          />
-                        </td>
-                        <td>
-                          <Form.Control
-                            type="number"
-                            name="quantity"
-                            min="1"
-                            value={item.quantity}
-                            onChange={(e) => handleItemChange(idx, e)}
-                            className="text-center"
-                          />
-                        </td>
-                        <td>
-                          <Form.Control
-                            type="text"
-                            name="serialNo"
-                            value={item.serialNo}
-                            onChange={(e) => handleItemChange(idx, e)}
-                            required
-                            placeholder="Enter serial no"
-                          />
-                        </td>
-                        <td>
-                          <Form.Select
-                            name="returnable"
-                            value={item.returnable}
-                            onChange={(e) => handleItemChange(idx, e)}
-                          >
-                            <option value="no">No</option>
-                            <option value="yes">Yes</option>
-                          </Form.Select>
-                        </td>
-                        {challan.items.some((i) => i.returnable === "yes") && (
-                          <td>
-                            {item.returnable === "yes" ? (
-                              <Form.Control
-                                type="date"
-                                name="expectedReturnDate"
-                                value={item.expectedReturnDate}
-                                onChange={(e) => handleItemChange(idx, e)}
-                                required
-                              />
-                            ) : (
-                              <span className="text-muted">N/A</span>
-                            )}
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </Card.Body>
-            </Card>
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Has PO Number?</Form.Label>
+                  <div className="d-flex">
+                    <Form.Check
+                      type="radio"
+                      label="Yes"
+                      name="hasPO"
+                      id="hasPO-yes"
+                      value="yes"
+                      checked={challan.hasPO === "yes"}
+                      onChange={handleInputChange}
+                      className="me-3"
+                    />
+                    <Form.Check
+                      type="radio"
+                      label="No"
+                      name="hasPO"
+                      id="hasPO-no"
+                      value="no"
+                      checked={challan.hasPO === "no"}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                </Form.Group>
+              </Col>
+              {challan.hasPO === "yes" && (
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>PO Number</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="poNumber"
+                      value={challan.poNumber}
+                      onChange={handleInputChange}
+                      placeholder="Enter PO Number"
+                      required
+                    />
+                  </Form.Group>
+                </Col>
+              )}
+            </Row>
+          </Card.Body>
+        </Card>
 
-            <div className="d-flex justify-content-end gap-3">
-              <Button variant="secondary" onClick={handleClearForm}>
-                Clear Form
+        <Card className="mb-4 form-card">
+          <Card.Header className="card-header-custom d-flex justify-content-between align-items-center">
+            <h5 className="card-title">
+              <i className="bi bi-list-ul me-2"></i>Item Details
+            </h5>
+            <div>
+              <Button
+                variant="outline-success"
+                size="sm"
+                onClick={addItem}
+                className="me-2"
+                style={{ color: "greenyellow" }}
+              >
+                <i className="bi bi-plus-circle me-1"></i>Add Item
               </Button>
-              <Button variant="primary" onClick={handlePreview}>
-                Preview Challan
+              <Button
+                variant="outline-danger"
+                size="sm"
+                onClick={() => removeItem(challan.items.length - 1)}
+                disabled={challan.items.length <= 1}
+              >
+                <i className="bi bi-dash-circle me-1"></i>Remove Item
               </Button>
             </div>
-          </Form>
+          </Card.Header>
+          <Card.Body className="p-0">
+            <Table bordered hover className="mb-0">
+              <thead>
+                <tr>
+                  <th width="5%">#</th>
+                  <th width="20%">Asset Name</th>
+                  <th width="25%">Description</th>
+                  <th width="10%">Qty</th>
+                  <th width="15%">Serial No</th>
+                  <th width="10%">Returnable</th>
+                  {challan.items.some(
+                    (item) => item.returnable === "yes"
+                  ) && <th width="15%">Expected Return Date</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {challan.items.map((item, idx) => (
+                  <tr key={idx}>
+                    <td className="text-center">{item.sno}</td>
+                    <td>
+                      <Form.Control
+                        type="text"
+                        name="assetName"
+                        value={item.assetName}
+                        onChange={(e) => handleItemChange(idx, e)}
+                        required
+                        placeholder="Enter asset name"
+                      />
+                    </td>
+                    <td>
+                      <Form.Control
+                        type="text"
+                        name="description"
+                        value={item.description}
+                        onChange={(e) => handleItemChange(idx, e)}
+                        required
+                        placeholder="Enter description"
+                      />
+                    </td>
+                    <td>
+                      <Form.Control
+                        type="number"
+                        name="quantity"
+                        min="1"
+                        value={item.quantity}
+                        onChange={(e) => handleItemChange(idx, e)}
+                        className="text-center"
+                      />
+                    </td>
+                    <td>
+                      <Form.Control
+                        type="text"
+                        name="serialNo"
+                        value={item.serialNo}
+                        onChange={(e) => handleItemChange(idx, e)}
+                        required
+                        placeholder="Enter serial no"
+                      />
+                    </td>
+                    <td>
+                      <Form.Select
+                        name="returnable"
+                        value={item.returnable}
+                        onChange={(e) => handleItemChange(idx, e)}
+                      >
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                      </Form.Select>
+                    </td>
+                    {challan.items.some((i) => i.returnable === "yes") && (
+                      <td>
+                        {item.returnable === "yes" ? (
+                          <Form.Control
+                            type="date"
+                            name="expectedReturnDate"
+                            value={item.expectedReturnDate}
+                            onChange={(e) => handleItemChange(idx, e)}
+                            required
+                          />
+                        ) : (
+                          <span className="text-muted">N/A</span>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </Card.Body>
+        </Card>
 
-          <PreviewModal
-            show={showPreview}
-            onHide={() => setShowPreview(false)}
-            challan={challan}
-            dcNumber={getDcNumber()}
-            onSave={handleSaveAndGenerate}
-            onPrint={() => window.print()}
-            loading={generating}
-          />
-        </Container>
-      )}
-      <footer className="custom-footer">
-        <Container>
-          <span className="">
-            &copy; {new Date().getFullYear()} Deevia Software. All rights
-            reserved.
-          </span>
-        </Container>
-      </footer>
-    </div>
+        <div className="d-flex justify-content-end gap-3">
+          <Button variant="secondary" onClick={handleClearForm}>
+            Clear Form
+          </Button>
+          <Button variant="primary" onClick={handlePreview}>
+            Preview Challan
+          </Button>
+        </div>
+      </Form>
+
+      <PreviewModal
+        show={showPreview}
+        onHide={() => setShowPreview(false)}
+        challan={challan}
+        dcNumber={getDcNumber()}
+        onSave={handleSaveAndGenerate}
+        onPrint={() => window.print()}
+        loading={generating}
+      />
+    </Container>
   );
 };
 
