@@ -332,13 +332,6 @@ const ChallanForm = () => {
           <div className="d-flex align-items-center ms-auto">
             <div className="d-flex gap-2">
               <Button
-                variant={currentView === "challan" ? "light" : "outline-light"}
-                onClick={() => setCurrentView("challan")}
-                className="d-flex align-items-center"
-              >
-                <i className="bi bi-house me-2"></i>Generate Challan
-              </Button>
-              <Button
                 variant={currentView === "data" ? "light" : "outline-light"}
                 onClick={() => setCurrentView("data")}
                 className="d-flex align-items-center"
@@ -346,11 +339,19 @@ const ChallanForm = () => {
                 <i className="bi bi-card-checklist me-2"></i>Dashboard
               </Button>
               <Button
+                variant={currentView === "challan" ? "light" : "outline-light"}
+                onClick={() => setCurrentView("challan")}
+                className="d-flex align-items-center"
+              >
+                <i className="bi bi-house me-2"></i>Generate Challan
+              </Button>
+              
+              <Button
                 variant={currentView === "project" ? "light" : "outline-light"}
                 onClick={() => setCurrentView("project")}
                 className="d-flex align-items-center"
               >
-                <i className="bi bi-folder-plus me-2"></i>Add Project
+                <i className="bi bi-folder-plus me-2"></i> Manage Project
               </Button>
             </div>
           </div>
@@ -797,6 +798,14 @@ const ChallanForm = () => {
           />
         </Container>
       )}
+      <footer className="custom-footer">
+        <Container>
+          <span className="">
+            &copy; {new Date().getFullYear()} Deevia Software. All rights
+            reserved.
+          </span>
+        </Container>
+      </footer>
     </div>
   );
 };

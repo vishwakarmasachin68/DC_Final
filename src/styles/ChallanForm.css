@@ -846,3 +846,11 @@ body {
     width: 100%;
   }
 }
+.custom-footer {
+  background-color: #6c757d;
+  color: white;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  margin-top: 50px;
+  text-align: center;
+}
