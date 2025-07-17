@@ -162,7 +162,7 @@ const PreviewModal = ({
           </Button>
           {/* <Button variant="primary" onClick={onPrint}>
             <i className="bi bi-printer me-2"></i>Print Preview
-          </Button> */}
+          </Button>  */}
         </div>
       </Modal.Footer>
     </Modal>
