@@ -575,7 +575,7 @@ const DataView = ({ challans: initialChallans }) => {
                       </Row>
                       <Row className="mb-4">
                         <Col md={3}>
-                          <h6>Field Supervisor</h6>
+                          <h6>Project Lead / Person who is visiting</h6>
                           <p>
                             {selectedProject?.fieldSupervisor ||
                               "Not specified"}
