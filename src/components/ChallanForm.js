@@ -501,11 +501,8 @@ const ChallanForm = ({ onSave }) => {
                         variant="success"
                         onClick={async () => {
                           if (!newLocation.trim()) return;
-                          await jsonStorage.saveLocation(
-                            newLocation.trim()
-                          );
-                          const locations =
-                            await jsonStorage.getLocations();
+                          await jsonStorage.saveLocation(newLocation.trim());
+                          const locations = await jsonStorage.getLocations();
                           setLocations(locations);
                           setChallan((prev) => ({
                             ...prev,
@@ -636,9 +633,9 @@ const ChallanForm = ({ onSave }) => {
                   <th width="10%">Qty</th>
                   <th width="15%">Serial No</th>
                   <th width="10%">Returnable</th>
-                  {challan.items.some(
-                    (item) => item.returnable === "yes"
-                  ) && <th width="15%">Expected Return Date</th>}
+                  {challan.items.some((item) => item.returnable === "yes") && (
+                    <th width="15%">Expected Return Date</th>
+                  )}
                 </tr>
               </thead>
               <tbody>

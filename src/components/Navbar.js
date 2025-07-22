@@ -10,7 +10,10 @@ const Navbar = () => {
       expand="lg"
       className="app-navbar py-2"
     >
-      <Container fluid className="d-flex justify-content-between align-items-center position-relative">
+      <Container
+        fluid
+        className="d-flex justify-content-between align-items-center position-relative"
+      >
         <div className="d-flex align-items-center">
           <BSNavbar.Brand href="#" className="d-flex align-items-center">
             <Link to="/">

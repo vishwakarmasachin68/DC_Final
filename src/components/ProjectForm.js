@@ -432,7 +432,8 @@ const ProjectForm = ({ onProjectUpdate }) => {
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>
-                    Project Lead / Person who is visiting <span className="text-danger">*</span>
+                    Project Lead / Person who is visiting{" "}
+                    <span className="text-danger">*</span>
                   </Form.Label>
                   <Form.Control
                     type="text"
