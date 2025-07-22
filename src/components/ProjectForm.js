@@ -100,7 +100,7 @@ const ProjectForm = ({ onProjectUpdate }) => {
       return false;
     }
     if (!project.fieldSupervisor) {
-      setError("Field supervisor is required");
+      setError("Project Lead / Person who is visiting is required");
       return false;
     }
     return true;
@@ -432,14 +432,14 @@ const ProjectForm = ({ onProjectUpdate }) => {
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>
-                    Field Supervisor <span className="text-danger">*</span>
+                    Project Lead / Person who is visiting <span className="text-danger">*</span>
                   </Form.Label>
                   <Form.Control
                     type="text"
                     name="fieldSupervisor"
                     value={project.fieldSupervisor}
                     onChange={handleChange}
-                    placeholder="Supervisor name"
+                    placeholder="Project Lead or Visiting Person"
                     required
                   />
                 </Form.Group>
@@ -552,7 +552,7 @@ const ProjectForm = ({ onProjectUpdate }) => {
                   <th>Project Name</th>
                   <th>Client</th>
                   <th>Location</th>
-                  <th>Field Supervisor</th>
+                  <th>Project Lead / Person who is visiting</th>
                   <th>Actions</th>
                 </tr>
               </thead>
