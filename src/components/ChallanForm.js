@@ -16,8 +16,6 @@ import PreviewModal from "./PreviewModal";
 import jsonStorage from "../services/jsonStorage";
 import { generateDoc } from "../services/docGenerator";
 import "../styles/ChallanForm.css";
-import { BrowserRouter } from 'react-router-dom';
-import Navbar from "./Navbar";
 
 const ChallanForm = ({ onSave }) => {
   const navigate = useNavigate();
