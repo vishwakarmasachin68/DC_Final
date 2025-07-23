@@ -1,5 +1,10 @@
 import React from "react";
-import { Navbar as BSNavbar, Container, Button } from "react-bootstrap";
+import {
+  Navbar as BSNavbar,
+  Container,
+  Button,
+  NavDropdown,
+} from "react-bootstrap";
 import { Link } from "react-router-dom";
 
 const Navbar = () => {
@@ -10,30 +15,30 @@ const Navbar = () => {
       expand="lg"
       className="app-navbar py-2"
     >
-      <Container
-        fluid
-        className="d-flex justify-content-between align-items-center position-relative"
-      >
-        <div className="d-flex align-items-center">
-          <BSNavbar.Brand href="#" className="d-flex align-items-center">
-            <Link to="/">
-              <img
-                src="/deevia-logo.png"
-                alt="Deevia Software"
-                height="50"
-                className="navbar-logo me-2"
-              />
-            </Link>
-          </BSNavbar.Brand>
-        </div>
+      <Container fluid>
+        {/* Logo */}
+        <BSNavbar.Brand
+          as={Link}
+          to="/"
+          className="d-flex align-items-center me-3"
+        >
+          <img
+            src="/deevia-logo.png"
+            alt="Deevia Software"
+            height="40"
+            className="navbar-logo"
+          />
+        </BSNavbar.Brand>
 
-        <div className="position-absolute top-50 start-50 translate-middle text-center">
-          <span className="navbar-brand-title text-white fs-2 fw-semibold">
+        {/* Title - always visible */}
+        <div className="navbar-title-container">
+          <span className="navbar-brand-title text-white">
             Delivery Challan Generator
           </span>
         </div>
 
-        <div className="d-flex align-items-center ms-auto">
+        {/* Desktop Navigation - shows on lg screens and up */}
+        <div className="d-none d-lg-flex ms-auto">
           <div className="d-flex gap-2">
             <Button
               as={Link}
@@ -57,9 +62,29 @@ const Navbar = () => {
               variant="outline-light"
               className="d-flex align-items-center"
             >
-              <i className="bi bi-folder-plus me-2"></i> Manage Project
+              <i className="bi bi-folder-plus me-2"></i>Manage Project
             </Button>
           </div>
+        </div>
+
+        {/* Mobile Navigation - shows dropdown on smaller screens */}
+        <div className="d-lg-none ms-auto">
+          <NavDropdown
+            title={<i className="bi bi-list"></i>}
+            id="basic-nav-dropdown"
+            className="mobile-menu-dropdown"
+            align="end"
+          >
+            <NavDropdown.Item as={Link} to="/">
+              <i className="bi bi-card-checklist me-2"></i>Dashboard
+            </NavDropdown.Item>
+            <NavDropdown.Item as={Link} to="/GenerateChallan">
+              <i className="bi bi-house me-2"></i>Generate Challan
+            </NavDropdown.Item>
+            <NavDropdown.Item as={Link} to="/Projects">
+              <i className="bi bi-folder-plus me-2"></i>Manage Project
+            </NavDropdown.Item>
+          </NavDropdown>
         </div>
       </Container>
     </BSNavbar>

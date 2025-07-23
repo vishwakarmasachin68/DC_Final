@@ -337,3 +337,97 @@ body {
     font-size: 0.75rem;
   }
 }
+/* Navbar Responsive Styles */
+.app-navbar {
+  padding: 0.5rem 1rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+}
+
+.navbar-logo {
+  transition: transform 0.3s ease;
+  height: 40px;
+}
+
+.navbar-logo:hover {
+  transform: scale(1.05);
+}
+
+.navbar-title-container {
+  flex-grow: 1;
+  text-align: center;
+  padding: 0 10px;
+  overflow: hidden;
+}
+
+.navbar-brand-title {
+  font-weight: 700;
+  color: white;
+  font-family: cursive;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+/* Mobile dropdown menu */
+.mobile-menu-dropdown .dropdown-toggle {
+  color: white;
+  font-size: 1.0rem;
+  padding: 0.25rem 0.75rem;
+  border: none;
+}
+
+.mobile-menu-dropdown .dropdown-toggle::after {
+  display: none;
+}
+
+.mobile-menu-dropdown .dropdown-menu {
+  background-color: var(--primary-color);
+  border: none;
+}
+
+.mobile-menu-dropdown .dropdown-item {
+  color: white;
+  padding: 0.5rem 1rem;
+}
+
+.mobile-menu-dropdown .dropdown-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1199.98px) {
+  .navbar-brand-title {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .navbar-brand-title {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .navbar-brand-title {
+    font-size: 1rem;
+  }
+  
+  .navbar-logo {
+    height: 35px;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .navbar-brand-title {
+    font-size: 0.9rem;
+  }
+  
+  .navbar-logo {
+    height: 25px;
+  }
+}
