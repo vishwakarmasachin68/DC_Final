@@ -45,7 +45,7 @@ const Navbar = () => {
             </Button>
             <Button
               as={Link}
-              to="/challan"
+              to="/GenerateChallan"
               variant="outline-light"
               className="d-flex align-items-center"
             >
@@ -53,7 +53,7 @@ const Navbar = () => {
             </Button>
             <Button
               as={Link}
-              to="/projects"
+              to="/Projects"
               variant="outline-light"
               className="d-flex align-items-center"
             >
