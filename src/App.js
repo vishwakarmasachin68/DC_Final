@@ -15,19 +15,18 @@ function App() {
       <Navbar />
       <div className="main-content">
         <Routes>
-          <Route 
-            path="/" 
-            element={<DataView challans={savedChallans} />} 
-          />
-          <Route 
-            path="/challan" 
+          <Route path="/" element={<DataView challans={savedChallans} />} />
+          <Route
+            path="/GenerateChallan"
             element={
-              <ChallanForm 
-                onSave={(newChallan) => setSavedChallans([...savedChallans, newChallan])} 
+              <ChallanForm
+                onSave={(newChallan) =>
+                  setSavedChallans([...savedChallans, newChallan])
+                }
               />
-            } 
+            }
           />
-          <Route path="/projects" element={<ProjectForm />} />
+          <Route path="/Projects" element={<ProjectForm />} />
         </Routes>
       </div>
       <Footer />
