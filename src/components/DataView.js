@@ -14,6 +14,7 @@ import {
   Form,
   Alert,
   ListGroup,
+  Modal,
 } from "react-bootstrap";
 import {
   BiBarChartAlt2,
@@ -22,12 +23,13 @@ import {
   BiCalendar,
   BiTrash,
   BiSearch,
-  BiRefresh,
   BiArrowFromBottom,
+  BiDownload,
 } from "react-icons/bi";
 import Chart from "react-apexcharts";
 import jsonStorage from "../services/jsonStorage";
 import ReturnableItemsModal from "./ReturnableItemsModal";
+import { generateDoc } from "../services/docGenerator";
 
 const DataView = ({ challans: initialChallans }) => {
   const formatDate = (dateString) => {
@@ -52,6 +54,8 @@ const DataView = ({ challans: initialChallans }) => {
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [showReturnableModal, setShowReturnableModal] = useState(false);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const loadData = async () => {
     try {
@@ -63,7 +67,6 @@ const DataView = ({ challans: initialChallans }) => {
       setProjects(loadedProjects);
 
       if (loadedChallans.length > 0) {
-        // Try to maintain the currently selected challan if it still exists
         const currentChallan = selectedChallan
           ? loadedChallans.find((c) => c.dcNumber === selectedChallan.dcNumber)
           : null;
@@ -93,13 +96,11 @@ const DataView = ({ challans: initialChallans }) => {
 
   useEffect(() => {
     if (selectedChallan) {
-      // Find the corresponding project when selectedChallan changes
       const project = projects.find(
         (p) => p.projectName === selectedChallan.projectName
       );
       setSelectedProject(project || null);
 
-      // Update chart data
       if (selectedChallan.items && selectedChallan.items.length > 0) {
         const itemsData = selectedChallan.items.map((item) => ({
           name: item.assetName || "Unnamed Asset",
@@ -159,6 +160,19 @@ const DataView = ({ challans: initialChallans }) => {
       console.error("Failed to delete challan:", err);
       setError("Failed to delete challan. Please try again.");
       setLoading(false);
+    }
+  };
+
+  const handleDownloadChallan = async (challan) => {
+    try {
+      setDownloading(true);
+      await generateDoc(challan);
+      setDownloading(false);
+      setShowDownloadModal(false);
+    } catch (err) {
+      console.error("Failed to download challan:", err);
+      setError("Failed to download challan. Please try again.");
+      setDownloading(false);
     }
   };
 
@@ -233,11 +247,6 @@ const DataView = ({ challans: initialChallans }) => {
             Challan Analytics Dashboard
           </h2>
         </Col>
-        {/* <Col md={6} className="text-end">
-          <Button variant="outline-primary" onClick={loadData}>
-            <BiRefresh className="me-1" /> Refresh Data
-          </Button>
-        </Col> */}
       </Row>
 
       {/* Search and Filter */}
@@ -426,6 +435,17 @@ const DataView = ({ challans: initialChallans }) => {
                                 </div>
                               </div>
                               <div className="d-flex gap-1">
+                                <Button
+                                  variant="outline-primary"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowDownloadModal(true);
+                                  }}
+                                  className="me-1"
+                                >
+                                  <BiDownload size={16} />
+                                </Button>
                                 <Button
                                   variant="outline-danger"
                                   size="sm"
@@ -703,6 +723,51 @@ const DataView = ({ challans: initialChallans }) => {
           </Row>
         </>
       )}
+
+      {/* Download Confirmation Modal */}
+      <Modal
+        show={showDownloadModal}
+        onHide={() => setShowDownloadModal(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Download Challan</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to download the challan{" "}
+          {selectedChallan?.dcNumber}?
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowDownloadModal(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() => handleDownloadChallan(selectedChallan)}
+            disabled={downloading}
+          >
+            {downloading ? (
+              <>
+                <Spinner
+                  as="span"
+                  animation="border"
+                  size="sm"
+                  role="status"
+                  aria-hidden="true"
+                  className="me-2"
+                />
+                Downloading...
+              </>
+            ) : (
+              "Download"
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
       <ReturnableItemsModal
         show={showReturnableModal}
         onHide={() => setShowReturnableModal(false)}
