@@ -8,7 +8,6 @@ import {
   Col,
   Spinner,
   Form,
-  ListGroup,
   InputGroup,
   Card,
   Table,
@@ -27,10 +26,7 @@ import {
   BiArrowFromBottom,
   BiSearch,
   BiListUl,
-  BiFileText,
   BiInfoCircle,
-  BiChevronDown,
-  BiChevronUp,
 } from "react-icons/bi";
 import jsonStorage from "../services/jsonStorage";
 
