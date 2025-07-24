@@ -488,10 +488,20 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
                                   </td>
                                   <td className="text-center">
                                     {!item.returnedDate && (
+                                      // <Button
+                                      //   variant={
+                                      //     isOverdue ? "danger" : "primary"
+                                      //   }
+                                      //   size="sm"
+                                      //   onClick={() => setConfirmReturn(item)}
+                                      //   disabled={loading}
+                                      // >
+                                      //   <BiCheckCircle className="me-1" />
+                                      //   Mark Returned
+                                      // </Button>
                                       <Button
-                                        variant={
-                                          isOverdue ? "danger" : "primary"
-                                        }
+                                        variant={ isOverdue ? "danger" : undefined} // Use Bootstrap's "danger" if overdue
+                                        style={!isOverdue ? { backgroundColor: "#0e787b", borderColor: "#0e7b2fff",}: {}}
                                         size="sm"
                                         onClick={() => setConfirmReturn(item)}
                                         disabled={loading}
@@ -528,7 +538,7 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
           centered
           backdrop="static"
         >
-          <Modal.Header closeButton className="bg-primary text-white">
+          <Modal.Header closeButton className="card-header-custom text-white">
             <Modal.Title>Confirm Asset Return</Modal.Title>
           </Modal.Header>
           <Modal.Body>
@@ -538,7 +548,7 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
             </div>
 
             <Card className="mb-4">
-              <Card.Header className="bg-light">
+              <Card.Header className="card-header-custom text-white">
                 <h6 className="mb-0 d-flex align-items-center">
                   <BiInfoCircle className="me-2" />
                   Asset Details
@@ -605,9 +615,10 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
               Cancel
             </Button>
             <Button
-              variant="primary"
+              // variant="primary"
               onClick={() => handleMarkAsReturned(confirmReturn)}
               disabled={loading}
+              style={{ backgroundColor: "#0e787b", borderColor: "#0e787b" }}
             >
               {loading ? (
                 <>

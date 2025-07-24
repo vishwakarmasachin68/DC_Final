@@ -431,3 +431,9 @@ body {
     height: 25px;
   }
 }
+.custom-toast-container {
+  position: fixed;
+  top: 8rem;
+  left: 40%;
+  z-index: 9999;
+}

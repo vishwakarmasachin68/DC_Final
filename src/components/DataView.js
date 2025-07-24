@@ -15,6 +15,8 @@ import {
   Alert,
   ListGroup,
   Modal,
+  Toast,
+  ToastContainer,
 } from "react-bootstrap";
 import {
   BiBarChartAlt2,
@@ -25,11 +27,15 @@ import {
   BiSearch,
   BiArrowFromBottom,
   BiDownload,
+  BiBell,
+  BiError,
+  BiTime,
 } from "react-icons/bi";
 import Chart from "react-apexcharts";
 import jsonStorage from "../services/jsonStorage";
 import ReturnableItemsModal from "./ReturnableItemsModal";
 import { generateDoc } from "../services/docGenerator";
+import { differenceInDays, parseISO, isAfter, isValid } from "date-fns";
 
 const DataView = ({ challans: initialChallans }) => {
   const formatDate = (dateString) => {
@@ -56,6 +62,22 @@ const DataView = ({ challans: initialChallans }) => {
   const [showReturnableModal, setShowReturnableModal] = useState(false);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationItems, setNotificationItems] = useState({
+    overdue: [],
+    dueSoon: [],
+  });
+
+  // Safe date parsing function
+  const safeParseISO = (dateString) => {
+    if (!dateString) return null;
+    try {
+      const date = parseISO(dateString);
+      return isValid(date) ? date : null;
+    } catch (e) {
+      return null;
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -82,11 +104,55 @@ const DataView = ({ challans: initialChallans }) => {
         setSelectedChallan(null);
         setSelectedProject(null);
       }
+
+      // Check for returnable items that are due soon or overdue
+      checkReturnableItems(loadedChallans);
       setLoading(false);
     } catch (err) {
       console.error("Failed to load data:", err);
       setError("Failed to load data. Please try again.");
       setLoading(false);
+    }
+  };
+
+  const checkReturnableItems = (allChallans) => {
+    const today = new Date();
+    const overdueItems = [];
+    const dueSoonItems = [];
+
+    allChallans.forEach((challan) => {
+      challan.items
+        .filter((item) => item.returnable === "yes" && !item.returnedDate)
+        .forEach((item) => {
+          const returnDate = safeParseISO(item.expectedReturnDate);
+          if (!returnDate) return;
+
+          const daysLeft = differenceInDays(returnDate, today);
+
+          if (daysLeft < 0) {
+            overdueItems.push({
+              ...item,
+              challanNumber: challan.dcNumber,
+              daysOverdue: Math.abs(daysLeft),
+            });
+          } else if (daysLeft <= 3) {
+            dueSoonItems.push({
+              ...item,
+              challanNumber: challan.dcNumber,
+              daysLeft,
+            });
+          }
+        });
+    });
+
+    if (overdueItems.length > 0 || dueSoonItems.length > 0) {
+      setNotificationItems({
+        overdue: overdueItems,
+        dueSoon: dueSoonItems,
+      });
+      setShowNotification(true);
+      // Auto-hide after 5 seconds
+      setTimeout(() => setShowNotification(false), 5000);
     }
   };
 
@@ -240,6 +306,72 @@ const DataView = ({ challans: initialChallans }) => {
         </Alert>
       )}
 
+      {/* Notification Toast */}
+      <ToastContainer className="custom-toast-container">
+        <Toast
+          show={showNotification}
+          onClose={() => setShowNotification(false)}
+          delay={10000}
+          autohide
+          className="border-0 shadow"
+        >
+          <Toast.Header className="card-header-custom text-white">
+            <strong className="me-auto d-flex align-items-center">
+              <BiBell className="me-2" /> Returnable Items Alert
+            </strong>
+          </Toast.Header>
+          <Toast.Body>
+            {notificationItems.overdue.length > 0 && (
+              <div className="mb-2">
+                <h6 className="d-flex align-items-center text-danger">
+                  <BiError className="me-2" /> Overdue Items
+                </h6>
+                <ul className="small">
+                  {notificationItems.overdue.slice(0, 3).map((item, index) => (
+                    <li key={`overdue-${index}`}>
+                      {item.assetName} (Challan: {item.challanNumber}) - {item.daysOverdue} days overdue
+                    </li>
+                  ))}
+                  {notificationItems.overdue.length > 3 && (
+                    <li>...and {notificationItems.overdue.length - 3} more</li>
+                  )}
+                </ul>
+              </div>
+            )}
+            {notificationItems.dueSoon.length > 0 && (
+              <div>
+                <h6 className="d-flex align-items-center text-warning">
+                  <BiTime className="me-2" /> Due Soon Items
+                </h6>
+                <ul className="small">
+                  {notificationItems.dueSoon.slice(0, 3).map((item, index) => (
+                    <li key={`duesoon-${index}`}>
+                      {item.assetName} (Challan: {item.challanNumber}) - due in {item.daysLeft} days
+                    </li>
+                  ))}
+                  {notificationItems.dueSoon.length > 3 && (
+                    <li>...and {notificationItems.dueSoon.length - 3} more</li>
+                  )}
+                </ul>
+              </div>
+            )}
+            <div className="mt-2 text-center">
+              <Button
+                size="sm"
+                onClick={() => {
+                  setShowReturnableModal(true);
+                  setShowNotification(false);
+                  
+                }}
+                style={{ backgroundColor: "#0e787b", borderColor: "#ffffffff" }}
+              >
+                View All Returnable Items
+              </Button>
+            </div>
+          </Toast.Body>
+        </Toast>
+      </ToastContainer>
+
       <Row className="mb-4 align-items-center">
         <Col md={6}>
           <h2 className="mb-0">
@@ -249,6 +381,7 @@ const DataView = ({ challans: initialChallans }) => {
         </Col>
       </Row>
 
+      {/* Rest of the DataView component remains the same */}
       {/* Search and Filter */}
       <Card className="mb-4">
         <Card.Body>
@@ -299,9 +432,10 @@ const DataView = ({ challans: initialChallans }) => {
               </Dropdown>
 
               <Button
-                variant="primary"
+                // variant="primary"
                 onClick={() => setShowReturnableModal(true)}
                 className="d-flex align-items-center"
+              style={{ backgroundColor: "#0e787b", borderColor: "#0e787b" }}
               >
                 <BiArrowFromBottom className="me-1" /> Track Returnable Items
               </Button>
