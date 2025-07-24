@@ -305,7 +305,7 @@ const ChallanForm = ({ onSave }) => {
 
       <Form>
         <Card className="mb-4 form-card">
-          <Card.Header className="card-header-custom">
+          <Card.Header className="card-header-custom text-white">
             <h5 className="card-title">
               <i className="bi bi-file-text me-2"></i>Challan Information
             </h5>
@@ -597,7 +597,7 @@ const ChallanForm = ({ onSave }) => {
         </Card>
 
         <Card className="mb-4 form-card">
-          <Card.Header className="card-header-custom d-flex justify-content-between align-items-center">
+          <Card.Header className="card-header-custom d-flex justify-content-between align-items-center text-white">
             <h5 className="card-title">
               <i className="bi bi-list-ul me-2"></i>Item Details
             </h5>
@@ -607,7 +607,11 @@ const ChallanForm = ({ onSave }) => {
                 size="sm"
                 onClick={addItem}
                 className="me-2"
-                style={{ color: "greenyellow" }}
+                style={{
+                  backgroundColor: "#085f7907",
+                  borderColor: "#ffffffff",
+                  color: "#d1ffcbff",
+                }}
               >
                 <i className="bi bi-plus-circle me-1"></i>Add Item
               </Button>
@@ -716,7 +720,10 @@ const ChallanForm = ({ onSave }) => {
           <Button variant="secondary" onClick={handleClearForm}>
             Clear Form
           </Button>
-          <Button variant="primary" onClick={handlePreview}>
+          <Button
+            style={{ backgroundColor: "	#085f79ff" }}
+            onClick={handlePreview}
+          >
             Preview Challan
           </Button>
         </div>
