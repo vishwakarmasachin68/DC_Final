@@ -275,7 +275,7 @@ const ProjectForm = ({ onProjectUpdate }) => {
 
       {/* Project Form */}
       <Card className="mb-4 form-card" id="project-form">
-        <Card.Header className="card-header-custom">
+        <Card.Header className="card-header-custom text-white">
           <h5 className="card-title">
             <i className="bi bi-folder me-2"></i>
             {editMode ? "Edit Project" : "Create New Project"}
@@ -462,7 +462,7 @@ const ProjectForm = ({ onProjectUpdate }) => {
 
             {/* Team Members */}
             <Card className="mb-4">
-              <Card.Header className="card-header-custom d-flex justify-content-between align-items-center">
+              <Card.Header className="card-header-custom d-flex justify-content-between align-items-center text-white">
                 <h5 className="card-title">
                   <i className="bi bi-people me-2"></i>
                   Team Members
@@ -471,6 +471,11 @@ const ProjectForm = ({ onProjectUpdate }) => {
                   variant="btn btn-primary"
                   size="sm"
                   onClick={addPersonField}
+                  style={{
+                    backgroundColor: "#085f7907",
+                    borderColor: "#ffffffff",
+                    color: "#fff",
+                  }}
                 >
                   <i className="bi bi-plus-circle me-1"></i>Add Member
                 </Button>
@@ -512,7 +517,7 @@ const ProjectForm = ({ onProjectUpdate }) => {
               >
                 <i className="bi bi-x-circle me-2"></i>Clear Form
               </Button>
-              <Button variant="primary" type="submit">
+              <Button style={{ backgroundColor: "#085f79ff" }} type="submit">
                 <i className="bi bi-save me-2"></i>
                 {editMode ? "Update Project" : "Save Project"}
               </Button>
@@ -523,7 +528,7 @@ const ProjectForm = ({ onProjectUpdate }) => {
 
       {/* Existing Projects Table */}
       <Card className="mb-4 form-card">
-        <Card.Header className="card-header-custom">
+        <Card.Header className="card-header-custom text-white">
           <h5 className="card-title">
             <i className="bi bi-list-check me-2"></i>
             Existing Projects
