@@ -609,7 +609,7 @@ const ChallanForm = ({ onSave }) => {
                 className="me-2"
                 style={{
                   backgroundColor: "#27ae60",
-                  borderColor: "#4aff3dff",
+                  borderColor: "#ffffffff",
                   color: "#ffffffff",
                 }}
               >
@@ -621,6 +621,11 @@ const ChallanForm = ({ onSave }) => {
                 size="sm"
                 onClick={() => removeItem(challan.items.length - 1)}
                 disabled={challan.items.length <= 1}
+                style={{
+                  backgroundColor: "#ce2121ff",
+                  borderColor: "#ffffffff",
+                  color: "#ffffffff",
+                }}
               >
                 <i className="bi bi-dash-circle me-1"></i>Remove Item
               </Button>

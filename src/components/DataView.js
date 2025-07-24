@@ -311,7 +311,7 @@ const DataView = ({ challans: initialChallans }) => {
         <Toast
           show={showNotification}
           onClose={() => setShowNotification(false)}
-          delay={10000}
+          delay={6000}
           autohide
           className="border-0 shadow"
         >
