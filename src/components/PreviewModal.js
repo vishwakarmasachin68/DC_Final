@@ -39,7 +39,7 @@ const PreviewModal = ({
       </Modal.Header>
       <Modal.Body>
         <Card className="mb-4 shadow-sm">
-          <Card.Header className="card-header-custom">
+          <Card.Header className="card-header-custom text-white">
             <h5 className="card-title">
               <i className="bi bi-file-text me-2"></i>Challan Information
             </h5>
@@ -76,7 +76,7 @@ const PreviewModal = ({
         </Card>
 
         <Card className="shadow-sm">
-          <Card.Header className="card-header-custom">
+          <Card.Header className="card-header-custom text-white">
             <h5 className="card-title">
               <i className="bi bi-list-ul me-2"></i>Item Details
             </h5>
