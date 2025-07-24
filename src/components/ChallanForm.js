@@ -608,13 +608,14 @@ const ChallanForm = ({ onSave }) => {
                 onClick={addItem}
                 className="me-2"
                 style={{
-                  backgroundColor: "#085f7907",
-                  borderColor: "#ffffffff",
-                  color: "#d1ffcbff",
+                  backgroundColor: "#27ae60",
+                  borderColor: "#4aff3dff",
+                  color: "#ffffffff",
                 }}
               >
                 <i className="bi bi-plus-circle me-1"></i>Add Item
               </Button>
+
               <Button
                 variant="outline-danger"
                 size="sm"

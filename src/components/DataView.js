@@ -329,7 +329,8 @@ const DataView = ({ challans: initialChallans }) => {
                 <ul className="small">
                   {notificationItems.overdue.slice(0, 3).map((item, index) => (
                     <li key={`overdue-${index}`}>
-                      {item.assetName} (Challan: {item.challanNumber}) - {item.daysOverdue} days overdue
+                      {item.assetName} (Challan: {item.challanNumber}) -{" "}
+                      {item.daysOverdue} days overdue
                     </li>
                   ))}
                   {notificationItems.overdue.length > 3 && (
@@ -346,7 +347,8 @@ const DataView = ({ challans: initialChallans }) => {
                 <ul className="small">
                   {notificationItems.dueSoon.slice(0, 3).map((item, index) => (
                     <li key={`duesoon-${index}`}>
-                      {item.assetName} (Challan: {item.challanNumber}) - due in {item.daysLeft} days
+                      {item.assetName} (Challan: {item.challanNumber}) - due in{" "}
+                      {item.daysLeft} days
                     </li>
                   ))}
                   {notificationItems.dueSoon.length > 3 && (
@@ -361,7 +363,6 @@ const DataView = ({ challans: initialChallans }) => {
                 onClick={() => {
                   setShowReturnableModal(true);
                   setShowNotification(false);
-                  
                 }}
                 style={{ backgroundColor: "#0e787b", borderColor: "#ffffffff" }}
               >
@@ -435,7 +436,7 @@ const DataView = ({ challans: initialChallans }) => {
                 // variant="primary"
                 onClick={() => setShowReturnableModal(true)}
                 className="d-flex align-items-center"
-              style={{ backgroundColor: "#0e787b", borderColor: "#0e787b" }}
+                style={{ backgroundColor: "#0e787b", borderColor: "#0e787b" }}
               >
                 <BiArrowFromBottom className="me-1" /> Track Returnable Items
               </Button>

@@ -488,20 +488,18 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
                                   </td>
                                   <td className="text-center">
                                     {!item.returnedDate && (
-                                      // <Button
-                                      //   variant={
-                                      //     isOverdue ? "danger" : "primary"
-                                      //   }
-                                      //   size="sm"
-                                      //   onClick={() => setConfirmReturn(item)}
-                                      //   disabled={loading}
-                                      // >
-                                      //   <BiCheckCircle className="me-1" />
-                                      //   Mark Returned
-                                      // </Button>
                                       <Button
-                                        variant={ isOverdue ? "danger" : undefined} // Use Bootstrap's "danger" if overdue
-                                        style={!isOverdue ? { backgroundColor: "#0e787b", borderColor: "#0e7b2fff",}: {}}
+                                        variant={
+                                          isOverdue ? "danger" : undefined
+                                        }
+                                        style={
+                                          !isOverdue
+                                            ? {
+                                                backgroundColor: "#0e787b",
+                                                borderColor: "#0e7b2fff",
+                                              }
+                                            : {}
+                                        }
                                         size="sm"
                                         onClick={() => setConfirmReturn(item)}
                                         disabled={loading}
