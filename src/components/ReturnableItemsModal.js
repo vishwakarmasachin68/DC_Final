@@ -113,7 +113,7 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
     }));
   };
 
-  // Filter items based on search term
+  // Filter items based on search term (updated to include serial number)
   const filteredItems = returnableItems.filter((item) => {
     const searchLower = searchTerm.toLowerCase();
     return (
@@ -123,7 +123,8 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
       (item.projectName &&
         item.projectName.toLowerCase().includes(searchLower)) ||
       (item.client && item.client.toLowerCase().includes(searchLower)) ||
-      (item.location && item.location.toLowerCase().includes(searchLower))
+      (item.location && item.location.toLowerCase().includes(searchLower)) ||
+      (item.serialNo && item.serialNo.toLowerCase().includes(searchLower))
     );
   });
 
@@ -325,7 +326,7 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
         )}
 
         <Card className="border-0 shadow-sm m-3">
-          <Card.Header className="card-header-custom">
+          <Card.Header className="card-header-custom text-white">
             <Row className="align-items-center">
               <Col md={6}>
                 <h5 className="card-title d-flex align-items-center mb-0">
@@ -341,7 +342,7 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
                     </InputGroup.Text>
                     <Form.Control
                       type="text"
-                      placeholder="Search by asset, challan, project..."
+                      placeholder="Search by serial no, asset, challan, project..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -424,7 +425,6 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
                                 {summary.pendingItems}/{summary.totalItems}{" "}
                                 pending
                               </Badge>
-                              {/* {isExpanded ? (<BiChevronUp size={20} />) : (<BiChevronDown size={20} /> )} */}
                             </div>
                           </Col>
                         </Row>
@@ -549,6 +549,10 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
                   <div className="d-flex justify-content-between mb-2">
                     <strong>Asset:</strong>
                     <span>{confirmReturn?.assetName}</span>
+                  </div>
+                  <div className="d-flex justify-content-between mb-2">
+                    <strong>Serial No:</strong>
+                    <span>{confirmReturn?.serialNo || "N/A"}</span>
                   </div>
                   <div className="d-flex justify-content-between mb-2">
                     <strong>Challan:</strong>
