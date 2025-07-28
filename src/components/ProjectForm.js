@@ -10,18 +10,27 @@ import {
   Container,
   Table,
 } from "react-bootstrap";
-import jsonStorage from "../services/jsonStorage";
+import {
+  getProjects,
+  addProject,
+  updateProject,
+  deleteProject,
+  getClients,
+  getLocations,
+  addClient,
+  addLocation,
+} from "../services/api";
 import "../styles/ProjectForm.css";
 
 const initialProjectState = {
-  location: "",
   client: "",
-  hasPO: "no",
-  poNumber: "",
-  projectName: "",
-  projectDetails: "",
-  personsInvolved: [""],
-  fieldSupervisor: "",
+  location: "",
+  has_po: "no",
+  po_number: "",
+  project_name: "",
+  project_details: "",
+  persons_involved: JSON.stringify([""]),
+  field_supervisor: "",
 };
 
 const ProjectForm = ({ onProjectUpdate }) => {
@@ -39,83 +48,84 @@ const ProjectForm = ({ onProjectUpdate }) => {
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Load all data on mount
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [projectsData, clientsData, locationsData] = await Promise.all([
+        getProjects(),
+        getClients(),
+        getLocations(),
+      ]);
+
+      setProjectsList(projectsData);
+      setClients(clientsData.map((c) => c.name));
+      setLocations(locationsData.map((l) => l.name));
+      setLoading(false);
+    } catch (err) {
+      console.error("Failed to load data:", err);
+      setError("Failed to load data. Please try again.");
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        const projects = await jsonStorage.getProjects();
-        const clients = await jsonStorage.getClients();
-        const locations = await jsonStorage.getLocations();
-
-        setProjectsList(projects);
-        setClients(clients);
-        setLocations(locations);
-        setLoading(false);
-      } catch (err) {
-        console.error("Failed to load data:", err);
-        setError("Failed to load data. Please try again.");
-        setLoading(false);
-      }
-    };
-
     loadData();
   }, []);
 
-  // Handle form field changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setProject((prev) => ({ ...prev, [name]: value }));
     setError(null);
   };
 
-  // Handle team member changes
   const handlePersonChange = (index, value) => {
-    const updatedPersons = [...project.personsInvolved];
+    const currentPersons = JSON.parse(project.persons_involved);
+    const updatedPersons = [...currentPersons];
     updatedPersons[index] = value;
-    setProject((prev) => ({ ...prev, personsInvolved: updatedPersons }));
-  };
-
-  // Add new team member field
-  const addPersonField = () => {
     setProject((prev) => ({
       ...prev,
-      personsInvolved: [...prev.personsInvolved, ""],
+      persons_involved: JSON.stringify(updatedPersons),
     }));
   };
 
-  // Remove team member field
-  const removePersonField = (index) => {
-    if (project.personsInvolved.length <= 1) return;
-    const updatedPersons = project.personsInvolved.filter(
-      (_, i) => i !== index
-    );
-    setProject((prev) => ({ ...prev, personsInvolved: updatedPersons }));
+  const addPersonField = () => {
+    const currentPersons = JSON.parse(project.persons_involved);
+    setProject((prev) => ({
+      ...prev,
+      persons_involved: JSON.stringify([...currentPersons, ""]),
+    }));
   };
 
-  // Form validation
+  const removePersonField = (index) => {
+    const currentPersons = JSON.parse(project.persons_involved);
+    if (currentPersons.length <= 1) return;
+    const updatedPersons = currentPersons.filter((_, i) => i !== index);
+    setProject((prev) => ({
+      ...prev,
+      persons_involved: JSON.stringify(updatedPersons),
+    }));
+  };
+
   const validateForm = () => {
-    if (!project.projectName) {
+    if (!project.project_name) {
       setError("Project name is required");
       return false;
     }
-    if (!project.fieldSupervisor) {
+    if (!project.field_supervisor) {
       setError("Project Lead / Person who is visiting is required");
       return false;
     }
     return true;
   };
 
-  // Load project for editing
   const loadProjectForEdit = (projectId) => {
     const projectToEdit = projectsList.find((p) => p.id === projectId);
     if (projectToEdit) {
       setProject({
         ...projectToEdit,
-        personsInvolved:
-          projectToEdit.personsInvolved?.length > 0
-            ? projectToEdit.personsInvolved
-            : [""],
+        persons_involved: projectToEdit.persons_involved
+          ? projectToEdit.persons_involved
+          : JSON.stringify([""]),
       });
       setEditMode(true);
       setSelectedProjectId(projectId);
@@ -124,7 +134,6 @@ const ProjectForm = ({ onProjectUpdate }) => {
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -132,22 +141,21 @@ const ProjectForm = ({ onProjectUpdate }) => {
     if (!validateForm()) return;
 
     try {
+      const projectData = {
+        ...project,
+        persons_involved: JSON.stringify(
+          JSON.parse(project.persons_involved || "[]")
+        ),
+      };
+
       if (editMode) {
-        await jsonStorage.updateProject(selectedProjectId, project);
+        await updateProject(selectedProjectId, projectData);
       } else {
-        await jsonStorage.saveProject(project);
+        await addProject(projectData);
       }
 
-      // Refresh data
-      const projects = await jsonStorage.getProjects();
-      const clients = await jsonStorage.getClients();
-      const locations = await jsonStorage.getLocations();
+      await loadData();
 
-      setProjectsList(projects);
-      setClients(clients);
-      setLocations(locations);
-
-      // Notify parent component of project update
       if (onProjectUpdate) {
         onProjectUpdate();
       }
@@ -160,7 +168,6 @@ const ProjectForm = ({ onProjectUpdate }) => {
     }
   };
 
-  // Clear form
   const handleClearForm = () => {
     setProject(initialProjectState);
     setEditMode(false);
@@ -170,17 +177,14 @@ const ProjectForm = ({ onProjectUpdate }) => {
     setError(null);
   };
 
-  // Delete project
   const handleDeleteProject = async (projectId) => {
     if (!window.confirm("Are you sure you want to delete this project?"))
       return;
 
     try {
-      await jsonStorage.deleteProject(projectId);
-      const projects = await jsonStorage.getProjects();
-      setProjectsList(projects);
+      await deleteProject(projectId);
+      await loadData();
 
-      // Notify parent component of project update
       if (onProjectUpdate) {
         onProjectUpdate();
       }
@@ -194,14 +198,12 @@ const ProjectForm = ({ onProjectUpdate }) => {
     }
   };
 
-  // Save new client
   const saveNewClient = async () => {
     if (!newClient.trim()) return;
 
     try {
-      await jsonStorage.saveClient(newClient.trim());
-      const clients = await jsonStorage.getClients();
-      setClients(clients);
+      await addClient(newClient.trim());
+      await loadData(); // reload everything
       setProject((prev) => ({ ...prev, client: newClient.trim() }));
       setShowNewClientInput(false);
       setNewClient("");
@@ -211,14 +213,12 @@ const ProjectForm = ({ onProjectUpdate }) => {
     }
   };
 
-  // Save new location
   const saveNewLocation = async () => {
     if (!newLocation.trim()) return;
 
     try {
-      await jsonStorage.saveLocation(newLocation.trim());
-      const locations = await jsonStorage.getLocations();
-      setLocations(locations);
+      await addLocation(newLocation.trim());
+      await loadData(); // reload everything
       setProject((prev) => ({ ...prev, location: newLocation.trim() }));
       setShowNewLocationInput(false);
       setNewLocation("");
@@ -228,7 +228,6 @@ const ProjectForm = ({ onProjectUpdate }) => {
     }
   };
 
-  // Handle client select change
   const handleClientChange = (e) => {
     const value = e.target.value;
     if (value === "new") {
@@ -240,7 +239,6 @@ const ProjectForm = ({ onProjectUpdate }) => {
     }
   };
 
-  // Handle location select change
   const handleLocationChange = (e) => {
     const value = e.target.value;
     if (value === "new") {
@@ -254,26 +252,22 @@ const ProjectForm = ({ onProjectUpdate }) => {
 
   return (
     <Container fluid className="project-form-container py-4">
-      {/* Header */}
       <div className="page-header mb-4">
         <h2>Project Management</h2>
       </div>
 
-      {/* Error Alert */}
       {error && (
         <Alert variant="danger" dismissible onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
 
-      {/* Success Alert */}
       {success && (
         <Alert variant="success" dismissible onClose={() => setSuccess(false)}>
           Project {editMode ? "updated" : "saved"} successfully!
         </Alert>
       )}
 
-      {/* Project Form */}
       <Card className="mb-4 form-card" id="project-form">
         <Card.Header className="card-header-custom text-white">
           <h5 className="card-title">
@@ -283,7 +277,6 @@ const ProjectForm = ({ onProjectUpdate }) => {
         </Card.Header>
         <Card.Body>
           <Form onSubmit={handleSubmit}>
-            {/* Client Field */}
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
@@ -323,7 +316,6 @@ const ProjectForm = ({ onProjectUpdate }) => {
                 </Form.Group>
               </Col>
 
-              {/* Location Field */}
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>Location</Form.Label>
@@ -366,7 +358,6 @@ const ProjectForm = ({ onProjectUpdate }) => {
               </Col>
             </Row>
 
-            {/* PO Number Section */}
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
@@ -375,34 +366,34 @@ const ProjectForm = ({ onProjectUpdate }) => {
                     <Form.Check
                       type="radio"
                       label="Yes"
-                      name="hasPO"
-                      id="hasPO-yes"
+                      name="has_po"
+                      id="has_po-yes"
                       value="yes"
-                      checked={project.hasPO === "yes"}
+                      checked={project.has_po === "yes"}
                       onChange={handleChange}
                       className="me-3"
                     />
                     <Form.Check
                       type="radio"
                       label="No"
-                      name="hasPO"
-                      id="hasPO-no"
+                      name="has_po"
+                      id="has_po-no"
                       value="no"
-                      checked={project.hasPO === "no"}
+                      checked={project.has_po === "no"}
                       onChange={handleChange}
                     />
                   </div>
                 </Form.Group>
               </Col>
 
-              {project.hasPO === "yes" && (
+              {project.has_po === "yes" && (
                 <Col md={6}>
                   <Form.Group className="mb-3">
                     <Form.Label>PO Number</Form.Label>
                     <Form.Control
                       type="text"
-                      name="poNumber"
-                      value={project.poNumber}
+                      name="po_number"
+                      value={project.po_number}
                       onChange={handleChange}
                       placeholder="Purchase order number"
                     />
@@ -411,7 +402,6 @@ const ProjectForm = ({ onProjectUpdate }) => {
               )}
             </Row>
 
-            {/* Project Name and Supervisor */}
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
@@ -420,8 +410,8 @@ const ProjectForm = ({ onProjectUpdate }) => {
                   </Form.Label>
                   <Form.Control
                     type="text"
-                    name="projectName"
-                    value={project.projectName}
+                    name="project_name"
+                    value={project.project_name}
                     onChange={handleChange}
                     placeholder="Project name"
                     required
@@ -437,8 +427,8 @@ const ProjectForm = ({ onProjectUpdate }) => {
                   </Form.Label>
                   <Form.Control
                     type="text"
-                    name="fieldSupervisor"
-                    value={project.fieldSupervisor}
+                    name="field_supervisor"
+                    value={project.field_supervisor}
                     onChange={handleChange}
                     placeholder="Project Lead or Visiting Person"
                     required
@@ -447,20 +437,18 @@ const ProjectForm = ({ onProjectUpdate }) => {
               </Col>
             </Row>
 
-            {/* Project Details */}
             <Form.Group className="mb-3">
               <Form.Label>Project Details</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
-                name="projectDetails"
-                value={project.projectDetails}
+                name="project_details"
+                value={project.project_details}
                 onChange={handleChange}
                 placeholder="Project description and details"
               />
             </Form.Group>
 
-            {/* Team Members */}
             <Card className="mb-4">
               <Card.Header className="card-header-custom d-flex justify-content-between align-items-center text-white">
                 <h5 className="card-title">
@@ -481,7 +469,7 @@ const ProjectForm = ({ onProjectUpdate }) => {
                 </Button>
               </Card.Header>
               <Card.Body>
-                {project.personsInvolved.map((person, index) => (
+                {JSON.parse(project.persons_involved).map((person, index) => (
                   <Row key={index} className="mb-3 align-items-center">
                     <Col>
                       <InputGroup>
@@ -493,7 +481,7 @@ const ProjectForm = ({ onProjectUpdate }) => {
                           }
                           placeholder={`Team member #${index + 1}`}
                         />
-                        {project.personsInvolved.length > 1 && (
+                        {JSON.parse(project.persons_involved).length > 1 && (
                           <Button
                             variant="outline-danger"
                             onClick={() => removePersonField(index)}
@@ -508,7 +496,6 @@ const ProjectForm = ({ onProjectUpdate }) => {
               </Card.Body>
             </Card>
 
-            {/* Form Actions */}
             <div className="form-actions">
               <Button
                 variant="outline-secondary"
@@ -526,7 +513,6 @@ const ProjectForm = ({ onProjectUpdate }) => {
         </Card.Body>
       </Card>
 
-      {/* Existing Projects Table */}
       <Card className="mb-4 form-card">
         <Card.Header className="card-header-custom text-white">
           <h5 className="card-title">
@@ -565,10 +551,10 @@ const ProjectForm = ({ onProjectUpdate }) => {
               <tbody>
                 {projectsList.map((proj) => (
                   <tr key={proj.id}>
-                    <td>{proj.projectName}</td>
+                    <td>{proj.project_name}</td>
                     <td>{proj.client || "-"}</td>
                     <td>{proj.location || "-"}</td>
-                    <td>{proj.fieldSupervisor}</td>
+                    <td>{proj.field_supervisor}</td>
                     <td>
                       <Button
                         variant="primary"

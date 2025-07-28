@@ -32,12 +32,12 @@ import {
   BiTime,
 } from "react-icons/bi";
 import Chart from "react-apexcharts";
-import jsonStorage from "../services/jsonStorage";
+import { getChallans, deleteChallan, getProjects } from "../services/api";
 import ReturnableItemsModal from "./ReturnableItemsModal";
 import { generateDoc } from "../services/docGenerator";
 import { differenceInDays, parseISO, isAfter, isValid } from "date-fns";
 
-const DataView = ({ challans: initialChallans }) => {
+const DataView = () => {
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
@@ -55,7 +55,7 @@ const DataView = ({ challans: initialChallans }) => {
   const [selectedChallan, setSelectedChallan] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
-  const [challans, setChallans] = useState(initialChallans || []);
+  const [challans, setChallans] = useState([]);
   const [error, setError] = useState(null);
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -82,24 +82,27 @@ const DataView = ({ challans: initialChallans }) => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const loadedChallans = await jsonStorage.getChallans();
-      const loadedProjects = await jsonStorage.getProjects();
+      const [loadedChallans, loadedProjects] = await Promise.all([
+        getChallans(),
+        getProjects()
+      ]);
 
       setChallans(loadedChallans);
       setProjects(loadedProjects);
 
       if (loadedChallans.length > 0) {
         const currentChallan = selectedChallan
-          ? loadedChallans.find((c) => c.dcNumber === selectedChallan.dcNumber)
+          ? loadedChallans.find((c) => c.id === selectedChallan.id)
           : null;
 
         setSelectedChallan(currentChallan || loadedChallans[0]);
 
-        const project = loadedProjects.find(
-          (p) =>
-            p.projectName === (currentChallan || loadedChallans[0]).projectName
-        );
-        setSelectedProject(project || null);
+        if (currentChallan || loadedChallans[0]) {
+          const project = loadedProjects.find(
+            (p) => p.project_name === (currentChallan || loadedChallans[0]).project_name
+          );
+          setSelectedProject(project || null);
+        }
       } else {
         setSelectedChallan(null);
         setSelectedProject(null);
@@ -122,9 +125,9 @@ const DataView = ({ challans: initialChallans }) => {
 
     allChallans.forEach((challan) => {
       challan.items
-        .filter((item) => item.returnable === "yes" && !item.returnedDate)
+        .filter((item) => item.returnable === "yes" && !item.returned_date)
         .forEach((item) => {
-          const returnDate = safeParseISO(item.expectedReturnDate);
+          const returnDate = safeParseISO(item.expected_return_date);
           if (!returnDate) return;
 
           const daysLeft = differenceInDays(returnDate, today);
@@ -132,13 +135,13 @@ const DataView = ({ challans: initialChallans }) => {
           if (daysLeft < 0) {
             overdueItems.push({
               ...item,
-              challanNumber: challan.dcNumber,
+              challanNumber: challan.dc_number,
               daysOverdue: Math.abs(daysLeft),
             });
           } else if (daysLeft <= 3) {
             dueSoonItems.push({
               ...item,
-              challanNumber: challan.dcNumber,
+              challanNumber: challan.dc_number,
               daysLeft,
             });
           }
@@ -151,7 +154,6 @@ const DataView = ({ challans: initialChallans }) => {
         dueSoon: dueSoonItems,
       });
       setShowNotification(true);
-      // Auto-hide after 5 seconds
       setTimeout(() => setShowNotification(false), 5000);
     }
   };
@@ -163,13 +165,13 @@ const DataView = ({ challans: initialChallans }) => {
   useEffect(() => {
     if (selectedChallan) {
       const project = projects.find(
-        (p) => p.projectName === selectedChallan.projectName
+        (p) => p.project_name === selectedChallan.project_name
       );
       setSelectedProject(project || null);
 
       if (selectedChallan.items && selectedChallan.items.length > 0) {
         const itemsData = selectedChallan.items.map((item) => ({
-          name: item.assetName || "Unnamed Asset",
+          name: item.asset_name || "Unnamed Asset",
           quantity: item.quantity,
         }));
 
@@ -192,11 +194,11 @@ const DataView = ({ challans: initialChallans }) => {
 
   const filteredChallans = challans.filter((challan) => {
     const matchesSearch =
-      challan.dcNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      challan.dc_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       challan.client?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       challan.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       challan.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      challan.projectName?.toLowerCase().includes(searchTerm.toLowerCase());
+      challan.project_name?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const challanDate = new Date(challan.date);
     const now = new Date();
@@ -213,13 +215,13 @@ const DataView = ({ challans: initialChallans }) => {
     return matchesSearch && matchesTimeRange;
   });
 
-  const handleDeleteChallan = async (dcNumber) => {
+  const handleDeleteChallan = async (id) => {
     if (!window.confirm("Are you sure you want to delete this challan?"))
       return;
 
     try {
       setLoading(true);
-      await jsonStorage.deleteChallan(dcNumber);
+      await deleteChallan(id);
       await loadData();
       setLoading(false);
     } catch (err) {
@@ -306,7 +308,6 @@ const DataView = ({ challans: initialChallans }) => {
         </Alert>
       )}
 
-      {/* Notification Toast */}
       <ToastContainer className="custom-toast-container">
         <Toast
           show={showNotification}
@@ -329,7 +330,7 @@ const DataView = ({ challans: initialChallans }) => {
                 <ul className="small">
                   {notificationItems.overdue.slice(0, 3).map((item, index) => (
                     <li key={`overdue-${index}`}>
-                      {item.assetName} (Challan: {item.challanNumber}) -{" "}
+                      {item.asset_name} (Challan: {item.challanNumber}) -{" "}
                       {item.daysOverdue} days overdue
                     </li>
                   ))}
@@ -347,7 +348,7 @@ const DataView = ({ challans: initialChallans }) => {
                 <ul className="small">
                   {notificationItems.dueSoon.slice(0, 3).map((item, index) => (
                     <li key={`duesoon-${index}`}>
-                      {item.assetName} (Challan: {item.challanNumber}) - due in{" "}
+                      {item.asset_name} (Challan: {item.challanNumber}) - due in{" "}
                       {item.daysLeft} days
                     </li>
                   ))}
@@ -382,8 +383,6 @@ const DataView = ({ challans: initialChallans }) => {
         </Col>
       </Row>
 
-      {/* Rest of the DataView component remains the same */}
-      {/* Search and Filter */}
       <Card className="mb-4">
         <Card.Body>
           <Row className="align-items-center">
@@ -433,7 +432,6 @@ const DataView = ({ challans: initialChallans }) => {
               </Dropdown>
 
               <Button
-                // variant="primary"
                 onClick={() => setShowReturnableModal(true)}
                 className="d-flex align-items-center"
                 style={{ backgroundColor: "#0e787b", borderColor: "#0e787b" }}
@@ -454,7 +452,6 @@ const DataView = ({ challans: initialChallans }) => {
         </Card>
       ) : (
         <>
-          {/* Stats Cards */}
           <Row className="mb-4">
             <Col md={4}>
               <Card>
@@ -517,7 +514,6 @@ const DataView = ({ challans: initialChallans }) => {
             </Col>
           </Row>
 
-          {/* Main Content */}
           <Row>
             <Col md={4}>
               <Card className="mb-4">
@@ -536,13 +532,13 @@ const DataView = ({ challans: initialChallans }) => {
                           eventKey={index.toString()}
                           onClick={() => setSelectedChallan(challan)}
                           active={
-                            selectedChallan?.dcNumber === challan.dcNumber
+                            selectedChallan?.id === challan.id
                           }
                         >
                           <Accordion.Header>
                             <div className="d-flex justify-content-between w-100">
                               <span className="fw-bold">
-                                {challan.dcNumber}
+                                {challan.dc_number}
                               </span>
                               <span className="text-muted small">
                                 {formatDate(challan.date)}
@@ -554,7 +550,7 @@ const DataView = ({ challans: initialChallans }) => {
                               <div>
                                 <div>
                                   <strong>Project:</strong>{" "}
-                                  {challan.projectName || "-"}
+                                  {challan.project_name || "-"}
                                 </div>
                                 <div>
                                   <strong>Client:</strong>{" "}
@@ -586,7 +582,7 @@ const DataView = ({ challans: initialChallans }) => {
                                   size="sm"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleDeleteChallan(challan.dcNumber);
+                                    handleDeleteChallan(challan.id);
                                   }}
                                 >
                                   <BiTrash size={16} />
@@ -605,7 +601,6 @@ const DataView = ({ challans: initialChallans }) => {
             <Col md={8}>
               {selectedChallan ? (
                 <>
-                  {/* Charts */}
                   {selectedChallan.items?.length > 0 && (
                     <Row className="mb-4">
                       <Col md={6}>
@@ -656,7 +651,6 @@ const DataView = ({ challans: initialChallans }) => {
                     </Row>
                   )}
 
-                  {/* Challan Details */}
                   <Card>
                     <Card.Header className="d-flex justify-content-between align-items-center">
                       <h5 className="mb-0">Challan Details</h5>
@@ -670,13 +664,13 @@ const DataView = ({ challans: initialChallans }) => {
                         <Col md={3}>
                           <div>
                             <h6>DC Number</h6>
-                            <p>{selectedChallan.dcNumber || "-"}</p>
+                            <p>{selectedChallan.dc_number || "-"}</p>
                           </div>
                         </Col>
                         <Col md={3}>
                           <div>
                             <h6>Project</h6>
-                            <p>{selectedChallan.projectName || "-"}</p>
+                            <p>{selectedChallan.project_name || "-"}</p>
                           </div>
                         </Col>
                         <Col md={3}>
@@ -703,7 +697,7 @@ const DataView = ({ challans: initialChallans }) => {
                           <div>
                             <h6>PO Number</h6>
                             <p>
-                              {selectedChallan.poNumber || selectedChallan.data}
+                              {selectedChallan.po_number || "-"}
                             </p>
                           </div>
                         </Col>
@@ -732,7 +726,7 @@ const DataView = ({ challans: initialChallans }) => {
                         <Col md={3}>
                           <h6>Project Lead / Person who is visiting</h6>
                           <p>
-                            {selectedProject?.fieldSupervisor ||
+                            {selectedProject?.field_supervisor ||
                               "Not specified"}
                           </p>
                         </Col>
@@ -740,14 +734,13 @@ const DataView = ({ challans: initialChallans }) => {
                         <Col md={6}>
                           <h6>Project Details</h6>
                           <p>
-                            {selectedProject?.projectDetails ||
+                            {selectedProject?.project_details ||
                               "No details provided"}
                           </p>
                         </Col>
                       </Row>
                       <Row className="mb-4">
-                        {/* Project Details Section */}
-                        {selectedProject?.personsInvolved?.length > 0 && (
+                        {selectedProject?.persons_involved && (
                           <Row className="mb-4">
                             <Col>
                               <Card>
@@ -756,7 +749,7 @@ const DataView = ({ challans: initialChallans }) => {
                                 </Card.Header>
                                 <Card.Body>
                                   <ListGroup variant="flush">
-                                    {selectedProject.personsInvolved.map(
+                                    {JSON.parse(selectedProject.persons_involved).map(
                                       (person, index) => (
                                         <ListGroup.Item key={index}>
                                           {person || `Team member ${index + 1}`}
@@ -771,7 +764,6 @@ const DataView = ({ challans: initialChallans }) => {
                         )}
                       </Row>
 
-                      {/* Items Table */}
                       {selectedChallan.items?.length > 0 ? (
                         <div className="table-responsive">
                           <Table striped bordered hover>
@@ -793,7 +785,7 @@ const DataView = ({ challans: initialChallans }) => {
                                     {item.sno || index + 1}
                                   </td>
                                   <td>
-                                    {item.assetName || (
+                                    {item.asset_name || (
                                       <span className="text-muted">-</span>
                                     )}
                                   </td>
@@ -806,7 +798,7 @@ const DataView = ({ challans: initialChallans }) => {
                                     {item.quantity}
                                   </td>
                                   <td>
-                                    {item.serialNo || (
+                                    {item.serial_no || (
                                       <span className="text-muted">-</span>
                                     )}
                                   </td>
@@ -823,7 +815,7 @@ const DataView = ({ challans: initialChallans }) => {
                                   </td>
                                   <td>
                                     {item.returnable === "yes" ? (
-                                      formatDate(item.expectedReturnDate) || (
+                                      formatDate(item.expected_return_date) || (
                                         <span className="text-muted">-</span>
                                       )
                                     ) : (
@@ -859,7 +851,6 @@ const DataView = ({ challans: initialChallans }) => {
         </>
       )}
 
-      {/* Download Confirmation Modal */}
       <Modal
         show={showDownloadModal}
         onHide={() => setShowDownloadModal(false)}
@@ -870,7 +861,7 @@ const DataView = ({ challans: initialChallans }) => {
         </Modal.Header>
         <Modal.Body>
           Are you sure you want to download the challan{" "}
-          {selectedChallan?.dcNumber}?
+          {selectedChallan?.dc_number}?
         </Modal.Body>
         <Modal.Footer>
           <Button

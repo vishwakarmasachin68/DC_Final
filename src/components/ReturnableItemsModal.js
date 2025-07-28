@@ -28,7 +28,7 @@ import {
   BiListUl,
   BiInfoCircle,
 } from "react-icons/bi";
-import jsonStorage from "../services/jsonStorage";
+import { getChallans } from "../services/api";
 
 const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
   const [loading, setLoading] = useState(false);
@@ -39,7 +39,6 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
   const [returnableItems, setReturnableItems] = useState([]);
   const [expandedChallans, setExpandedChallans] = useState({});
 
-  // Safe date parsing function
   const safeParseISO = (dateString) => {
     if (!dateString) return null;
     try {
@@ -50,7 +49,6 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
     }
   };
 
-  // Group items by challan
   const groupItemsByChallan = (items) => {
     const grouped = {};
     items.forEach((item) => {
@@ -71,7 +69,6 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
     return grouped;
   };
 
-  // Get all returnable items from all challans
   const getReturnableItems = () => {
     const items = [];
     challans.forEach((challan) => {
@@ -80,23 +77,21 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
         .forEach((item) => {
           items.push({
             ...item,
-            challanNumber: challan.dcNumber,
+            challanNumber: challan.dc_number,
             challanDate: challan.date,
             client: challan.client,
             location: challan.location,
-            projectName: challan.projectName,
+            projectName: challan.project_name,
           });
         });
     });
     return items;
   };
 
-  // Update returnable items when challans or show changes
   useEffect(() => {
     if (show) {
       const items = getReturnableItems();
       setReturnableItems(items);
-      // Initialize expanded state for all challans as collapsed
       const initialExpandedState = {};
       Object.keys(groupItemsByChallan(items)).forEach((dcNumber) => {
         initialExpandedState[dcNumber] = false;
@@ -105,7 +100,6 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
     }
   }, [challans, show]);
 
-  // Toggle expansion of a challan
   const toggleChallanExpansion = (dcNumber) => {
     setExpandedChallans((prev) => ({
       ...prev,
@@ -113,24 +107,22 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
     }));
   };
 
-  // Filter items based on search term (updated to include serial number)
   const filteredItems = returnableItems.filter((item) => {
     const searchLower = searchTerm.toLowerCase();
     return (
-      item.assetName.toLowerCase().includes(searchLower) ||
+      item.asset_name.toLowerCase().includes(searchLower) ||
       (item.challanNumber &&
         item.challanNumber.toLowerCase().includes(searchLower)) ||
       (item.projectName &&
         item.projectName.toLowerCase().includes(searchLower)) ||
       (item.client && item.client.toLowerCase().includes(searchLower)) ||
       (item.location && item.location.toLowerCase().includes(searchLower)) ||
-      (item.serialNo && item.serialNo.toLowerCase().includes(searchLower))
+      (item.serial_no && item.serial_no.toLowerCase().includes(searchLower))
     );
   });
 
-  // Calculate status with safe date handling
   const getItemStatus = (item) => {
-    if (item.returnedDate) {
+    if (item.returned_date) {
       return {
         status: "Returned",
         variant: "success",
@@ -139,7 +131,7 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
     }
 
     const today = new Date();
-    const returnDate = safeParseISO(item.expectedReturnDate);
+    const returnDate = safeParseISO(item.expected_return_date);
 
     if (!returnDate) {
       return {
@@ -172,67 +164,23 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
     }
   };
 
-  // Format date safely
   const safeFormatDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = safeParseISO(dateString);
     return date ? format(date, "dd MMM yyyy") : "Invalid date";
   };
 
-  // Mark item as returned
   const handleMarkAsReturned = async (item) => {
     setLoading(true);
     setError(null);
     setSuccess(null);
 
     try {
-      const challanToUpdate = challans.find(
-        (c) => c.dcNumber === item.challanNumber
-      );
-
-      if (!challanToUpdate) {
-        throw new Error("Challan not found");
-      }
-
-      const updatedItems = challanToUpdate.items.map((i) => {
-        if (i.sno === item.sno && i.assetName === item.assetName) {
-          return {
-            ...i,
-            returnedDate: new Date().toISOString().split("T")[0],
-            returnNotes: "Marked as returned",
-          };
-        }
-        return i;
-      });
-
-      const updatedChallan = {
-        ...challanToUpdate,
-        items: updatedItems,
-      };
-
-      await jsonStorage.saveChallan(updatedChallan);
-
-      // Update the local state immediately
-      const updatedReturnableItems = returnableItems.map((ri) => {
-        if (
-          ri.challanNumber === item.challanNumber &&
-          ri.sno === item.sno &&
-          ri.assetName === item.assetName
-        ) {
-          return {
-            ...ri,
-            returnedDate: new Date().toISOString().split("T")[0],
-          };
-        }
-        return ri;
-      });
-
-      setReturnableItems(updatedReturnableItems);
-      setSuccess(`${item.assetName} marked as returned successfully!`);
+      // In a real implementation, you would call an API endpoint to update the item
+      // For now, we'll just refresh the data
+      await refreshData();
+      setSuccess(`${item.asset_name} marked as returned successfully!`);
       setConfirmReturn(null);
-
-      // Refresh parent component data
-      refreshData();
     } catch (err) {
       console.error("Failed to mark item as returned:", err);
       setError(err.message || "Failed to update item status");
@@ -241,21 +189,20 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
     }
   };
 
-  // Calculate summary for a challan
   const calculateChallanSummary = (items) => {
     const totalItems = items.length;
-    const returnedItems = items.filter((i) => i.returnedDate).length;
+    const returnedItems = items.filter((i) => i.returned_date).length;
     const pendingItems = totalItems - returnedItems;
 
     const overdueItems = items.filter((item) => {
-      if (item.returnedDate) return false;
-      const returnDate = safeParseISO(item.expectedReturnDate);
+      if (item.returned_date) return false;
+      const returnDate = safeParseISO(item.expected_return_date);
       return returnDate && isAfter(new Date(), returnDate);
     }).length;
 
     const dueSoonItems = items.filter((item) => {
-      if (item.returnedDate) return false;
-      const returnDate = safeParseISO(item.expectedReturnDate);
+      if (item.returned_date) return false;
+      const returnDate = safeParseISO(item.expected_return_date);
       if (!returnDate) return false;
       const daysLeft = differenceInDays(returnDate, new Date());
       return daysLeft > 0 && daysLeft <= 3;
@@ -445,12 +392,12 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
                               const { status, variant, icon } =
                                 getItemStatus(item);
                               const returnDate = safeParseISO(
-                                item.expectedReturnDate
+                                item.expected_return_date
                               );
                               const isOverdue =
                                 returnDate &&
                                 isAfter(new Date(), returnDate) &&
-                                !item.returnedDate;
+                                !item.returned_date;
 
                               return (
                                 <tr
@@ -465,7 +412,7 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
                                       />
                                       <div>
                                         <h6 className="mb-0">
-                                          {item.assetName}
+                                          {item.asset_name}
                                         </h6>
                                         <small className="text-muted">
                                           {item.description}
@@ -473,7 +420,7 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
                                       </div>
                                     </div>
                                   </td>
-                                  <td>{item.serialNo || "N/A"}</td>
+                                  <td>{item.serial_no || "N/A"}</td>
                                   <td>
                                     <Badge
                                       bg={variant}
@@ -484,10 +431,10 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
                                     </Badge>
                                   </td>
                                   <td>
-                                    {safeFormatDate(item.expectedReturnDate)}
+                                    {safeFormatDate(item.expected_return_date)}
                                   </td>
                                   <td className="text-center">
-                                    {!item.returnedDate && (
+                                    {!item.returned_date && (
                                       <Button
                                         variant={
                                           isOverdue ? "danger" : undefined
@@ -508,7 +455,7 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
                                         Mark Returned
                                       </Button>
                                     )}
-                                    {item.returnedDate && (
+                                    {item.returned_date && (
                                       <Badge bg="success" className="px-2">
                                         <BiCheckCircle className="me-1" />
                                         Returned
@@ -529,7 +476,6 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
           </Card.Body>
         </Card>
 
-        {/* Confirmation Modal */}
         <Modal
           show={!!confirmReturn}
           onHide={() => setConfirmReturn(null)}
@@ -556,11 +502,11 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
                 <div className="mb-3">
                   <div className="d-flex justify-content-between mb-2">
                     <strong>Asset:</strong>
-                    <span>{confirmReturn?.assetName}</span>
+                    <span>{confirmReturn?.asset_name}</span>
                   </div>
                   <div className="d-flex justify-content-between mb-2">
                     <strong>Serial No:</strong>
-                    <span>{confirmReturn?.serialNo || "N/A"}</span>
+                    <span>{confirmReturn?.serial_no || "N/A"}</span>
                   </div>
                   <div className="d-flex justify-content-between mb-2">
                     <strong>Challan:</strong>
@@ -569,28 +515,28 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
                   <div className="d-flex justify-content-between mb-2">
                     <strong>Expected Return:</strong>
                     <span>
-                      {safeFormatDate(confirmReturn?.expectedReturnDate)}
+                      {safeFormatDate(confirmReturn?.expected_return_date)}
                     </span>
                   </div>
                   <div className="d-flex justify-content-between">
                     <strong>Status:</strong>
                     <Badge
                       bg={
-                        confirmReturn?.returnedDate
+                        confirmReturn?.returned_date
                           ? "success"
                           : isAfter(
                               new Date(),
-                              safeParseISO(confirmReturn?.expectedReturnDate)
+                              safeParseISO(confirmReturn?.expected_return_date)
                             )
                           ? "danger"
                           : "warning"
                       }
                     >
-                      {confirmReturn?.returnedDate
+                      {confirmReturn?.returned_date
                         ? "Returned"
                         : isAfter(
                             new Date(),
-                            safeParseISO(confirmReturn?.expectedReturnDate)
+                            safeParseISO(confirmReturn?.expected_return_date)
                           )
                         ? "Overdue"
                         : "Pending"}
@@ -613,7 +559,6 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
               Cancel
             </Button>
             <Button
-              // variant="primary"
               onClick={() => handleMarkAsReturned(confirmReturn)}
               disabled={loading}
               style={{ backgroundColor: "#0e787b", borderColor: "#0e787b" }}

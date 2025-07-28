@@ -13,12 +13,21 @@ import {
 } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import PreviewModal from "./PreviewModal";
-import jsonStorage from "../services/jsonStorage";
+import { 
+  getChallans, 
+  addChallan, 
+  getProjects, 
+  getClients, 
+  getLocations,
+  addClient,
+  addLocation
+} from "../services/api";
 import { generateDoc } from "../services/docGenerator";
 import "../styles/ChallanForm.css";
 
 const ChallanForm = ({ onSave }) => {
   const navigate = useNavigate();
+  
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, "0");
@@ -43,20 +52,20 @@ const ChallanForm = ({ onSave }) => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [projects, clients, locations, challans] = await Promise.all([
-        jsonStorage.getProjects(),
-        jsonStorage.getClients(),
-        jsonStorage.getLocations(),
-        jsonStorage.getChallans(),
+      const [projectsData, clientsData, locationsData, challansData] = await Promise.all([
+        getProjects(),
+        getClients(),
+        getLocations(),
+        getChallans(),
       ]);
 
-      setProjects(projects);
-      setClients(clients);
-      setLocations(locations);
+      setProjects(projectsData);
+      setClients(clientsData.map(c => c.name));
+      setLocations(locationsData.map(l => l.name));
 
-      if (challans.length > 0) {
-        const sequences = challans.map((c) => {
-          const parts = c.dcNumber?.split("/") || [];
+      if (challansData.length > 0) {
+        const sequences = challansData.map((c) => {
+          const parts = c.dc_number?.split("/") || [];
           return parts.length > 2 ? parseInt(parts[2]) : 0;
         });
         const maxSequence = Math.max(...sequences);
@@ -77,59 +86,45 @@ const ChallanForm = ({ onSave }) => {
     loadData();
   }, []);
 
-  const handleProjectUpdate = async () => {
-    const updatedProjects = await jsonStorage.getProjects();
-    setProjects(updatedProjects);
-  };
-
-  const getDcNumber = () => {
-    const prefix = "DSI/";
-    const middle =
-      challan.hasPO === "yes" && challan.poNumber
-        ? challan.poNumber
-        : formatDate(challan.date).replace(/\//g, "");
-    return `${prefix}${middle}/${nextSequence}`;
-  };
-
   const [challan, setChallan] = useState({
-    dcSequence: nextSequence,
+    dc_sequence: nextSequence,
     date: new Date().toISOString().split("T")[0],
     name: "",
-    project: "",
-    projectName: "",
+    project_id: "",
+    project_name: "",
     client: "",
     location: "",
-    hasPO: "no",
-    poNumber: "",
+    has_po: "no",
+    po_number: "",
     items: [
       {
         sno: 1,
-        assetName: "",
+        asset_name: "",
         description: "",
         quantity: 1,
-        serialNo: "",
+        serial_no: "",
         returnable: "no",
-        expectedReturnDate: "",
+        expected_return_date: "",
       },
     ],
   });
 
   useEffect(() => {
-    setChallan((prev) => ({
+    setChallan(prev => ({
       ...prev,
-      dcSequence: nextSequence,
+      dc_sequence: nextSequence,
     }));
   }, [nextSequence]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setChallan((prev) => ({ ...prev, [name]: value }));
+    setChallan(prev => ({ ...prev, [name]: value }));
     setError(null);
   };
 
   const handleItemChange = (index, e) => {
     const { name, value } = e.target;
-    setChallan((prev) => {
+    setChallan(prev => {
       const updatedItems = [...prev.items];
       updatedItems[index] = {
         ...updatedItems[index],
@@ -137,7 +132,7 @@ const ChallanForm = ({ onSave }) => {
       };
 
       if (name === "returnable" && value === "no") {
-        updatedItems[index].expectedReturnDate = "";
+        updatedItems[index].expected_return_date = "";
       }
 
       return { ...prev, items: updatedItems };
@@ -145,18 +140,18 @@ const ChallanForm = ({ onSave }) => {
   };
 
   const addItem = () => {
-    setChallan((prev) => ({
+    setChallan(prev => ({
       ...prev,
       items: [
         ...prev.items,
         {
           sno: prev.items.length + 1,
-          assetName: "",
+          asset_name: "",
           description: "",
           quantity: 1,
-          serialNo: "",
+          serial_no: "",
           returnable: "no",
-          expectedReturnDate: "",
+          expected_return_date: "",
         },
       ],
     }));
@@ -167,11 +162,11 @@ const ChallanForm = ({ onSave }) => {
     const updatedItems = challan.items
       .filter((_, i) => i !== index)
       .map((item, i) => ({ ...item, sno: i + 1 }));
-    setChallan((prev) => ({ ...prev, items: updatedItems }));
+    setChallan(prev => ({ ...prev, items: updatedItems }));
   };
 
   const validateForm = () => {
-    if (!challan.dcSequence || !/^\d{3}$/.test(challan.dcSequence)) {
+    if (!challan.dc_sequence || !/^\d{3}$/.test(challan.dc_sequence)) {
       setError("DC Sequence must be a 3-digit number");
       return false;
     }
@@ -187,16 +182,16 @@ const ChallanForm = ({ onSave }) => {
       setError("Location is required");
       return false;
     }
-    if (challan.hasPO === "yes" && !challan.poNumber) {
+    if (challan.has_po === "yes" && !challan.po_number) {
       setError("PO Number is required");
       return false;
     }
     for (const [i, item] of challan.items.entries()) {
-      if (!item.assetName || !item.description || !item.serialNo) {
+      if (!item.asset_name || !item.description || !item.serial_no) {
         setError(`Please complete all fields for item ${i + 1}`);
         return false;
       }
-      if (item.returnable === "yes" && !item.expectedReturnDate) {
+      if (item.returnable === "yes" && !item.expected_return_date) {
         setError(`Please enter expected return date for item ${i + 1}`);
         return false;
       }
@@ -210,73 +205,88 @@ const ChallanForm = ({ onSave }) => {
     }
   };
 
-  const handleSaveAndGenerate = async () => {
-    if (!validateForm()) return;
-
-    setGenerating(true);
-    try {
-      const dcNumber = getDcNumber();
-      const selectedProject = projects.find((p) => p.id === challan.project);
-      const docData = {
-        ...challan,
-        dcNumber,
-        projectName: selectedProject ? selectedProject.projectName : "",
-        items: challan.items.map((item) => ({
-          ...item,
-          returnable: item.returnable,
-          expectedReturnDate:
-            item.returnable === "yes" ? item.expectedReturnDate : "",
-        })),
-      };
-
-      await jsonStorage.saveChallan(docData);
-      if (onSave) {
-        onSave(docData);
-      }
-
-      const newSequence = String(parseInt(nextSequence) + 1).padStart(3, "0");
-      setNextSequence(newSequence);
-
-      setChallan((prev) => ({
-        ...prev,
-        dcSequence: newSequence,
-      }));
-
-      await generateDoc(docData);
-
-      setShowPreview(false);
-      setError(null);
-      navigate("/"); // Redirect to dashboard after save
-    } catch (err) {
-      console.error("Failed to save/generate challan:", err);
-      setError(
-        err.message || "Failed to save/generate challan. Please try again."
-      );
-    } finally {
-      setGenerating(false);
-    }
+  const getDcNumber = () => {
+    const prefix = "DSI/";
+    const middle =
+      challan.has_po === "yes" && challan.po_number
+        ? challan.po_number
+        : formatDate(challan.date).replace(/\//g, "");
+    return `${prefix}${middle}/${challan.dc_sequence}`;
   };
+
+ const handleSaveAndGenerate = async () => {
+  if (!validateForm()) return;
+
+  setGenerating(true);
+  try {
+    const dcNumber = getDcNumber();
+    const selectedProject = projects.find(p => p.id === challan.project_id);
+
+    const challanData = {
+      dc_number: dcNumber,
+      dc_sequence: challan.dc_sequence,
+      date: challan.date,
+      name: challan.name,
+      project_name: selectedProject?.project_name || challan.project_name,
+      client: challan.client,
+      location: challan.location,
+      has_po: challan.has_po,
+      po_number: challan.po_number,
+      items: challan.items.map(item => ({
+        sno: item.sno,
+        asset_name: item.asset_name,
+        description: item.description,
+        quantity: item.quantity,
+        serial_no: item.serial_no,
+        returnable: item.returnable,
+        expected_return_date: item.returnable === "yes" ? item.expected_return_date : null,
+      })),
+    };
+
+    await addChallan(challanData);
+    if (onSave) onSave(challanData);
+
+    const newSequence = String(parseInt(nextSequence) + 1).padStart(3, "0");
+    setNextSequence(newSequence);
+
+    await generateDoc({
+      ...challanData,
+      dcNumber,
+      projectName: selectedProject?.project_name || challan.project_name,
+    });
+
+    setShowPreview(false);
+    setError(null);
+    navigate("/");
+  } catch (err) {
+    console.error("Failed to save/generate challan:", err);
+    setError(err.message || "Failed to save/generate challan. Please try again.");
+  } finally {
+    setGenerating(false);
+  }
+};
+
 
   const handleClearForm = () => {
     setChallan({
-      dcSequence: nextSequence,
+      dc_sequence: nextSequence,
       date: new Date().toISOString().split("T")[0],
       name: "",
-      project: "",
-      projectName: "",
+      project_id: "",
+      project_name: "",
       client: "",
       location: "",
-      hasPO: "no",
-      poNumber: "",
+      has_po: "no",
+      po_number: "",
       items: [
         {
           sno: 1,
-          assetName: "",
+          asset_name: "",
           description: "",
           quantity: 1,
-          serialNo: "",
+          serial_no: "",
           returnable: "no",
-          expectedReturnDate: "",
+          expected_return_date: "",
         },
       ],
     });
@@ -286,10 +296,7 @@ const ChallanForm = ({ onSave }) => {
 
   if (loading) {
     return (
-      <div
-        className="d-flex justify-content-center align-items-center"
-        style={{ height: "100vh" }}
-      >
+      <div className="d-flex justify-content-center align-items-center" style={{ height: "100vh" }}>
         <Spinner animation="border" variant="primary" />
       </div>
     );
@@ -318,15 +325,15 @@ const ChallanForm = ({ onSave }) => {
                   <InputGroup>
                     <InputGroup.Text>DSI/</InputGroup.Text>
                     <InputGroup.Text>
-                      {challan.hasPO === "yes" && challan.poNumber
-                        ? challan.poNumber
+                      {challan.has_po === "yes" && challan.po_number
+                        ? challan.po_number
                         : formatDate(challan.date).replace(/\//g, "")}
                     </InputGroup.Text>
                     <InputGroup.Text>/</InputGroup.Text>
                     <Form.Control
                       type="text"
-                      name="dcSequence"
-                      value={challan.dcSequence}
+                      name="dc_sequence"
+                      value={challan.dc_sequence}
                       onChange={handleInputChange}
                       placeholder="001"
                       required
@@ -357,8 +364,8 @@ const ChallanForm = ({ onSave }) => {
                 <Form.Group className="mb-3">
                   <Form.Label>Project</Form.Label>
                   <Form.Select
-                    name="project"
-                    value={challan.project}
+                    name="project_id"
+                    value={challan.project_id}
                     onChange={(e) => {
                       const projectId = e.target.value;
                       if (projectId === "add") {
@@ -366,30 +373,28 @@ const ChallanForm = ({ onSave }) => {
                         return;
                       }
                       if (!projectId) {
-                        setChallan((prev) => ({
+                        setChallan(prev => ({
                           ...prev,
-                          project: "",
-                          projectName: "",
+                          project_id: "",
+                          project_name: "",
                           client: "",
                           location: "",
-                          hasPO: "no",
-                          poNumber: "",
+                          has_po: "no",
+                          po_number: "",
                         }));
                         return;
                       }
 
-                      const selectedProject = projects.find(
-                        (p) => p.id === projectId
-                      );
+                      const selectedProject = projects.find(p => p.id == projectId);
                       if (selectedProject) {
-                        setChallan((prev) => ({
+                        setChallan(prev => ({
                           ...prev,
-                          project: projectId,
-                          projectName: selectedProject.projectName,
+                          project_id: projectId,
+                          project_name: selectedProject.project_name,
                           client: selectedProject.client || "",
                           location: selectedProject.location || "",
-                          hasPO: selectedProject.hasPO || "no",
-                          poNumber: selectedProject.poNumber || "",
+                          has_po: selectedProject.has_po || "no",
+                          po_number: selectedProject.po_number || "",
                         }));
                       }
                     }}
@@ -398,7 +403,7 @@ const ChallanForm = ({ onSave }) => {
                     <option value="add">+ Add Projects</option>
                     {projects.map((project) => (
                       <option key={project.id} value={project.id}>
-                        {project.projectName}
+                        {project.project_name}
                       </option>
                     ))}
                   </Form.Select>
@@ -435,15 +440,19 @@ const ChallanForm = ({ onSave }) => {
                         variant="success"
                         onClick={async () => {
                           if (!newClient.trim()) return;
-                          await jsonStorage.saveClient(newClient.trim());
-                          const clients = await jsonStorage.getClients();
-                          setClients(clients);
-                          setChallan((prev) => ({
-                            ...prev,
-                            client: newClient.trim(),
-                          }));
-                          setShowNewClientInput(false);
-                          setNewClient("");
+                          try {
+                            await addClient(newClient.trim());
+                            const clients = await getClients();
+                            setClients(clients.map(c => c.name));
+                            setChallan(prev => ({
+                              ...prev,
+                              client: newClient.trim(),
+                            }));
+                            setShowNewClientInput(false);
+                            setNewClient("");
+                          } catch (err) {
+                            setError("Failed to add client. Please try again.");
+                          }
                         }}
                       >
                         Save
@@ -462,10 +471,10 @@ const ChallanForm = ({ onSave }) => {
                         const value = e.target.value;
                         if (value === "new") {
                           setShowNewClientInput(true);
-                          setChallan((prev) => ({ ...prev, client: "" }));
+                          setChallan(prev => ({ ...prev, client: "" }));
                         } else {
                           setShowNewClientInput(false);
-                          setChallan((prev) => ({
+                          setChallan(prev => ({
                             ...prev,
                             client: value,
                           }));
@@ -499,15 +508,19 @@ const ChallanForm = ({ onSave }) => {
                         variant="success"
                         onClick={async () => {
                           if (!newLocation.trim()) return;
-                          await jsonStorage.saveLocation(newLocation.trim());
-                          const locations = await jsonStorage.getLocations();
-                          setLocations(locations);
-                          setChallan((prev) => ({
-                            ...prev,
-                            location: newLocation.trim(),
-                          }));
-                          setShowNewLocationInput(false);
-                          setNewLocation("");
+                          try {
+                            await addLocation(newLocation.trim());
+                            const locations = await getLocations();
+                            setLocations(locations.map(l => l.name));
+                            setChallan(prev => ({
+                              ...prev,
+                              location: newLocation.trim(),
+                            }));
+                            setShowNewLocationInput(false);
+                            setNewLocation("");
+                          } catch (err) {
+                            setError("Failed to add location. Please try again.");
+                          }
                         }}
                       >
                         Save
@@ -526,10 +539,10 @@ const ChallanForm = ({ onSave }) => {
                         const value = e.target.value;
                         if (value === "new") {
                           setShowNewLocationInput(true);
-                          setChallan((prev) => ({ ...prev, location: "" }));
+                          setChallan(prev => ({ ...prev, location: "" }));
                         } else {
                           setShowNewLocationInput(false);
-                          setChallan((prev) => ({
+                          setChallan(prev => ({
                             ...prev,
                             location: value,
                           }));
@@ -558,33 +571,33 @@ const ChallanForm = ({ onSave }) => {
                     <Form.Check
                       type="radio"
                       label="Yes"
-                      name="hasPO"
-                      id="hasPO-yes"
+                      name="has_po"
+                      id="has_po-yes"
                       value="yes"
-                      checked={challan.hasPO === "yes"}
+                      checked={challan.has_po === "yes"}
                       onChange={handleInputChange}
                       className="me-3"
                     />
                     <Form.Check
                       type="radio"
                       label="No"
-                      name="hasPO"
-                      id="hasPO-no"
+                      name="has_po"
+                      id="has_po-no"
                       value="no"
-                      checked={challan.hasPO === "no"}
+                      checked={challan.has_po === "no"}
                       onChange={handleInputChange}
                     />
                   </div>
                 </Form.Group>
               </Col>
-              {challan.hasPO === "yes" && (
+              {challan.has_po === "yes" && (
                 <Col md={6}>
                   <Form.Group className="mb-3">
                     <Form.Label>PO Number</Form.Label>
                     <Form.Control
                       type="text"
-                      name="poNumber"
-                      value={challan.poNumber}
+                      name="po_number"
+                      value={challan.po_number}
                       onChange={handleInputChange}
                       placeholder="Enter PO Number"
                       required
@@ -653,8 +666,8 @@ const ChallanForm = ({ onSave }) => {
                     <td>
                       <Form.Control
                         type="text"
-                        name="assetName"
-                        value={item.assetName}
+                        name="asset_name"
+                        value={item.asset_name}
                         onChange={(e) => handleItemChange(idx, e)}
                         required
                         placeholder="Enter asset name"
@@ -683,8 +696,8 @@ const ChallanForm = ({ onSave }) => {
                     <td>
                       <Form.Control
                         type="text"
-                        name="serialNo"
-                        value={item.serialNo}
+                        name="serial_no"
+                        value={item.serial_no}
                         onChange={(e) => handleItemChange(idx, e)}
                         required
                         placeholder="Enter serial no"
@@ -705,8 +718,8 @@ const ChallanForm = ({ onSave }) => {
                         {item.returnable === "yes" ? (
                           <Form.Control
                             type="date"
-                            name="expectedReturnDate"
-                            value={item.expectedReturnDate}
+                            name="expected_return_date"
+                            value={item.expected_return_date}
                             onChange={(e) => handleItemChange(idx, e)}
                             required
                           />
@@ -727,7 +740,7 @@ const ChallanForm = ({ onSave }) => {
             Clear Form
           </Button>
           <Button
-            style={{ backgroundColor: "	#085f79ff" }}
+            style={{ backgroundColor: "#085f79ff" }}
             onClick={handlePreview}
           >
             Preview Challan
@@ -738,10 +751,20 @@ const ChallanForm = ({ onSave }) => {
       <PreviewModal
         show={showPreview}
         onHide={() => setShowPreview(false)}
-        challan={challan}
+        challan={{
+          ...challan,
+          dcNumber: getDcNumber(),
+          items: challan.items.map(item => ({
+            ...item,
+            assetName: item.asset_name,
+            serialNo: item.serial_no,
+            expectedReturnDate: item.expected_return_date,
+          })),
+          hasPO: challan.has_po,
+          poNumber: challan.po_number,
+        }}
         dcNumber={getDcNumber()}
         onSave={handleSaveAndGenerate}
-        onPrint={() => window.print()}
         loading={generating}
       />
     </Container>
