@@ -13,21 +13,21 @@ import {
 } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import PreviewModal from "./PreviewModal";
-import { 
-  getChallans, 
-  addChallan, 
-  getProjects, 
-  getClients, 
+import {
+  getChallans,
+  addChallan,
+  getProjects,
+  getClients,
   getLocations,
   addClient,
-  addLocation
+  addLocation,
 } from "../services/api";
 import { generateDoc } from "../services/docGenerator";
 import "../styles/ChallanForm.css";
 
 const ChallanForm = ({ onSave }) => {
   const navigate = useNavigate();
-  
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, "0");
@@ -52,16 +52,17 @@ const ChallanForm = ({ onSave }) => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [projectsData, clientsData, locationsData, challansData] = await Promise.all([
-        getProjects(),
-        getClients(),
-        getLocations(),
-        getChallans(),
-      ]);
+      const [projectsData, clientsData, locationsData, challansData] =
+        await Promise.all([
+          getProjects(),
+          getClients(),
+          getLocations(),
+          getChallans(),
+        ]);
 
       setProjects(projectsData);
-      setClients(clientsData.map(c => c.name));
-      setLocations(locationsData.map(l => l.name));
+      setClients(clientsData.map((c) => c.name));
+      setLocations(locationsData.map((l) => l.name));
 
       if (challansData.length > 0) {
         const sequences = challansData.map((c) => {
@@ -110,7 +111,7 @@ const ChallanForm = ({ onSave }) => {
   });
 
   useEffect(() => {
-    setChallan(prev => ({
+    setChallan((prev) => ({
       ...prev,
       dc_sequence: nextSequence,
     }));
@@ -118,13 +119,13 @@ const ChallanForm = ({ onSave }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setChallan(prev => ({ ...prev, [name]: value }));
+    setChallan((prev) => ({ ...prev, [name]: value }));
     setError(null);
   };
 
   const handleItemChange = (index, e) => {
     const { name, value } = e.target;
-    setChallan(prev => {
+    setChallan((prev) => {
       const updatedItems = [...prev.items];
       updatedItems[index] = {
         ...updatedItems[index],
@@ -140,7 +141,7 @@ const ChallanForm = ({ onSave }) => {
   };
 
   const addItem = () => {
-    setChallan(prev => ({
+    setChallan((prev) => ({
       ...prev,
       items: [
         ...prev.items,
@@ -162,7 +163,7 @@ const ChallanForm = ({ onSave }) => {
     const updatedItems = challan.items
       .filter((_, i) => i !== index)
       .map((item, i) => ({ ...item, sno: i + 1 }));
-    setChallan(prev => ({ ...prev, items: updatedItems }));
+    setChallan((prev) => ({ ...prev, items: updatedItems }));
   };
 
   const validateForm = () => {
@@ -214,58 +215,63 @@ const ChallanForm = ({ onSave }) => {
     return `${prefix}${middle}/${challan.dc_sequence}`;
   };
 
- const handleSaveAndGenerate = async () => {
-  if (!validateForm()) return;
+  const handleSaveAndGenerate = async () => {
+    if (!validateForm()) return;
 
-  setGenerating(true);
-  try {
-    const dcNumber = getDcNumber();
-    const selectedProject = projects.find(p => p.id === challan.project_id);
+    setGenerating(true);
+    try {
+      const dcNumber = getDcNumber();
+      const selectedProject = projects.find((p) => p.id === challan.project_id);
 
-    const challanData = {
-      dc_number: dcNumber,
-      dc_sequence: challan.dc_sequence,
-      date: challan.date,
-      name: challan.name,
-      project_name: selectedProject?.project_name || challan.project_name,
-      client: challan.client,
-      location: challan.location,
-      has_po: challan.has_po,
-      po_number: challan.po_number,
-      items: challan.items.map(item => ({
-        sno: item.sno,
-        asset_name: item.asset_name,
-        description: item.description,
-        quantity: item.quantity,
-        serial_no: item.serial_no,
-        returnable: item.returnable,
-        expected_return_date: item.returnable === "yes" ? item.expected_return_date : null,
-      })),
-    };
+      const challanData = {
+        dc_number: dcNumber,
+        dc_sequence: challan.dc_sequence,
+        date: challan.date,
+        name: challan.name,
+        project_id: challan.project_id,
+        project_name: selectedProject?.project_name || challan.project_name,
+        client: challan.client,
+        location: challan.location,
+        has_po: challan.has_po,
+        po_number: challan.po_number,
+        items: challan.items.map((item) => ({
+          sno: item.sno,
+          asset_name: item.asset_name,
+          description: item.description,
+          quantity: item.quantity,
+          serial_no: item.serial_no,
+          returnable: item.returnable,
+          expected_return_date: item.returnable === "yes" ? item.expected_return_date : null,
+        })),
+      };
 
-    await addChallan(challanData);
-    if (onSave) onSave(challanData);
+      // Save to backend
+      const savedChallan = await addChallan(challanData);
+      
+      if (onSave) onSave(savedChallan);
 
-    const newSequence = String(parseInt(nextSequence) + 1).padStart(3, "0");
-    setNextSequence(newSequence);
+      const newSequence = String(parseInt(nextSequence) + 1).padStart(3, "0");
+      setNextSequence(newSequence);
 
-    await generateDoc({
-      ...challanData,
-      dcNumber,
-      projectName: selectedProject?.project_name || challan.project_name,
-    });
+      // Generate document
+      await generateDoc({
+        ...challanData,
+        dcNumber,
+        projectName: selectedProject?.project_name || challan.project_name,
+      });
 
-    setShowPreview(false);
-    setError(null);
-    navigate("/");
-  } catch (err) {
-    console.error("Failed to save/generate challan:", err);
-    setError(err.message || "Failed to save/generate challan. Please try again.");
-  } finally {
-    setGenerating(false);
-  }
-};
-
+      setShowPreview(false);
+      setError(null);
+      navigate("/");
+    } catch (err) {
+      console.error("Failed to save/generate challan:", err);
+      setError(
+        err.message || "Failed to save/generate challan. Please try again."
+      );
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const handleClearForm = () => {
     setChallan({
@@ -296,7 +302,10 @@ const ChallanForm = ({ onSave }) => {
 
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ height: "100vh" }}>
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ height: "100vh" }}
+      >
         <Spinner animation="border" variant="primary" />
       </div>
     );
@@ -373,7 +382,7 @@ const ChallanForm = ({ onSave }) => {
                         return;
                       }
                       if (!projectId) {
-                        setChallan(prev => ({
+                        setChallan((prev) => ({
                           ...prev,
                           project_id: "",
                           project_name: "",
@@ -385,9 +394,11 @@ const ChallanForm = ({ onSave }) => {
                         return;
                       }
 
-                      const selectedProject = projects.find(p => p.id == projectId);
+                      const selectedProject = projects.find(
+                        (p) => p.id == projectId
+                      );
                       if (selectedProject) {
-                        setChallan(prev => ({
+                        setChallan((prev) => ({
                           ...prev,
                           project_id: projectId,
                           project_name: selectedProject.project_name,
@@ -443,8 +454,8 @@ const ChallanForm = ({ onSave }) => {
                           try {
                             await addClient(newClient.trim());
                             const clients = await getClients();
-                            setClients(clients.map(c => c.name));
-                            setChallan(prev => ({
+                            setClients(clients.map((c) => c.name));
+                            setChallan((prev) => ({
                               ...prev,
                               client: newClient.trim(),
                             }));
@@ -471,10 +482,10 @@ const ChallanForm = ({ onSave }) => {
                         const value = e.target.value;
                         if (value === "new") {
                           setShowNewClientInput(true);
-                          setChallan(prev => ({ ...prev, client: "" }));
+                          setChallan((prev) => ({ ...prev, client: "" }));
                         } else {
                           setShowNewClientInput(false);
-                          setChallan(prev => ({
+                          setChallan((prev) => ({
                             ...prev,
                             client: value,
                           }));
@@ -511,15 +522,17 @@ const ChallanForm = ({ onSave }) => {
                           try {
                             await addLocation(newLocation.trim());
                             const locations = await getLocations();
-                            setLocations(locations.map(l => l.name));
-                            setChallan(prev => ({
+                            setLocations(locations.map((l) => l.name));
+                            setChallan((prev) => ({
                               ...prev,
                               location: newLocation.trim(),
                             }));
                             setShowNewLocationInput(false);
                             setNewLocation("");
                           } catch (err) {
-                            setError("Failed to add location. Please try again.");
+                            setError(
+                              "Failed to add location. Please try again."
+                            );
                           }
                         }}
                       >
@@ -539,10 +552,10 @@ const ChallanForm = ({ onSave }) => {
                         const value = e.target.value;
                         if (value === "new") {
                           setShowNewLocationInput(true);
-                          setChallan(prev => ({ ...prev, location: "" }));
+                          setChallan((prev) => ({ ...prev, location: "" }));
                         } else {
                           setShowNewLocationInput(false);
-                          setChallan(prev => ({
+                          setChallan((prev) => ({
                             ...prev,
                             location: value,
                           }));
@@ -754,7 +767,7 @@ const ChallanForm = ({ onSave }) => {
         challan={{
           ...challan,
           dcNumber: getDcNumber(),
-          items: challan.items.map(item => ({
+          items: challan.items.map((item) => ({
             ...item,
             assetName: item.asset_name,
             serialNo: item.serial_no,

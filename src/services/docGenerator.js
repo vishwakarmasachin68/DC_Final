@@ -32,23 +32,23 @@ export const generateDoc = async (challan) => {
     // Prepare data for the document
     const items = challan.items.map((item) => ({
       SLNo: item.sno,
-      asset: item.assetName,
+      asset: item.asset_name,
       desc: item.description,
       qty: item.quantity,
-      serial: item.serialNo,
+      serial: item.serial_no,
       return: item.returnable === "yes" ? "YES" : "NO",
       returnDate:
         item.returnable === "yes"
-          ? formatDateToReadable(item.expectedReturnDate)
+          ? formatDateToReadable(item.expected_return_date)
           : "N/A",
     }));
 
     // Set the template variables
     doc.setData({
-      DCNO: challan.dcNumber,
+      DCNO: challan.dc_number,
       Date: formatDateToReadable(challan.date),
       Name: challan.name,
-      Project: challan.projectName || "N/A",
+      Project: challan.project_name || "N/A",
       Client: challan.client,
       Location: challan.location,
       items: items,

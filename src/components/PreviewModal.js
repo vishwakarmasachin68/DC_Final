@@ -65,9 +65,9 @@ const PreviewModal = ({
                 <p>
                   <strong>Location:</strong> {locationName}
                 </p>
-                {challan.hasPO === "yes" && challan.poNumber && (
+                {challan.has_po === "yes" && challan.po_number && (
                   <p>
-                    <strong>PO Number:</strong> {challan.poNumber}
+                    <strong>PO Number:</strong> {challan.po_number}
                   </p>
                 )}
               </div>
@@ -106,10 +106,10 @@ const PreviewModal = ({
                 {challan.items.map((item, idx) => (
                   <tr key={idx}>
                     <td className="text-center">{item.sno}</td>
-                    <td>{item.assetName || "N/A"}</td>
+                    <td>{item.asset_name || "N/A"}</td>
                     <td>{item.description || "N/A"}</td>
                     <td className="text-center">{item.quantity || 1}</td>
-                    <td>{item.serialNo || "N/A"}</td>
+                    <td>{item.serial_no || "N/A"}</td>
                     <td className="text-center">
                       <Badge
                         bg={item.returnable === "yes" ? "success" : "secondary"}
@@ -120,7 +120,7 @@ const PreviewModal = ({
                     {challan.items.some((i) => i.returnable === "yes") && (
                       <td>
                         {item.returnable === "yes"
-                          ? formatDate(item.expectedReturnDate)
+                          ? formatDate(item.expected_return_date)
                           : "N/A"}
                       </td>
                     )}

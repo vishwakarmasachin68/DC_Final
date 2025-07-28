@@ -203,13 +203,13 @@ const ProjectForm = ({ onProjectUpdate }) => {
 
     try {
       await addClient(newClient.trim());
-      await loadData(); // reload everything
+      const clients = await getClients();
+      setClients(clients.map(c => c.name));
       setProject((prev) => ({ ...prev, client: newClient.trim() }));
       setShowNewClientInput(false);
       setNewClient("");
     } catch (err) {
-      console.error("Failed to save client:", err);
-      setError("Failed to save client. Please try again.");
+      setError("Failed to add client. Please try again.");
     }
   };
 
@@ -218,13 +218,13 @@ const ProjectForm = ({ onProjectUpdate }) => {
 
     try {
       await addLocation(newLocation.trim());
-      await loadData(); // reload everything
+      const locations = await getLocations();
+      setLocations(locations.map(l => l.name));
       setProject((prev) => ({ ...prev, location: newLocation.trim() }));
       setShowNewLocationInput(false);
       setNewLocation("");
     } catch (err) {
-      console.error("Failed to save location:", err);
-      setError("Failed to save location. Please try again.");
+      setError("Failed to add location. Please try again.");
     }
   };
 
@@ -235,7 +235,10 @@ const ProjectForm = ({ onProjectUpdate }) => {
       setProject((prev) => ({ ...prev, client: "" }));
     } else {
       setShowNewClientInput(false);
-      setProject((prev) => ({ ...prev, client: value }));
+      setProject((prev) => ({
+        ...prev,
+        client: value,
+      }));
     }
   };
 
@@ -246,7 +249,10 @@ const ProjectForm = ({ onProjectUpdate }) => {
       setProject((prev) => ({ ...prev, location: "" }));
     } else {
       setShowNewLocationInput(false);
-      setProject((prev) => ({ ...prev, location: value }));
+      setProject((prev) => ({
+        ...prev,
+        location: value,
+      }));
     }
   };
 
