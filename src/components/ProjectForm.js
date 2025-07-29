@@ -50,6 +50,7 @@ const ProjectForm = ({ onProjectUpdate }) => {
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [loading, setLoading] = useState(true);
 
+  const maxLength = Math.max(clients.length, locations.length);
   const loadData = async () => {
     try {
       setLoading(true);
@@ -588,7 +589,7 @@ const ProjectForm = ({ onProjectUpdate }) => {
                       <th>Client</th>
                       <th>Location</th>
                       <th>Project Lead / Person who is visiting</th>
-                      <th>Actions</th>
+                      <th style={{ width: "180px" }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -599,21 +600,23 @@ const ProjectForm = ({ onProjectUpdate }) => {
                         <td>{proj.location || "-"}</td>
                         <td>{proj.field_supervisor}</td>
                         <td>
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={() => loadProjectForEdit(proj.id)}
-                            className="me-2"
-                          >
-                            <i className="bi bi-pencil"></i> Edit
-                          </Button>
-                          <Button
-                            variant="outline-danger"
-                            size="sm"
-                            onClick={() => handleDeleteProject(proj.id)}
-                          >
-                            <i className="bi bi-trash"></i> Delete
-                          </Button>
+                          <div className="d-flex justify-content-between">
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={() => loadProjectForEdit(proj.id)}
+                              className="me-2"
+                            >
+                              <i className="bi bi-pencil"></i> Edit
+                            </Button>
+                            <Button
+                              variant="outline-danger"
+                              size="sm"
+                              onClick={() => handleDeleteProject(proj.id)}
+                            >
+                              <i className="bi bi-trash"></i> Delete
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -623,8 +626,9 @@ const ProjectForm = ({ onProjectUpdate }) => {
             </Card.Body>
           </Card>
         </Col>
-
-        <Col>
+        
+      </Row>
+      <Col>
           <Card className="mb-4 form-card">
             <Card.Header className="card-header-custom text-white">
               <h5 className="card-title">
@@ -633,68 +637,73 @@ const ProjectForm = ({ onProjectUpdate }) => {
               </h5>
             </Card.Header>
             <Card.Body>
-              <Row>
-                <Col md={6}>
-                  <h6>Clients</h6>
-                  {clients.length > 0 ? (
-                    <ul className="list-unstyled">
-                      {clients.map((client, index) => (
-                        <li
-                          key={index}
-                          className="mb-2 d-flex justify-content-between align-items-center"
-                        >
-                          <span>
-                            <i className="bi bi-person-fill me-2"></i>
-                            {client}
-                          </span>
-                          <Button
-                            variant="outline-danger"
-                            size="sm"
-                            onClick={() => handleDeleteClient(client)}
-                          >
-                            <i className="bi bi-trash"></i>
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
+              <Table striped bordered hover>
+                <thead>
+                  <tr>
+                    <th width="50%">Clients</th>
+                    <th width="50%">Locations</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {maxLength > 0 ? (
+                    Array.from({ length: maxLength }).map((_, index) => (
+                      <tr key={index}>
+                        <td>
+                          {index < clients.length ? (
+                            <div className="d-flex justify-content-between align-items-center">
+                              <span>
+                                <i className="bi bi-person-fill me-2"></i>
+                                {clients[index]}
+                              </span>
+                              <Button
+                                variant="outline-danger"
+                                size="sm"
+                                onClick={() =>
+                                  handleDeleteClient(clients[index])
+                                }
+                              >
+                                <i className="bi bi-trash"></i> Delete
+                              </Button>
+                            </div>
+                          ) : null}
+                        </td>
+                        <td>
+                          {index < locations.length ? (
+                            <div className="d-flex justify-content-between align-items-center">
+                              <span>
+                                <i className="bi bi-geo-alt-fill me-2"></i>
+                                {locations[index]}
+                              </span>
+                              <Button
+                                variant="outline-danger"
+                                size="sm"
+                                onClick={() =>
+                                  handleDeleteLocation(locations[index])
+                                }
+                              >
+                                <i className="bi bi-trash"></i> Delete
+                              </Button>
+                            </div>
+                          ) : null}
+                        </td>
+                      </tr>
+                    ))
                   ) : (
-                    <p>No clients found.</p>
+                    <tr>
+                      <td colSpan={2} className="text-center py-4">
+                        <i
+                          className="bi bi-folder-x"
+                          style={{ fontSize: "2rem", color: "#6c757d" }}
+                        ></i>
+                        <p className="mt-2">No clients or locations found</p>
+                      </td>
+                    </tr>
                   )}
-                </Col>
-
-                <Col md={6}>
-                  <h6>Locations</h6>
-                  {locations.length > 0 ? (
-                    <ul className="list-unstyled">
-                      {locations.map((location, index) => (
-                        <li
-                          key={index}
-                          className="mb-2 d-flex justify-content-between align-items-center"
-                        >
-                          <span>
-                            <i className="bi bi-geo-alt-fill me-2"></i>
-                            {location}
-                          </span>
-                          <Button
-                            variant="outline-danger"
-                            size="sm"
-                            onClick={() => handleDeleteLocation(location)}
-                          >
-                            {/* <i className="bi bi-x-lg"></i> */}
-                            <i className="bi bi-trash"></i>
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p>No locations found.</p>
-                  )}
-                </Col>
-              </Row>
+                </tbody>
+              </Table>
             </Card.Body>
           </Card>
         </Col>
-      </Row>
     </Container>
   );
 };
