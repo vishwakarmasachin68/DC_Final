@@ -434,7 +434,7 @@ body {
 .custom-toast-container {
   position: fixed;
   top: 8rem;
-  left: 10%;
+  left: 40%;
   z-index: 9999;
 }
 @media screen and (max-width: 1180px) {

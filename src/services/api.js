@@ -53,6 +53,14 @@ export async function addChallan(challan) {
   });
 }
 
+export async function deleteClient(clientName) {
+  return fetchAPI(`/clients/${encodeURIComponent(clientName)}`, "DELETE");
+}
+
+export async function deleteLocation(locationName) {
+  return fetchAPI(`/locations/${encodeURIComponent(locationName)}`, "DELETE");
+}
+
 export async function deleteChallan(id) {
   return fetchAPI(`/challans/${id}/`, "DELETE");
 }
