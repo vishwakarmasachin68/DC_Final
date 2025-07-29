@@ -1,7 +1,5 @@
-// src/services/api.js
-const API = "http://localhost:8000"; // Change if backend runs elsewhere
+const API = "http://localhost:8000";
 
-// Helper function for API calls
 async function fetchAPI(endpoint, method = "GET", body = null) {
   const options = {
     method,
@@ -53,19 +51,17 @@ export async function addChallan(challan) {
   });
 }
 
-export async function deleteClient(clientName) {
-  return fetchAPI(`/clients/${encodeURIComponent(clientName)}`, "DELETE");
-}
-
-export async function deleteLocation(locationName) {
-  return fetchAPI(`/locations/${encodeURIComponent(locationName)}`, "DELETE");
-}
-
 export async function deleteChallan(id) {
   return fetchAPI(`/challans/${id}/`, "DELETE");
 }
 
-// Other endpoints remain the same...
+export async function markItemAsReturned(itemId, returnedDate = new Date().toISOString().split('T')[0]) {
+  return fetchAPI(`/challan-items/${itemId}/return`, "PUT", {
+    returned_date: returnedDate
+  });
+}
+
+// Client endpoints
 export async function getClients() {
   return fetchAPI("/clients/");
 }
@@ -74,6 +70,11 @@ export async function addClient(name) {
   return fetchAPI("/clients/", "POST", { name });
 }
 
+export async function deleteClient(clientName) {
+  return fetchAPI(`/clients/${encodeURIComponent(clientName)}`, "DELETE");
+}
+
+// Location endpoints
 export async function getLocations() {
   return fetchAPI("/locations/");
 }
@@ -82,6 +83,11 @@ export async function addLocation(name) {
   return fetchAPI("/locations/", "POST", { name });
 }
 
+export async function deleteLocation(locationName) {
+  return fetchAPI(`/locations/${encodeURIComponent(locationName)}`, "DELETE");
+}
+
+// Project endpoints
 export async function getProjects() {
   return fetchAPI("/projects/");
 }

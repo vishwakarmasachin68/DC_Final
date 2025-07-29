@@ -27,7 +27,7 @@ const PreviewModal = ({
     <Modal
       show={show}
       onHide={onHide}
-      size="lg"
+      size="xl"
       centered
       className="preview-modal"
       backdrop="static"

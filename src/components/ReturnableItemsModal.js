@@ -28,7 +28,7 @@ import {
   BiListUl,
   BiInfoCircle,
 } from "react-icons/bi";
-// import { getChallans } from "../services/api";
+import { markItemAsReturned } from "../services/api";
 
 const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
   const [loading, setLoading] = useState(false);
@@ -176,8 +176,7 @@ const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
     setSuccess(null);
 
     try {
-      // In a real implementation, you would call an API endpoint to update the item
-      // For now, we'll just refresh the data
+      await markItemAsReturned(item.id);
       await refreshData();
       setSuccess(`${item.asset_name} marked as returned successfully!`);
       setConfirmReturn(null);
