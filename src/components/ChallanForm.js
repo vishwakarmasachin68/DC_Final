@@ -241,13 +241,14 @@ const ChallanForm = ({ onSave }) => {
           quantity: item.quantity,
           serial_no: item.serial_no,
           returnable: item.returnable,
-          expected_return_date: item.returnable === "yes" ? item.expected_return_date : null,
+          expected_return_date:
+            item.returnable === "yes" ? item.expected_return_date : null,
         })),
       };
 
       // Save to backend
       const savedChallan = await addChallan(challanData);
-      
+
       if (onSave) onSave(savedChallan);
 
       const newSequence = String(parseInt(nextSequence) + 1).padStart(3, "0");

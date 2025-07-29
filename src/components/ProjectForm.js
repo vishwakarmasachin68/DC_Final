@@ -80,29 +80,39 @@ const ProjectForm = ({ onProjectUpdate }) => {
     setError(null);
   };
   const handleDeleteClient = async (clientToDelete) => {
-  if (!window.confirm(`Are you sure you want to delete client "${clientToDelete}"?`)) return;
+    if (
+      !window.confirm(
+        `Are you sure you want to delete client "${clientToDelete}"?`
+      )
+    )
+      return;
 
-  try {
-    await deleteClient(clientToDelete); // Backend call
-    const updatedClients = await getClients(); // Refresh list
-    setClients(updatedClients.map((c) => c.name));
-  } catch (err) {
-    console.error("Failed to delete client:", err);
-    setError("Failed to delete client. Please try again.");
-  }
-};
+    try {
+      await deleteClient(clientToDelete); // Backend call
+      const updatedClients = await getClients(); // Refresh list
+      setClients(updatedClients.map((c) => c.name));
+    } catch (err) {
+      console.error("Failed to delete client:", err);
+      setError("Failed to delete client. Please try again.");
+    }
+  };
 
   const handleDeleteLocation = async (locationToDelete) => {
-  if (!window.confirm(`Are you sure you want to delete location "${locationToDelete}"?`)) return;
-  try {
-    await deleteLocation(locationToDelete); // Backend call
-    const updatedLocations = await getLocations(); // Refresh list
-    setLocations(updatedLocations.map((l) => l.name));
-  } catch (err) {
-    console.error("Failed to delete location:", err);
-    setError("Failed to delete location. Please try again.");
-  }
-};
+    if (
+      !window.confirm(
+        `Are you sure you want to delete location "${locationToDelete}"?`
+      )
+    )
+      return;
+    try {
+      await deleteLocation(locationToDelete); // Backend call
+      const updatedLocations = await getLocations(); // Refresh list
+      setLocations(updatedLocations.map((l) => l.name));
+    } catch (err) {
+      console.error("Failed to delete location:", err);
+      setError("Failed to delete location. Please try again.");
+    }
+  };
 
   const handlePersonChange = (index, value) => {
     const currentPersons = JSON.parse(project.persons_involved);
@@ -545,116 +555,149 @@ const ProjectForm = ({ onProjectUpdate }) => {
         </Card.Body>
       </Card>
       <Row className="mb-4">
-  <Col>
-    <Card className="mb-4 form-card">
-      <Card.Header className="card-header-custom text-white">
-        <h5 className="card-title">
-          <i className="bi bi-list-check me-2"></i>
-          Existing Projects
-        </h5>
-      </Card.Header>
-      <Card.Body>
-        {loading ? (
-          <div className="text-center py-4">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-          </div>
-        ) : projectsList.length === 0 ? (
-          <div className="text-center py-4">
-            <i className="bi bi-folder-x" style={{ fontSize: "3rem", color: "#6c757d" }}></i>
-            <p className="mt-3">No projects found. Create your first project!</p>
-          </div>
-        ) : (
-          <Table striped bordered hover>
-            <thead>
-              <tr>
-                <th>Project Name</th>
-                <th>Client</th>
-                <th>Location</th>
-                <th>Project Lead / Person who is visiting</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {projectsList.map((proj) => (
-                <tr key={proj.id}>
-                  <td>{proj.project_name}</td>
-                  <td>{proj.client || "-"}</td>
-                  <td>{proj.location || "-"}</td>
-                  <td>{proj.field_supervisor}</td>
-                  <td>
-                    <Button variant="primary" size="sm" onClick={() => loadProjectForEdit(proj.id)} className="me-2">
-                      <i className="bi bi-pencil"></i> Edit
-                    </Button>
-                    <Button variant="outline-danger" size="sm" onClick={() => handleDeleteProject(proj.id)}>
-                      <i className="bi bi-trash"></i> Delete
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        )}
-      </Card.Body>
-    </Card>
-  </Col>
+        <Col>
+          <Card className="mb-4 form-card">
+            <Card.Header className="card-header-custom text-white">
+              <h5 className="card-title">
+                <i className="bi bi-list-check me-2"></i>
+                Existing Projects
+              </h5>
+            </Card.Header>
+            <Card.Body>
+              {loading ? (
+                <div className="text-center py-4">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                </div>
+              ) : projectsList.length === 0 ? (
+                <div className="text-center py-4">
+                  <i
+                    className="bi bi-folder-x"
+                    style={{ fontSize: "3rem", color: "#6c757d" }}
+                  ></i>
+                  <p className="mt-3">
+                    No projects found. Create your first project!
+                  </p>
+                </div>
+              ) : (
+                <Table striped bordered hover>
+                  <thead>
+                    <tr>
+                      <th>Project Name</th>
+                      <th>Client</th>
+                      <th>Location</th>
+                      <th>Project Lead / Person who is visiting</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {projectsList.map((proj) => (
+                      <tr key={proj.id}>
+                        <td>{proj.project_name}</td>
+                        <td>{proj.client || "-"}</td>
+                        <td>{proj.location || "-"}</td>
+                        <td>{proj.field_supervisor}</td>
+                        <td>
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => loadProjectForEdit(proj.id)}
+                            className="me-2"
+                          >
+                            <i className="bi bi-pencil"></i> Edit
+                          </Button>
+                          <Button
+                            variant="outline-danger"
+                            size="sm"
+                            onClick={() => handleDeleteProject(proj.id)}
+                          >
+                            <i className="bi bi-trash"></i> Delete
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
 
-  <Col>
-    <Card className="mb-4 form-card">
-      <Card.Header className="card-header-custom text-white">
-        <h5 className="card-title">
-          <i className="bi bi-people-fill me-2"></i>
-          Existing Clients and Locations
-        </h5>
-      </Card.Header>
-      <Card.Body>
-        <Row>
-          <Col md={6}>
-            <h6>Clients</h6>
-            {clients.length > 0 ? (
-              <ul className="list-unstyled">
-                {clients.map((client, index) => (
-                  <li key={index} className="mb-2 d-flex justify-content-between align-items-center">
-                    <span><i className="bi bi-person-fill me-2"></i>{client}</span>
-                    <Button variant="outline-danger" size="sm" onClick={() => handleDeleteClient(client)}>
-                      {/* <i className="bi bi-x-lg"></i> */}
-                      <i className="bi bi-trash"></i>
-                      {/* <BiTrash /> */}
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>No clients found.</p>
-            )}
-          </Col>
+        <Col>
+          <Card className="mb-4 form-card">
+            <Card.Header className="card-header-custom text-white">
+              <h5 className="card-title">
+                <i className="bi bi-people-fill me-2"></i>
+                Existing Clients and Locations
+              </h5>
+            </Card.Header>
+            <Card.Body>
+              <Row>
+                <Col md={6}>
+                  <h6>Clients</h6>
+                  {clients.length > 0 ? (
+                    <ul className="list-unstyled">
+                      {clients.map((client, index) => (
+                        <li
+                          key={index}
+                          className="mb-2 d-flex justify-content-between align-items-center"
+                        >
+                          <span>
+                            <i className="bi bi-person-fill me-2"></i>
+                            {client}
+                          </span>
+                          <Button
+                            variant="outline-danger"
+                            size="sm"
+                            onClick={() => handleDeleteClient(client)}
+                          >
+                            {/* <i className="bi bi-x-lg"></i> */}
+                            <i className="bi bi-trash"></i>
+                            {/* <BiTrash /> */}
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>No clients found.</p>
+                  )}
+                </Col>
 
-          <Col md={6}>
-            <h6>Locations</h6>
-            {locations.length > 0 ? (
-              <ul className="list-unstyled">
-                {locations.map((location, index) => (
-                  <li key={index} className="mb-2 d-flex justify-content-between align-items-center">
-                    <span><i className="bi bi-geo-alt-fill me-2"></i>{location}</span>
-                    <Button variant="outline-danger" size="sm" onClick={() => handleDeleteLocation(location)}>
-                      {/* <i className="bi bi-x-lg"></i> */}
-                      <i className="bi bi-trash"></i>
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>No locations found.</p>
-            )}
-          </Col>
-        </Row>
-      </Card.Body>
-    </Card>
-  </Col>
-</Row>
-
-    </Container>  
+                <Col md={6}>
+                  <h6>Locations</h6>
+                  {locations.length > 0 ? (
+                    <ul className="list-unstyled">
+                      {locations.map((location, index) => (
+                        <li
+                          key={index}
+                          className="mb-2 d-flex justify-content-between align-items-center"
+                        >
+                          <span>
+                            <i className="bi bi-geo-alt-fill me-2"></i>
+                            {location}
+                          </span>
+                          <Button
+                            variant="outline-danger"
+                            size="sm"
+                            onClick={() => handleDeleteLocation(location)}
+                          >
+                            {/* <i className="bi bi-x-lg"></i> */}
+                            <i className="bi bi-trash"></i>
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>No locations found.</p>
+                  )}
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+    </Container>
   );
 };
 

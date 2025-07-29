@@ -84,7 +84,7 @@ const DataView = () => {
       setLoading(true);
       const [loadedChallans, loadedProjects] = await Promise.all([
         getChallans(),
-        getProjects()
+        getProjects(),
       ]);
 
       setChallans(loadedChallans);
@@ -99,7 +99,9 @@ const DataView = () => {
 
         if (currentChallan || loadedChallans[0]) {
           const project = loadedProjects.find(
-            (p) => p.project_name === (currentChallan || loadedChallans[0]).project_name
+            (p) =>
+              p.project_name ===
+              (currentChallan || loadedChallans[0]).project_name
           );
           setSelectedProject(project || null);
         }
@@ -234,7 +236,33 @@ const DataView = () => {
   const handleDownloadChallan = async (challan) => {
     try {
       setDownloading(true);
-      await generateDoc(challan);
+
+      // Prepare the challan data in the format expected by generateDoc
+      const challanData = {
+        dc_number: challan.dc_number,
+        dc_sequence: challan.dc_sequence,
+        date: challan.date,
+        name: challan.name,
+        project_id: challan.project_id,
+        project_name: challan.project_name,
+        client: challan.client,
+        location: challan.location,
+        has_po: challan.has_po,
+        po_number: challan.po_number,
+        items: challan.items.map((item) => ({
+          sno: item.sno,
+          asset_name: item.asset_name,
+          description: item.description,
+          quantity: item.quantity,
+          serial_no: item.serial_no,
+          returnable: item.returnable,
+          expected_return_date: item.expected_return_date,
+          returned_date: item.returned_date,
+        })),
+        dcNumber: challan.dc_number, // Add dcNumber for doc generator
+      };
+
+      await generateDoc(challanData);
       setDownloading(false);
       setShowDownloadModal(false);
     } catch (err) {
@@ -531,9 +559,7 @@ const DataView = () => {
                           key={index}
                           eventKey={index.toString()}
                           onClick={() => setSelectedChallan(challan)}
-                          active={
-                            selectedChallan?.id === challan.id
-                          }
+                          active={selectedChallan?.id === challan.id}
                         >
                           <Accordion.Header>
                             <div className="d-flex justify-content-between w-100">
@@ -696,9 +722,7 @@ const DataView = () => {
                         <Col md={3}>
                           <div>
                             <h6>PO Number</h6>
-                            <p>
-                              {selectedChallan.po_number || "-"}
-                            </p>
+                            <p>{selectedChallan.po_number || "-"}</p>
                           </div>
                         </Col>
                         <Col md={3}>
@@ -749,13 +773,13 @@ const DataView = () => {
                                 </Card.Header>
                                 <Card.Body>
                                   <ListGroup variant="flush">
-                                    {JSON.parse(selectedProject.persons_involved).map(
-                                      (person, index) => (
-                                        <ListGroup.Item key={index}>
-                                          {person || `Team member ${index + 1}`}
-                                        </ListGroup.Item>
-                                      )
-                                    )}
+                                    {JSON.parse(
+                                      selectedProject.persons_involved
+                                    ).map((person, index) => (
+                                      <ListGroup.Item key={index}>
+                                        {person || `Team member ${index + 1}`}
+                                      </ListGroup.Item>
+                                    ))}
                                   </ListGroup>
                                 </Card.Body>
                               </Card>

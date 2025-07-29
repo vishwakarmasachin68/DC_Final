@@ -32,23 +32,23 @@ export const generateDoc = async (challan) => {
     // Prepare data for the document
     const items = challan.items.map((item) => ({
       SLNo: item.sno,
-      asset: item.asset_name,
+      asset: item.asset_name || item.assetName,
       desc: item.description,
       qty: item.quantity,
-      serial: item.serial_no,
+      serial: item.serial_no || item.serialNo,
       return: item.returnable === "yes" ? "YES" : "NO",
       returnDate:
         item.returnable === "yes"
-          ? formatDateToReadable(item.expected_return_date)
+          ? formatDateToReadable(item.expected_return_date || item.expectedReturnDate)
           : "N/A",
     }));
 
     // Set the template variables
     doc.setData({
-      DCNO: challan.dc_number,
+      DCNO: challan.dc_number || challan.dcNumber,
       Date: formatDateToReadable(challan.date),
       Name: challan.name,
-      Project: challan.project_name || "N/A",
+      Project: challan.project_name || challan.projectName || "N/A",
       Client: challan.client,
       Location: challan.location,
       items: items,
@@ -71,7 +71,7 @@ export const generateDoc = async (challan) => {
     // Save the document
     saveAs(
       blob,
-      `Delivery_Challan_${challan.dcNumber.replace(/\//g, "_")}.docx`
+      `Delivery_Challan_${(challan.dc_number || challan.dcNumber).replace(/\//g, "_")}.docx`
     );
 
     return { success: true };

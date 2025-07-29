@@ -28,7 +28,7 @@ import {
   BiListUl,
   BiInfoCircle,
 } from "react-icons/bi";
-import { getChallans } from "../services/api";
+// import { getChallans } from "../services/api";
 
 const ReturnableItemsModal = ({ show, onHide, challans, refreshData }) => {
   const [loading, setLoading] = useState(false);
