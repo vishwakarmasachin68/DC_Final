@@ -652,9 +652,7 @@ const ProjectForm = ({ onProjectUpdate }) => {
                             size="sm"
                             onClick={() => handleDeleteClient(client)}
                           >
-                            {/* <i className="bi bi-x-lg"></i> */}
                             <i className="bi bi-trash"></i>
-                            {/* <BiTrash /> */}
                           </Button>
                         </li>
                       ))}
