@@ -1,4 +1,5 @@
 const API = "http://localhost:8000";
+// const API = "https://backend-final-dc-2.onrender.com";
 
 async function fetchAPI(endpoint, method = "GET", body = null) {
   const options = {
@@ -14,11 +15,21 @@ async function fetchAPI(endpoint, method = "GET", body = null) {
 
   const response = await fetch(`${API}${endpoint}`, options);
 
+  let errorData = {};
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const errorMessage = errorData.message || response.statusText;
-    throw new Error(`API request failed: ${errorMessage}`);
+    try {
+      errorData = await response.json();
+    } catch (e) {
+      errorData = { detail: response.statusText };
+    }
+
+    // Throw a custom error object
+    throw {
+      status: response.status,
+      detail: errorData.detail || "Unknown error occurred",
+    };
   }
+
   return await response.json();
 }
 
@@ -55,9 +66,12 @@ export async function deleteChallan(id) {
   return fetchAPI(`/challans/${id}/`, "DELETE");
 }
 
-export async function markItemAsReturned(itemId, returnedDate = new Date().toISOString().split('T')[0]) {
+export async function markItemAsReturned(
+  itemId,
+  returnedDate = new Date().toISOString().split("T")[0]
+) {
   return fetchAPI(`/challan-items/${itemId}/return`, "PUT", {
-    returned_date: returnedDate
+    returned_date: returnedDate,
   });
 }
 

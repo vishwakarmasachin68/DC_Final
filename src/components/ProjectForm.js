@@ -245,8 +245,13 @@ const ProjectForm = ({ onProjectUpdate }) => {
       setProject((prev) => ({ ...prev, client: newClient.trim() }));
       setShowNewClientInput(false);
       setNewClient("");
+      setError(""); // clear any previous error
     } catch (err) {
-      setError("Failed to add client. Please try again.");
+      if (err.status === 400 && err.detail === "Client already exists") {
+        setError("Client already exists. Please enter a new Client.");
+      } else {
+        setError("Failed to add client. Please try again.");
+      }
     }
   };
 
@@ -261,7 +266,11 @@ const ProjectForm = ({ onProjectUpdate }) => {
       setShowNewLocationInput(false);
       setNewLocation("");
     } catch (err) {
-      setError("Failed to add location. Please try again.");
+      if (err.status === 400 && err.detail === "Location already exists") {
+        setError("Location already exists. Please enter a new Location.");
+      } else {
+        setError("Failed to add location. Please try again.");
+      }
     }
   };
 
@@ -626,84 +635,81 @@ const ProjectForm = ({ onProjectUpdate }) => {
             </Card.Body>
           </Card>
         </Col>
-        
       </Row>
       <Col>
-          <Card className="mb-4 form-card">
-            <Card.Header className="card-header-custom text-white">
-              <h5 className="card-title">
-                <i className="bi bi-people-fill me-2"></i>
-                Existing Clients and Locations
-              </h5>
-            </Card.Header>
-            <Card.Body>
-              <Table striped bordered hover>
-                <thead>
-                  <tr>
-                    <th width="50%">Clients</th>
-                    <th width="50%">Locations</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {maxLength > 0 ? (
-                    Array.from({ length: maxLength }).map((_, index) => (
-                      <tr key={index}>
-                        <td>
-                          {index < clients.length ? (
-                            <div className="d-flex justify-content-between align-items-center">
-                              <span>
-                                <i className="bi bi-person-fill me-2"></i>
-                                {clients[index]}
-                              </span>
-                              <Button
-                                variant="outline-danger"
-                                size="sm"
-                                onClick={() =>
-                                  handleDeleteClient(clients[index])
-                                }
-                              >
-                                <i className="bi bi-trash"></i> Delete
-                              </Button>
-                            </div>
-                          ) : null}
-                        </td>
-                        <td>
-                          {index < locations.length ? (
-                            <div className="d-flex justify-content-between align-items-center">
-                              <span>
-                                <i className="bi bi-geo-alt-fill me-2"></i>
-                                {locations[index]}
-                              </span>
-                              <Button
-                                variant="outline-danger"
-                                size="sm"
-                                onClick={() =>
-                                  handleDeleteLocation(locations[index])
-                                }
-                              >
-                                <i className="bi bi-trash"></i> Delete
-                              </Button>
-                            </div>
-                          ) : null}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={2} className="text-center py-4">
-                        <i
-                          className="bi bi-folder-x"
-                          style={{ fontSize: "2rem", color: "#6c757d" }}
-                        ></i>
-                        <p className="mt-2">No clients or locations found</p>
+        <Card className="mb-4 form-card">
+          <Card.Header className="card-header-custom text-white">
+            <h5 className="card-title">
+              <i className="bi bi-people-fill me-2"></i>
+              Existing Clients and Locations
+            </h5>
+          </Card.Header>
+          <Card.Body>
+            <Table striped bordered hover>
+              <thead>
+                <tr>
+                  <th width="50%">Clients</th>
+                  <th width="50%">Locations</th>
+                </tr>
+              </thead>
+              <tbody>
+                {maxLength > 0 ? (
+                  Array.from({ length: maxLength }).map((_, index) => (
+                    <tr key={index}>
+                      <td>
+                        {index < clients.length ? (
+                          <div className="d-flex justify-content-between align-items-center">
+                            <span>
+                              <i className="bi bi-person-fill me-2"></i>
+                              {clients[index]}
+                            </span>
+                            <Button
+                              variant="outline-danger"
+                              size="sm"
+                              onClick={() => handleDeleteClient(clients[index])}
+                            >
+                              <i className="bi bi-trash"></i> Delete
+                            </Button>
+                          </div>
+                        ) : null}
+                      </td>
+                      <td>
+                        {index < locations.length ? (
+                          <div className="d-flex justify-content-between align-items-center">
+                            <span>
+                              <i className="bi bi-geo-alt-fill me-2"></i>
+                              {locations[index]}
+                            </span>
+                            <Button
+                              variant="outline-danger"
+                              size="sm"
+                              onClick={() =>
+                                handleDeleteLocation(locations[index])
+                              }
+                            >
+                              <i className="bi bi-trash"></i> Delete
+                            </Button>
+                          </div>
+                        ) : null}
                       </td>
                     </tr>
-                  )}
-                </tbody>
-              </Table>
-            </Card.Body>
-          </Card>
-        </Col>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={2} className="text-center py-4">
+                      <i
+                        className="bi bi-folder-x"
+                        style={{ fontSize: "2rem", color: "#6c757d" }}
+                      ></i>
+                      <p className="mt-2">No clients or locations found</p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </Table>
+          </Card.Body>
+        </Card>
+      </Col>
     </Container>
   );
 };
