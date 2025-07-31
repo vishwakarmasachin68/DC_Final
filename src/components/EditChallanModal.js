@@ -5,14 +5,11 @@ import {
   Form,
   Row,
   Col,
-  InputGroup,
   Table,
   Spinner,
   Alert,
-  Badge,
 } from "react-bootstrap";
-import { Link } from "react-router-dom";
-import { BiCalendar, BiTrash, BiPlus, BiMinus } from "react-icons/bi";
+import {  BiPlus, BiMinus } from "react-icons/bi";
 import { getProjects, getClients, getLocations } from "../services/api";
 
 const EditChallanModal = ({

@@ -13,11 +13,13 @@ import {
   InputGroup,
   Form,
   Alert,
-  ListGroup,
   Modal,
   Toast,
   ToastContainer,
+  OverlayTrigger,
+  Tooltip,
 } from "react-bootstrap";
+
 import {
   BiBarChartAlt2,
   BiPieChartAlt,
@@ -33,10 +35,15 @@ import {
   BiEdit,
 } from "react-icons/bi";
 import Chart from "react-apexcharts";
-import { getChallans, deleteChallan, getProjects, updateChallan } from "../services/api";
+import {
+  getChallans,
+  deleteChallan,
+  getProjects,
+  updateChallan,
+} from "../services/api";
 import ReturnableItemsModal from "./ReturnableItemsModal";
 import { generateDoc } from "../services/docGenerator";
-import { differenceInDays, parseISO, isAfter, isValid } from "date-fns";
+import { differenceInDays, parseISO, isValid } from "date-fns";
 import EditChallanModal from "./EditChallanModal";
 
 const DataView = () => {
@@ -136,16 +143,16 @@ const DataView = () => {
     try {
       setLoading(true);
       await updateChallan(selectedChallan.id, updatedChallan);
-      
+
       // Update the challan in the list while maintaining original order
-      const updatedChallans = originalChallans.map(challan => 
+      const updatedChallans = originalChallans.map((challan) =>
         challan.id === selectedChallan.id ? updatedChallan : challan
       );
-      
+
       setChallans(updatedChallans);
       setOriginalChallans(updatedChallans);
       setSelectedChallan(updatedChallan);
-      
+
       setLoading(false);
       setShowEditModal(false);
     } catch (err) {
@@ -193,14 +200,6 @@ const DataView = () => {
       setShowNotification(true);
       setTimeout(() => setShowNotification(false), 5000);
     }
-  };
-
-  const handleSort = (key) => {
-    let direction = "asc";
-    if (sortConfig.key === key && sortConfig.direction === "asc") {
-      direction = "desc";
-    }
-    setSortConfig({ key, direction });
   };
 
   const sortedChallans = [...challans].sort((a, b) => {
@@ -462,7 +461,6 @@ const DataView = () => {
             Challan Analytics Dashboard
           </h2>
         </Col>
-        
       </Row>
 
       <Card className="mb-4">
@@ -584,38 +582,71 @@ const DataView = () => {
                                 </div>
                               </div>
                               <div className="d-flex gap-1">
-                                <Button
-                                  variant="outline-primary"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedChallan(challan);
-                                    setShowEditModal(true);
-                                  }}
+                                <OverlayTrigger
+                                  placement="top"
+                                  overlay={
+                                    <Tooltip id={`tooltip-edit-${challan.id}`}>
+                                      Edit Challan
+                                    </Tooltip>
+                                  }
                                 >
-                                  <BiEdit size={16} />
-                                </Button>
-                                <Button
-                                  variant="outline-success"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedChallan(challan);
-                                    setShowDownloadModal(true);
-                                  }}
+                                  <Button
+                                    variant="outline-primary"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedChallan(challan);
+                                      setShowEditModal(true);
+                                    }}
+                                  >
+                                    <BiEdit size={16} />
+                                  </Button>
+                                </OverlayTrigger>
+
+                                <OverlayTrigger
+                                  placement="top"
+                                  overlay={
+                                    <Tooltip
+                                      id={`tooltip-download-${challan.id}`}
+                                    >
+                                      Download Challan
+                                    </Tooltip>
+                                  }
                                 >
-                                  <BiDownload size={16} />
-                                </Button>
-                                <Button
-                                  variant="outline-danger"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteChallan(challan.id);
-                                  }}
+                                  <Button
+                                    variant="outline-success"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedChallan(challan);
+                                      setShowDownloadModal(true);
+                                    }}
+                                  >
+                                    <BiDownload size={16} />
+                                  </Button>
+                                </OverlayTrigger>
+
+                                <OverlayTrigger
+                                  placement="top"
+                                  overlay={
+                                    <Tooltip
+                                      id={`tooltip-delete-${challan.id}`}
+                                    >
+                                      Delete Challan
+                                    </Tooltip>
+                                  }
                                 >
-                                  <BiTrash size={16} />
-                                </Button>
+                                  <Button
+                                    variant="outline-danger"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteChallan(challan.id);
+                                    }}
+                                  >
+                                    <BiTrash size={16} />
+                                  </Button>
+                                </OverlayTrigger>
                               </div>
                             </div>
                           </Accordion.Body>
@@ -1035,7 +1066,7 @@ const DataView = () => {
         onHide={() => setShowReturnableModal(false)}
         challans={filteredChallans}
       />
-      
+
       <EditChallanModal
         show={showEditModal}
         onHide={() => setShowEditModal(false)}
