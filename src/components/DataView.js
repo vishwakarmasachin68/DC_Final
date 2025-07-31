@@ -31,7 +31,6 @@ import {
   BiError,
   BiTime,
   BiEdit,
-  BiRefresh,
 } from "react-icons/bi";
 import Chart from "react-apexcharts";
 import { getChallans, deleteChallan, getProjects, updateChallan } from "../services/api";
@@ -59,6 +58,7 @@ const DataView = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [challans, setChallans] = useState([]);
+  const [originalChallans, setOriginalChallans] = useState([]); // To maintain original order
   const [error, setError] = useState(null);
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -86,12 +86,6 @@ const DataView = () => {
     }
   };
 
-  const handleRefresh = async () => {
-    setLoading(true);
-    await loadData();
-    setLoading(false);
-  };
-
   const loadData = async () => {
     try {
       setLoading(true);
@@ -100,21 +94,27 @@ const DataView = () => {
         getProjects(),
       ]);
 
-      setChallans(loadedChallans);
+      // Sort challans by dc_sequence to maintain order
+      const sortedChallans = [...loadedChallans].sort((a, b) => {
+        return a.dc_sequence - b.dc_sequence;
+      });
+
+      setChallans(sortedChallans);
+      setOriginalChallans(sortedChallans); // Store original order
       setProjects(loadedProjects);
 
-      if (loadedChallans.length > 0) {
+      if (sortedChallans.length > 0) {
         const currentChallan = selectedChallan
-          ? loadedChallans.find((c) => c.id === selectedChallan.id)
+          ? sortedChallans.find((c) => c.id === selectedChallan.id)
           : null;
 
-        setSelectedChallan(currentChallan || loadedChallans[0]);
+        setSelectedChallan(currentChallan || sortedChallans[0]);
 
-        if (currentChallan || loadedChallans[0]) {
+        if (currentChallan || sortedChallans[0]) {
           const project = loadedProjects.find(
             (p) =>
               p.project_name ===
-              (currentChallan || loadedChallans[0]).project_name
+              (currentChallan || sortedChallans[0]).project_name
           );
           setSelectedProject(project || null);
         }
@@ -123,7 +123,7 @@ const DataView = () => {
         setSelectedProject(null);
       }
 
-      checkReturnableItems(loadedChallans);
+      checkReturnableItems(sortedChallans);
       setLoading(false);
     } catch (err) {
       console.error("Failed to load data:", err);
@@ -135,8 +135,17 @@ const DataView = () => {
   const handleSaveChallan = async (updatedChallan) => {
     try {
       setLoading(true);
-      const response = await updateChallan(selectedChallan.id, updatedChallan);
-      await loadData(); // Refresh the data
+      await updateChallan(selectedChallan.id, updatedChallan);
+      
+      // Update the challan in the list while maintaining original order
+      const updatedChallans = originalChallans.map(challan => 
+        challan.id === selectedChallan.id ? updatedChallan : challan
+      );
+      
+      setChallans(updatedChallans);
+      setOriginalChallans(updatedChallans);
+      setSelectedChallan(updatedChallan);
+      
       setLoading(false);
       setShowEditModal(false);
     } catch (err) {
@@ -453,17 +462,7 @@ const DataView = () => {
             Challan Analytics Dashboard
           </h2>
         </Col>
-        <Col md={6} className="d-flex justify-content-end">
-          <Button
-            variant="outline-primary"
-            onClick={handleRefresh}
-            disabled={loading}
-            className="d-flex align-items-center"
-          >
-            <BiRefresh className="me-1" />
-            Refresh Data
-          </Button>
-        </Col>
+        
       </Row>
 
       <Card className="mb-4">
@@ -1035,7 +1034,6 @@ const DataView = () => {
         show={showReturnableModal}
         onHide={() => setShowReturnableModal(false)}
         challans={filteredChallans}
-        refreshData={loadData}
       />
       
       <EditChallanModal

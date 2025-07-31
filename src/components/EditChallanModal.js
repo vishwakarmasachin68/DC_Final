@@ -148,7 +148,7 @@ const EditChallanModal = ({
 
   return (
     <Modal show={show} onHide={onHide} size="xl" centered backdrop="static">
-      <Modal.Header closeButton className="bg-primary text-white">
+      <Modal.Header className="card-header-custom text-white" closeButton>
         <Modal.Title className="d-flex align-items-center">
           Edit Challan: {formData.dc_number}
         </Modal.Title>
@@ -335,7 +335,12 @@ const EditChallanModal = ({
           <div className="mb-3">
             <div className="d-flex justify-content-between align-items-center mb-2">
               <h5>Items</h5>
-              <Button variant="primary" size="sm" onClick={addItem}>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={addItem}
+                style={{ backgroundColor: "#0e787b", borderColor: "#0e787b" }}
+              >
                 <BiPlus /> Add Item
               </Button>
             </div>
@@ -443,7 +448,12 @@ const EditChallanModal = ({
             <Button variant="secondary" onClick={onHide} className="me-2">
               Cancel
             </Button>
-            <Button type="submit" variant="primary" disabled={loading}>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={loading}
+              style={{ backgroundColor: "#0e787b", borderColor: "#0e787b" }}
+            >
               {loading ? (
                 <>
                   <Spinner
