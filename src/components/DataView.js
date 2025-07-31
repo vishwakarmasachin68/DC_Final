@@ -30,12 +30,15 @@ import {
   BiBell,
   BiError,
   BiTime,
+  BiEdit,
+  BiRefresh,
 } from "react-icons/bi";
 import Chart from "react-apexcharts";
-import { getChallans, deleteChallan, getProjects } from "../services/api";
+import { getChallans, deleteChallan, getProjects, updateChallan } from "../services/api";
 import ReturnableItemsModal from "./ReturnableItemsModal";
 import { generateDoc } from "../services/docGenerator";
 import { differenceInDays, parseISO, isAfter, isValid } from "date-fns";
+import EditChallanModal from "./EditChallanModal";
 
 const DataView = () => {
   const formatDate = (dateString) => {
@@ -63,12 +66,16 @@ const DataView = () => {
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [notificationItems, setNotificationItems] = useState({
     overdue: [],
     dueSoon: [],
   });
+  const [sortConfig, setSortConfig] = useState({
+    key: "date",
+    direction: "desc",
+  });
 
-  // Safe date parsing function
   const safeParseISO = (dateString) => {
     if (!dateString) return null;
     try {
@@ -77,6 +84,12 @@ const DataView = () => {
     } catch (e) {
       return null;
     }
+  };
+
+  const handleRefresh = async () => {
+    setLoading(true);
+    await loadData();
+    setLoading(false);
   };
 
   const loadData = async () => {
@@ -110,12 +123,25 @@ const DataView = () => {
         setSelectedProject(null);
       }
 
-      // Check for returnable items that are due soon or overdue
       checkReturnableItems(loadedChallans);
       setLoading(false);
     } catch (err) {
       console.error("Failed to load data:", err);
       setError("Failed to load data. Please try again.");
+      setLoading(false);
+    }
+  };
+
+  const handleSaveChallan = async (updatedChallan) => {
+    try {
+      setLoading(true);
+      const response = await updateChallan(selectedChallan.id, updatedChallan);
+      await loadData(); // Refresh the data
+      setLoading(false);
+      setShowEditModal(false);
+    } catch (err) {
+      console.error("Failed to update challan:", err);
+      setError("Failed to update challan. Please try again.");
       setLoading(false);
     }
   };
@@ -160,6 +186,24 @@ const DataView = () => {
     }
   };
 
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedChallans = [...challans].sort((a, b) => {
+    if (a[sortConfig.key] < b[sortConfig.key]) {
+      return sortConfig.direction === "asc" ? -1 : 1;
+    }
+    if (a[sortConfig.key] > b[sortConfig.key]) {
+      return sortConfig.direction === "asc" ? 1 : -1;
+    }
+    return 0;
+  });
+
   useEffect(() => {
     loadData();
   }, []);
@@ -194,7 +238,7 @@ const DataView = () => {
     }
   }, [selectedChallan, projects]);
 
-  const filteredChallans = challans.filter((challan) => {
+  const filteredChallans = sortedChallans.filter((challan) => {
     const matchesSearch =
       challan.dc_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       challan.client?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -237,7 +281,6 @@ const DataView = () => {
     try {
       setDownloading(true);
 
-      // Prepare the challan data in the format expected by generateDoc
       const challanData = {
         dc_number: challan.dc_number,
         dc_sequence: challan.dc_sequence,
@@ -259,7 +302,7 @@ const DataView = () => {
           expected_return_date: item.expected_return_date,
           returned_date: item.returned_date,
         })),
-        dcNumber: challan.dc_number, // Add dcNumber for doc generator
+        dcNumber: challan.dc_number,
       };
 
       await generateDoc(challanData);
@@ -389,6 +432,7 @@ const DataView = () => {
             <div className="mt-2 text-center">
               <Button
                 size="sm"
+                variant="primary"
                 onClick={() => {
                   setShowReturnableModal(true);
                   setShowNotification(false);
@@ -408,6 +452,17 @@ const DataView = () => {
             <BiBarChartAlt2 className="me-2" />
             Challan Analytics Dashboard
           </h2>
+        </Col>
+        <Col md={6} className="d-flex justify-content-end">
+          <Button
+            variant="outline-primary"
+            onClick={handleRefresh}
+            disabled={loading}
+            className="d-flex align-items-center"
+          >
+            <BiRefresh className="me-1" />
+            Refresh Data
+          </Button>
         </Col>
       </Row>
 
@@ -429,7 +484,7 @@ const DataView = () => {
             </Col>
             <Col md={6} className="d-flex justify-content-end gap-3">
               <Dropdown>
-                <Dropdown.Toggle variant="outline-secondary">
+                <Dropdown.Toggle variant="outline-primary">
                   <BiFilterAlt className="me-1" /> Filter:{" "}
                   {timeRange === "all"
                     ? "All Time"
@@ -480,72 +535,10 @@ const DataView = () => {
         </Card>
       ) : (
         <>
-          <Row className="mb-4">
-            <Col md={4}>
-              <Card>
-                <Card.Body>
-                  <h6 className="text-muted">Total Challans</h6>
-                  <h3>{filteredChallans.length}</h3>
-                  <Badge bg="info">Saved</Badge>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col md={4}>
-              <Card>
-                <Card.Body>
-                  <h6 className="text-muted">Total Items</h6>
-                  <h3>
-                    {filteredChallans.reduce(
-                      (sum, c) => sum + (c.items?.length || 0),
-                      0
-                    )}
-                  </h3>
-                  <Badge bg="success">All Saved</Badge>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col md={4}>
-              <Card>
-                <Card.Body>
-                  <Row>
-                    <Col>
-                      <h6 className="text-muted">Returnable Items</h6>
-                      <h3>
-                        {filteredChallans.reduce(
-                          (sum, c) =>
-                            sum +
-                            (c.items?.filter(
-                              (item) => item.returnable === "yes"
-                            ).length || 0),
-                          0
-                        )}
-                      </h3>
-                      <Badge bg="warning">Returnable</Badge>
-                    </Col>
-                    <Col>
-                      <h6 className="text-muted">Non Returnable Items</h6>
-                      <h3>
-                        {filteredChallans.reduce(
-                          (sum, c) =>
-                            sum +
-                            (c.items?.filter(
-                              (item) => item.returnable !== "yes"
-                            ).length || 0),
-                          0
-                        )}
-                      </h3>
-                      <Badge bg="danger">Non Returnable</Badge>
-                    </Col>
-                  </Row>
-                </Card.Body>
-              </Card>
-            </Col>
-          </Row>
-
           <Row>
             <Col md={4}>
               <Card className="mb-4">
-                <Card.Header className="d-flex justify-content-between align-items-center">
+                <Card.Header className="bg-light d-flex justify-content-between align-items-center">
                   <h5 className="mb-0">Generated Challans</h5>
                   <Badge bg="light" text="dark" pill>
                     {filteredChallans.length} items
@@ -597,9 +590,20 @@ const DataView = () => {
                                   size="sm"
                                   onClick={(e) => {
                                     e.stopPropagation();
+                                    setSelectedChallan(challan);
+                                    setShowEditModal(true);
+                                  }}
+                                >
+                                  <BiEdit size={16} />
+                                </Button>
+                                <Button
+                                  variant="outline-success"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedChallan(challan);
                                     setShowDownloadModal(true);
                                   }}
-                                  className="me-1"
                                 >
                                   <BiDownload size={16} />
                                 </Button>
@@ -627,58 +631,145 @@ const DataView = () => {
             <Col md={8}>
               {selectedChallan ? (
                 <>
-                  {selectedChallan.items?.length > 0 && (
-                    <Row className="mb-4">
-                      <Col md={6}>
-                        <Card>
-                          <Card.Header>
-                            <h5>
-                              <BiBarChartAlt2 className="me-2" />
-                              Items Quantity Distribution
-                            </h5>
-                          </Card.Header>
-                          <Card.Body>
-                            <Chart
-                              options={barChartOptions}
-                              series={[
-                                {
-                                  name: "Quantity",
-                                  data: chartData.items.map(
-                                    (item) => item.quantity
-                                  ),
-                                },
-                              ]}
-                              type="bar"
-                              height={350}
-                            />
-                          </Card.Body>
-                        </Card>
-                      </Col>
-                      <Col md={6}>
-                        <Card>
-                          <Card.Header>
-                            <h5>
-                              <BiPieChartAlt className="me-2" />
-                              Return Status
-                            </h5>
-                          </Card.Header>
-                          <Card.Body>
-                            <Chart
-                              options={pieChartOptions}
-                              series={chartData.returnStatus.map(
-                                (item) => item.value
-                              )}
-                              type="donut"
-                              height={350}
-                            />
-                          </Card.Body>
-                        </Card>
-                      </Col>
-                    </Row>
-                  )}
+                  <Row className="mb-4">
+                    <Col md={6}>
+                      <Card className="h-100">
+                        <Card.Header className="bg-light">
+                          <h5 className="mb-0">Summary</h5>
+                        </Card.Header>
+                        <Card.Body>
+                          <Row>
+                            <Col md={6} className="mb-3">
+                              <Card className="h-100">
+                                <Card.Body className="text-center">
+                                  <h6 className="text-muted">Total Challans</h6>
+                                  <h3>{filteredChallans.length}</h3>
+                                  <Badge bg="info">Saved</Badge>
+                                </Card.Body>
+                              </Card>
+                            </Col>
+                            <Col md={6} className="mb-3">
+                              <Card className="h-100">
+                                <Card.Body className="text-center">
+                                  <h6 className="text-muted">Total Items</h6>
+                                  <h3>
+                                    {filteredChallans.reduce(
+                                      (sum, c) => sum + (c.items?.length || 0),
+                                      0
+                                    )}
+                                  </h3>
+                                  <Badge bg="success">All Saved</Badge>
+                                </Card.Body>
+                              </Card>
+                            </Col>
+                          </Row>
+                          <Row>
+                            <Col md={12}>
+                              <Card>
+                                <Card.Header className="bg-light">
+                                  <h5 className="mb-0">
+                                    <BiBarChartAlt2 className="me-2" />
+                                    Items Quantity Distribution
+                                  </h5>
+                                </Card.Header>
+                                <Card.Body>
+                                  <Chart
+                                    options={barChartOptions}
+                                    series={[
+                                      {
+                                        name: "Quantity",
+                                        data: chartData.items.map(
+                                          (item) => item.quantity
+                                        ),
+                                      },
+                                    ]}
+                                    type="bar"
+                                    height={300}
+                                  />
+                                </Card.Body>
+                              </Card>
+                            </Col>
+                          </Row>
+                        </Card.Body>
+                      </Card>
+                    </Col>
+                    <Col md={6}>
+                      <Card className="h-100">
+                        <Card.Header className="bg-light">
+                          <h5 className="mb-0">Return Status</h5>
+                        </Card.Header>
+                        <Card.Body>
+                          <Row>
+                            <Col md={6} className="mb-3">
+                              <Card className="h-100">
+                                <Card.Body className="text-center">
+                                  <h6 className="text-muted">
+                                    Returnable Items
+                                  </h6>
+                                  <h3>
+                                    {filteredChallans.reduce(
+                                      (sum, c) =>
+                                        sum +
+                                        (c.items?.filter(
+                                          (item) => item.returnable === "yes"
+                                        ).length || 0),
+                                      0
+                                    )}
+                                  </h3>
+                                  <Badge bg="warning">Returnable</Badge>
+                                </Card.Body>
+                              </Card>
+                            </Col>
+                            <Col md={6} className="mb-3">
+                              <Card className="h-100">
+                                <Card.Body className="text-center">
+                                  <h6 className="text-muted">
+                                    Non Returnable Items
+                                  </h6>
+                                  <h3>
+                                    {filteredChallans.reduce(
+                                      (sum, c) =>
+                                        sum +
+                                        (c.items?.filter(
+                                          (item) => item.returnable !== "yes"
+                                        ).length || 0),
+                                      0
+                                    )}
+                                  </h3>
+                                  <Badge bg="danger">Non Returnable</Badge>
+                                </Card.Body>
+                              </Card>
+                            </Col>
+                          </Row>
+                          <Row>
+                            <Col md={12}>
+                              <Card>
+                                <Card.Header className="bg-light">
+                                  <h5 className="mb-0">
+                                    <BiPieChartAlt className="me-2" />
+                                    Return Status
+                                  </h5>
+                                </Card.Header>
+                                <Card.Body>
+                                  <Chart
+                                    options={pieChartOptions}
+                                    series={chartData.returnStatus.map(
+                                      (item) => item.value
+                                    )}
+                                    type="donut"
+                                    height={300}
+                                  />
+                                </Card.Body>
+                              </Card>
+                            </Col>
+                          </Row>
+                        </Card.Body>
+                      </Card>
+                    </Col>
+                  </Row>
 
-                  <Card>
-                    <Card.Header className="d-flex justify-content-between align-items-center">
+                  <Card className="mb-4">
+                    <Card.Header className="d-flex justify-content-between align-items-center bg-light">
                       <h5 className="mb-0">Challan Details</h5>
                       <Badge bg="light" text="dark">
                         <BiCalendar className="me-1" />
@@ -688,47 +779,59 @@ const DataView = () => {
                     <Card.Body>
                       <Row className="mb-4">
                         <Col md={3}>
-                          <div>
-                            <h6>DC Number</h6>
-                            <p>{selectedChallan.dc_number || "-"}</p>
+                          <div className="mb-3">
+                            <h6 className="text-muted">DC Number</h6>
+                            <p className="fw-bold">
+                              {selectedChallan.dc_number || "-"}
+                            </p>
                           </div>
                         </Col>
                         <Col md={3}>
-                          <div>
-                            <h6>Project</h6>
-                            <p>{selectedChallan.project_name || "-"}</p>
+                          <div className="mb-3">
+                            <h6 className="text-muted">Project</h6>
+                            <p className="fw-bold">
+                              {selectedChallan.project_name || "-"}
+                            </p>
                           </div>
                         </Col>
                         <Col md={3}>
-                          <div>
-                            <h6>Prepared By</h6>
-                            <p>{selectedChallan.name || "-"}</p>
+                          <div className="mb-3">
+                            <h6 className="text-muted">Prepared By</h6>
+                            <p className="fw-bold">
+                              {selectedChallan.name || "-"}
+                            </p>
                           </div>
                         </Col>
                         <Col md={3}>
-                          <div>
-                            <h6>Client</h6>
-                            <p>{selectedChallan.client || "-"}</p>
+                          <div className="mb-3">
+                            <h6 className="text-muted">Client</h6>
+                            <p className="fw-bold">
+                              {selectedChallan.client || "-"}
+                            </p>
                           </div>
                         </Col>
                       </Row>
                       <Row className="mb-4">
                         <Col md={3}>
-                          <div>
-                            <h6>Location</h6>
-                            <p>{selectedChallan.location || "-"}</p>
+                          <div className="mb-3">
+                            <h6 className="text-muted">Location</h6>
+                            <p className="fw-bold">
+                              {selectedChallan.location || "-"}
+                            </p>
                           </div>
                         </Col>
                         <Col md={3}>
-                          <div>
-                            <h6>PO Number</h6>
-                            <p>{selectedChallan.po_number || "-"}</p>
+                          <div className="mb-3">
+                            <h6 className="text-muted">PO Number</h6>
+                            <p className="fw-bold">
+                              {selectedChallan.po_number || "-"}
+                            </p>
                           </div>
                         </Col>
                         <Col md={3}>
-                          <div>
-                            <h6>Returnable Items</h6>
-                            <p>
+                          <div className="mb-3">
+                            <h6 className="text-muted">Returnable Items</h6>
+                            <p className="fw-bold">
                               {selectedChallan.items?.filter(
                                 (item) => item.returnable === "yes"
                               ).length || 0}
@@ -736,9 +839,9 @@ const DataView = () => {
                           </div>
                         </Col>
                         <Col md={3}>
-                          <div>
-                            <h6>Non-Returnable Items</h6>
-                            <p>
+                          <div className="mb-3">
+                            <h6 className="text-muted">Non-Returnable Items</h6>
+                            <p className="fw-bold">
                               {selectedChallan.items?.filter(
                                 (item) => item.returnable !== "yes"
                               ).length || 0}
@@ -747,51 +850,61 @@ const DataView = () => {
                         </Col>
                       </Row>
                       <Row className="mb-4">
-                        <Col md={3}>
-                          <h6>Project Lead / Person who is visiting</h6>
-                          <p>
-                            {selectedProject?.field_supervisor ||
-                              "Not specified"}
-                          </p>
-                        </Col>
-
                         <Col md={6}>
-                          <h6>Project Details</h6>
-                          <p>
-                            {selectedProject?.project_details ||
-                              "No details provided"}
-                          </p>
+                          <div className="mb-3">
+                            <h6 className="text-muted">
+                              Project Lead / Person who is visiting
+                            </h6>
+                            <p className="fw-bold">
+                              {selectedProject?.field_supervisor ||
+                                "Not specified"}
+                            </p>
+                          </div>
+                        </Col>
+                        <Col md={6}>
+                          <div className="mb-3">
+                            <h6 className="text-muted">Project Details</h6>
+                            <p className="fw-bold">
+                              {selectedProject?.project_details ||
+                                "No details provided"}
+                            </p>
+                          </div>
                         </Col>
                       </Row>
-                      <Row className="mb-4">
-                        {selectedProject?.persons_involved && (
-                          <Row className="mb-4">
-                            <Col>
-                              <Card>
-                                <Card.Header>
-                                  <h6 className="mb-0">Team Members</h6>
-                                </Card.Header>
-                                <Card.Body>
-                                  <ListGroup variant="flush">
-                                    {JSON.parse(
-                                      selectedProject.persons_involved
-                                    ).map((person, index) => (
-                                      <ListGroup.Item key={index}>
+
+                      {selectedProject?.persons_involved && (
+                        <Row className="mb-4">
+                          <Col>
+                            <Card>
+                              <Card.Header className="bg-light">
+                                <h6 className="mb-0">Team Members</h6>
+                              </Card.Header>
+                              <Card.Body>
+                                <Row>
+                                  {JSON.parse(
+                                    selectedProject.persons_involved
+                                  ).map((person, index) => (
+                                    <Col md={4} key={index} className="mb-2">
+                                      <Badge
+                                        bg="light"
+                                        text="dark"
+                                        className="w-100 text-start p-2"
+                                      >
                                         {person || `Team member ${index + 1}`}
-                                      </ListGroup.Item>
-                                    ))}
-                                  </ListGroup>
-                                </Card.Body>
-                              </Card>
-                            </Col>
-                          </Row>
-                        )}
-                      </Row>
+                                      </Badge>
+                                    </Col>
+                                  ))}
+                                </Row>
+                              </Card.Body>
+                            </Card>
+                          </Col>
+                        </Row>
+                      )}
 
                       {selectedChallan.items?.length > 0 ? (
                         <div className="table-responsive">
                           <Table striped bordered hover>
-                            <thead>
+                            <thead className="table-light">
                               <tr>
                                 <th width="5%">#</th>
                                 <th width="20%">Asset Name</th>
@@ -923,6 +1036,15 @@ const DataView = () => {
         onHide={() => setShowReturnableModal(false)}
         challans={filteredChallans}
         refreshData={loadData}
+      />
+      
+      <EditChallanModal
+        show={showEditModal}
+        onHide={() => setShowEditModal(false)}
+        challan={selectedChallan}
+        projects={projects}
+        onSave={handleSaveChallan}
+        loading={loading}
       />
     </Container>
   );

@@ -39,28 +39,22 @@ export async function getChallans() {
 }
 
 export async function addChallan(challan) {
-  return fetchAPI("/challans/", "POST", {
-    dc_number: challan.dc_number,
-    dc_sequence: challan.dc_sequence,
-    date: challan.date,
-    name: challan.name,
-    project_id: challan.project_id,
-    project_name: challan.project_name,
-    client: challan.client,
-    location: challan.location,
-    has_po: challan.has_po,
-    po_number: challan.po_number,
-    items: challan.items.map((item) => ({
-      sno: item.sno,
-      asset_name: item.asset_name,
-      description: item.description,
-      quantity: item.quantity,
-      serial_no: item.serial_no,
-      returnable: item.returnable,
+  return fetchAPI("/challans/", "POST", challan);
+}
+
+export async function updateChallan(id, challan) {
+  return fetchAPI(`/challans/${id}/`, "PUT", {
+    ...challan,
+    date: new Date(challan.date).toISOString().split("T")[0], // ✅ ensure correct date format
+    items: challan.items.map(item => ({
+      ...item,
       expected_return_date: item.expected_return_date || null,
-    })),
+      returned_date: item.returned_date || null
+    }))
   });
 }
+
+
 
 export async function deleteChallan(id) {
   return fetchAPI(`/challans/${id}/`, "DELETE");
