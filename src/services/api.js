@@ -1,5 +1,7 @@
 // const API = "http://localhost:8000";
-const API = "https://backend-final-dc-2.onrender.com";
+// const API = "https://backend-final-dc-2.onrender.com";
+const API = process.env.REACT_APP_API_BASE_URL;
+
 
 async function fetchAPI(endpoint, method = "GET", body = null) {
   const options = {
