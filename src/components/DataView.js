@@ -19,7 +19,6 @@ import {
   OverlayTrigger,
   Tooltip,
 } from "react-bootstrap";
-
 import {
   BiBarChartAlt2,
   BiPieChartAlt,
@@ -65,7 +64,7 @@ const DataView = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [challans, setChallans] = useState([]);
-  const [originalChallans, setOriginalChallans] = useState([]); // To maintain original order
+  const [originalChallans, setOriginalChallans] = useState([]);
   const [error, setError] = useState(null);
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -101,13 +100,12 @@ const DataView = () => {
         getProjects(),
       ]);
 
-      // Sort challans by dc_sequence to maintain order
       const sortedChallans = [...loadedChallans].sort((a, b) => {
         return a.dc_sequence - b.dc_sequence;
       });
 
       setChallans(sortedChallans);
-      setOriginalChallans(sortedChallans); // Store original order
+      setOriginalChallans(sortedChallans);
       setProjects(loadedProjects);
 
       if (sortedChallans.length > 0) {
@@ -144,7 +142,6 @@ const DataView = () => {
       setLoading(true);
       await updateChallan(selectedChallan.id, updatedChallan);
 
-      // Update the challan in the list while maintaining original order
       const updatedChallans = originalChallans.map((challan) =>
         challan.id === selectedChallan.id ? updatedChallan : challan
       );
@@ -1065,6 +1062,7 @@ const DataView = () => {
         show={showReturnableModal}
         onHide={() => setShowReturnableModal(false)}
         challans={filteredChallans}
+        refreshData={loadData}
       />
 
       <EditChallanModal
