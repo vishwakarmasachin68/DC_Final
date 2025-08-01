@@ -23,7 +23,6 @@ async function fetchAPI(endpoint, method = "GET", body = null) {
       errorData = { detail: response.statusText };
     }
 
-    // Throw a custom error object
     throw {
       status: response.status,
       detail: errorData.detail || "Unknown error occurred",
@@ -33,7 +32,6 @@ async function fetchAPI(endpoint, method = "GET", body = null) {
   return await response.json();
 }
 
-// Challan endpoints
 export async function getChallans() {
   return fetchAPI("/challans/");
 }
@@ -45,7 +43,7 @@ export async function addChallan(challan) {
 export async function updateChallan(id, challan) {
   return fetchAPI(`/challans/${id}/`, "PUT", {
     ...challan,
-    date: new Date(challan.date).toISOString().split("T")[0], // ✅ ensure correct date format
+    date: new Date(challan.date).toISOString().split("T")[0],
     items: challan.items.map((item) => ({
       ...item,
       expected_return_date: item.expected_return_date || null,
