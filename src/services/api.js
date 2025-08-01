@@ -1,5 +1,5 @@
- const API = "http://localhost:8000";
-//const API = "https://backend-final-dc-2.onrender.com";
+// const API = "http://localhost:8000";
+const API = "https://backend-final-dc-2.onrender.com";
 
 async function fetchAPI(endpoint, method = "GET", body = null) {
   const options = {
