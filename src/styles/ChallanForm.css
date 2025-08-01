@@ -30,7 +30,11 @@ body {
 .app-navbar {
   padding: 0.5rem 1rem;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  background: linear-gradient(
+    135deg,
+    var(--primary-color),
+    var(--secondary-color)
+  );
 }
 
 .navbar-logo {
@@ -92,7 +96,11 @@ body {
 }
 
 .card-header-custom {
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  background: linear-gradient(
+    135deg,
+    var(--primary-color),
+    var(--secondary-color)
+  );
   color: white;
   padding: 1rem 1.5rem;
   border-bottom: none;
@@ -226,7 +234,11 @@ body {
 
 .preview-modal .modal-header {
   padding: 1rem 1.5rem;
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  background: linear-gradient(
+    135deg,
+    var(--primary-color),
+    var(--secondary-color)
+  );
 }
 
 .preview-modal .modal-body {
@@ -256,7 +268,11 @@ body {
 
 .returnable-items-modal .modal-header {
   padding: 1rem 1.5rem;
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  background: linear-gradient(
+    135deg,
+    var(--primary-color),
+    var(--secondary-color)
+  );
   color: white;
 }
 
@@ -341,7 +357,11 @@ body {
 .app-navbar {
   padding: 0.5rem 1rem;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  background: linear-gradient(
+    135deg,
+    var(--primary-color),
+    var(--secondary-color)
+  );
   position: sticky;
   top: 0;
   z-index: 1030;
@@ -376,7 +396,7 @@ body {
 /* Mobile dropdown menu */
 .mobile-menu-dropdown .dropdown-toggle {
   color: white;
-  font-size: 1.0rem;
+  font-size: 1rem;
   padding: 0.25rem 0.75rem;
   border: none;
 }
@@ -416,7 +436,7 @@ body {
   .navbar-brand-title {
     font-size: 1rem;
   }
-  
+
   .navbar-logo {
     height: 35px;
   }
@@ -426,7 +446,7 @@ body {
   .navbar-brand-title {
     font-size: 0.9rem;
   }
-  
+
   .navbar-logo {
     height: 25px;
   }
@@ -442,12 +462,10 @@ body {
     left: 28%;
     width: 95%;
   }
-  
 }
 @media screen and (max-width: 576px) {
   .custom-toast-container {
     left: 8%;
     width: 90%;
   }
-  
 }

@@ -39,7 +39,9 @@ export const generateDoc = async (challan) => {
       return: item.returnable === "yes" ? "YES" : "NO",
       returnDate:
         item.returnable === "yes"
-          ? formatDateToReadable(item.expected_return_date || item.expectedReturnDate)
+          ? formatDateToReadable(
+              item.expected_return_date || item.expectedReturnDate
+            )
           : "N/A",
     }));
 
@@ -71,7 +73,10 @@ export const generateDoc = async (challan) => {
     // Save the document
     saveAs(
       blob,
-      `Delivery_Challan_${(challan.dc_number || challan.dcNumber).replace(/\//g, "_")}.docx`
+      `Delivery_Challan_${(challan.dc_number || challan.dcNumber).replace(
+        /\//g,
+        "_"
+      )}.docx`
     );
 
     return { success: true };

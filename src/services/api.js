@@ -46,15 +46,13 @@ export async function updateChallan(id, challan) {
   return fetchAPI(`/challans/${id}/`, "PUT", {
     ...challan,
     date: new Date(challan.date).toISOString().split("T")[0], // ✅ ensure correct date format
-    items: challan.items.map(item => ({
+    items: challan.items.map((item) => ({
       ...item,
       expected_return_date: item.expected_return_date || null,
-      returned_date: item.returned_date || null
-    }))
+      returned_date: item.returned_date || null,
+    })),
   });
 }
-
-
 
 export async function deleteChallan(id) {
   return fetchAPI(`/challans/${id}/`, "DELETE");

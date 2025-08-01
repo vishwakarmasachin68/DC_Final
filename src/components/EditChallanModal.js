@@ -9,7 +9,7 @@ import {
   Spinner,
   Alert,
 } from "react-bootstrap";
-import {  BiPlus, BiMinus } from "react-icons/bi";
+import { BiPlus, BiMinus } from "react-icons/bi";
 import { getProjects, getClients, getLocations } from "../services/api";
 
 const EditChallanModal = ({
