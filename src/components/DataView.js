@@ -57,10 +57,11 @@ const DataView = () => {
 
   const getDcNumber = (challan) => {
     const prefix = "DSI/";
-    const middle = challan.has_po === "yes" && challan.po_number
-      ? challan.po_number
-      : formatDate(challan.date).replace(/\//g, "");
-    return `${prefix}${middle}/${String(challan.dc_sequence).padStart(3, '0')}`;
+    const middle =
+      challan.has_po === "yes" && challan.po_number
+        ? challan.po_number
+        : formatDate(challan.date).replace(/\//g, "");
+    return `${prefix}${middle}/${String(challan.dc_sequence).padStart(3, "0")}`;
   };
 
   const [timeRange, setTimeRange] = useState("all");
@@ -114,9 +115,9 @@ const DataView = () => {
       });
 
       // Generate DC numbers for all challans
-      const challansWithDcNumbers = sortedChallans.map(challan => ({
+      const challansWithDcNumbers = sortedChallans.map((challan) => ({
         ...challan,
-        dc_number: getDcNumber(challan)
+        dc_number: getDcNumber(challan),
       }));
 
       setChallans(challansWithDcNumbers);
@@ -155,12 +156,12 @@ const DataView = () => {
   const handleSaveChallan = async (updatedChallan) => {
     try {
       setLoading(true);
-      
+
       // Update DC number if PO number changed
       const dcNumber = getDcNumber(updatedChallan);
       updatedChallan = {
         ...updatedChallan,
-        dc_number: dcNumber
+        dc_number: dcNumber,
       };
 
       await updateChallan(selectedChallan.id, updatedChallan);
@@ -500,8 +501,8 @@ const DataView = () => {
               </InputGroup>
             </Col>
             <Col md={6} className="d-flex justify-content-end gap-3">
-              <Dropdown>
-                <Dropdown.Toggle variant="outline-primary">
+              <Dropdown >
+                <Dropdown.Toggle style={{ backgroundColor: "#0e787b", borderColor: "#0e787b" }} >
                   <BiFilterAlt className="me-1" /> Filter:{" "}
                   {timeRange === "all"
                     ? "All Time"
@@ -509,7 +510,7 @@ const DataView = () => {
                     ? "This Month"
                     : "This Week"}
                 </Dropdown.Toggle>
-                <Dropdown.Menu>
+                <Dropdown.Menu style={{ backgroundColor: "#ffffffff", borderColor: "#0e787b" }}>
                   <Dropdown.Item
                     active={timeRange === "all"}
                     onClick={() => setTimeRange("all")}
@@ -1037,7 +1038,6 @@ const DataView = () => {
           </Row>
         </>
       )}
-
       <Modal
         show={showDownloadModal}
         onHide={() => setShowDownloadModal(false)}
@@ -1080,14 +1080,12 @@ const DataView = () => {
           </Button>
         </Modal.Footer>
       </Modal>
-
       <ReturnableItemsModal
         show={showReturnableModal}
         onHide={() => setShowReturnableModal(false)}
         challans={filteredChallans}
         refreshData={loadData}
       />
-
       <EditChallanModal
         show={showEditModal}
         onHide={() => setShowEditModal(false)}
@@ -1099,5 +1097,4 @@ const DataView = () => {
     </Container>
   );
 };
-
 export default DataView;
