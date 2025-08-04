@@ -55,6 +55,14 @@ const DataView = () => {
     return `${day}/${month}/${year}`;
   };
 
+  const getDcNumber = (challan) => {
+    const prefix = "DSI/";
+    const middle = challan.has_po === "yes" && challan.po_number
+      ? challan.po_number
+      : formatDate(challan.date).replace(/\//g, "");
+    return `${prefix}${middle}/${String(challan.dc_sequence).padStart(3, '0')}`;
+  };
+
   const [timeRange, setTimeRange] = useState("all");
   const [chartData, setChartData] = useState({
     items: [],
@@ -78,8 +86,8 @@ const DataView = () => {
     dueSoon: [],
   });
   const [sortConfig, setSortConfig] = useState({
-    key: "date",
-    direction: "desc",
+    key: "dc_sequence",
+    direction: "asc",
   });
 
   const safeParseISO = (dateString) => {
@@ -100,26 +108,33 @@ const DataView = () => {
         getProjects(),
       ]);
 
+      // Sort challans by dc_sequence in descending order
       const sortedChallans = [...loadedChallans].sort((a, b) => {
-        return a.dc_sequence - b.dc_sequence;
+        return b.dc_sequence - a.dc_sequence;
       });
 
-      setChallans(sortedChallans);
-      setOriginalChallans(sortedChallans);
+      // Generate DC numbers for all challans
+      const challansWithDcNumbers = sortedChallans.map(challan => ({
+        ...challan,
+        dc_number: getDcNumber(challan)
+      }));
+
+      setChallans(challansWithDcNumbers);
+      setOriginalChallans(challansWithDcNumbers);
       setProjects(loadedProjects);
 
-      if (sortedChallans.length > 0) {
+      if (challansWithDcNumbers.length > 0) {
         const currentChallan = selectedChallan
-          ? sortedChallans.find((c) => c.id === selectedChallan.id)
+          ? challansWithDcNumbers.find((c) => c.id === selectedChallan.id)
           : null;
 
-        setSelectedChallan(currentChallan || sortedChallans[0]);
+        setSelectedChallan(currentChallan || challansWithDcNumbers[0]);
 
-        if (currentChallan || sortedChallans[0]) {
+        if (currentChallan || challansWithDcNumbers[0]) {
           const project = loadedProjects.find(
             (p) =>
               p.project_name ===
-              (currentChallan || sortedChallans[0]).project_name
+              (currentChallan || challansWithDcNumbers[0]).project_name
           );
           setSelectedProject(project || null);
         }
@@ -128,7 +143,7 @@ const DataView = () => {
         setSelectedProject(null);
       }
 
-      checkReturnableItems(sortedChallans);
+      checkReturnableItems(challansWithDcNumbers);
       setLoading(false);
     } catch (err) {
       console.error("Failed to load data:", err);
@@ -140,6 +155,14 @@ const DataView = () => {
   const handleSaveChallan = async (updatedChallan) => {
     try {
       setLoading(true);
+      
+      // Update DC number if PO number changed
+      const dcNumber = getDcNumber(updatedChallan);
+      updatedChallan = {
+        ...updatedChallan,
+        dc_number: dcNumber
+      };
+
       await updateChallan(selectedChallan.id, updatedChallan);
 
       const updatedChallans = originalChallans.map((challan) =>

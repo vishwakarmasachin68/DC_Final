@@ -3,13 +3,13 @@ import Docxtemplater from "docxtemplater";
 import { saveAs } from "file-saver";
 
 const formatDateToReadable = (isoDate) => {
+  if (!isoDate) return "N/A";
   try {
     const dateObj = new Date(isoDate);
-    return dateObj.toLocaleDateString("en-US", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    });
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const year = dateObj.getFullYear();
+    return `${day}/${month}/${year}`;
   } catch {
     return isoDate;
   }
@@ -29,31 +29,30 @@ export const generateDoc = async (challan) => {
       linebreaks: true,
     });
 
-    // Prepare data for the document
-    const items = challan.items.map((item) => ({
-      SLNo: item.sno,
-      asset: item.asset_name || item.assetName,
-      desc: item.description,
-      qty: item.quantity,
-      serial: item.serial_no || item.serialNo,
+    // Prepare data for the document with proper serial numbers
+    const items = challan.items.map((item, index) => ({
+      SLNo: item.sno || index + 1, // Use provided serial number or fallback to index
+      asset: item.asset_name || "N/A",
+      desc: item.description || "N/A",
+      qty: item.quantity || 0,
+      serial: item.serial_no || "N/A",
       return: item.returnable === "yes" ? "YES" : "NO",
-      returnDate:
-        item.returnable === "yes"
-          ? formatDateToReadable(
-              item.expected_return_date || item.expectedReturnDate
-            )
-          : "N/A",
+      returnDate: item.returnable === "yes" 
+        ? formatDateToReadable(item.expected_return_date) 
+        : "N/A",
     }));
 
-    // Set the template variables
+    // Set the template variables with fallbacks
     doc.setData({
-      DCNO: challan.dc_number || challan.dcNumber,
+      DCNO: challan.dc_number || "N/A",
       Date: formatDateToReadable(challan.date),
-      Name: challan.name,
-      Project: challan.project_name || challan.projectName || "N/A",
-      Client: challan.client,
-      Location: challan.location,
+      Name: challan.name || "N/A",
+      Project: challan.project_name || "N/A",
+      Client: challan.client || "N/A",
+      Location: challan.location || "N/A",
+      PONumber: challan.po_number || "N/A",
       items: items,
+      totalItems: items.length,
     });
 
     try {
@@ -66,20 +65,18 @@ export const generateDoc = async (challan) => {
     // Generate the document
     const blob = doc.getZip().generate({
       type: "blob",
-      mimeType:
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     });
 
-    // Save the document
-    saveAs(
-      blob,
-      `Delivery_Challan_${(challan.dc_number || challan.dcNumber).replace(
-        /\//g,
-        "_"
-      )}.docx`
-    );
+    // Generate filename with current date
+    const currentDate = new Date();
+    const formattedDate = `${currentDate.getDate()}-${currentDate.getMonth()+1}-${currentDate.getFullYear()}`;
+    const filename = `Delivery_Challan_${(challan.dc_number || "DC").replace(/\//g, "_")}_${formattedDate}.docx`;
 
-    return { success: true };
+    // Save the document
+    saveAs(blob, filename);
+
+    return { success: true, filename };
   } catch (error) {
     console.error("Document generation error:", error);
     throw new Error(`Failed to generate document: ${error.message}`);

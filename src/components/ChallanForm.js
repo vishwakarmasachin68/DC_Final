@@ -36,6 +36,14 @@ const ChallanForm = ({ onSave }) => {
     return `${day}/${month}/${year}`;
   };
 
+  const getDcNumber = (challan) => {
+    const prefix = "DSI/";
+    const middle = challan.has_po === "yes" && challan.po_number
+      ? challan.po_number
+      : formatDate(challan.date).replace(/\//g, "");
+    return `${prefix}${middle}/${challan.dc_sequence}`;
+  };
+
   const [clients, setClients] = useState([]);
   const [locations, setLocations] = useState([]);
   const [projects, setProjects] = useState([]);
@@ -206,21 +214,12 @@ const ChallanForm = ({ onSave }) => {
     }
   };
 
-  const getDcNumber = () => {
-    const prefix = "DSI/";
-    const middle =
-      challan.has_po === "yes" && challan.po_number
-        ? challan.po_number
-        : formatDate(challan.date).replace(/\//g, "");
-    return `${prefix}${middle}/${challan.dc_sequence}`;
-  };
-
   const handleSaveAndGenerate = async () => {
     if (!validateForm()) return;
 
     setGenerating(true);
     try {
-      const dcNumber = getDcNumber();
+      const dcNumber = getDcNumber(challan);
       const selectedProject = projects.find((p) => p.id === challan.project_id);
 
       const challanData = {
@@ -351,7 +350,7 @@ const ChallanForm = ({ onSave }) => {
                     />
                   </InputGroup>
                   <div className="mt-2">
-                    Full DC Number: <strong>{getDcNumber()}</strong>
+                    Full DC Number: <strong>{getDcNumber(challan)}</strong>
                   </div>
                 </Form.Group>
               </Col>
@@ -767,7 +766,7 @@ const ChallanForm = ({ onSave }) => {
         onHide={() => setShowPreview(false)}
         challan={{
           ...challan,
-          dcNumber: getDcNumber(),
+          dcNumber: getDcNumber(challan),
           items: challan.items.map((item) => ({
             ...item,
             assetName: item.asset_name,
@@ -777,7 +776,7 @@ const ChallanForm = ({ onSave }) => {
           hasPO: challan.has_po,
           poNumber: challan.po_number,
         }}
-        dcNumber={getDcNumber()}
+        dcNumber={getDcNumber(challan)}
         onSave={handleSaveAndGenerate}
         loading={generating}
       />
