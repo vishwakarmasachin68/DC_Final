@@ -66,8 +66,11 @@ const DataView = () => {
 
   const [timeRange, setTimeRange] = useState("all");
   const [chartData, setChartData] = useState({
-    items: [],
-    returnStatus: [],
+    items: [{ name: "No Items", quantity: 0 }],
+    returnStatus: [
+      { name: "Returnable", value: 0 },
+      { name: "Non-Returnable", value: 0 },
+    ],
   });
   const [selectedChallan, setSelectedChallan] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -244,26 +247,41 @@ const DataView = () => {
       );
       setSelectedProject(project || null);
 
-      if (selectedChallan.items && selectedChallan.items.length > 0) {
-        const itemsData = selectedChallan.items.map((item) => ({
-          name: item.asset_name || "Unnamed Asset",
-          quantity: item.quantity,
-        }));
+      // Initialize chart data with defaults or actual values
+      const itemsData =
+        selectedChallan.items?.length > 0
+          ? selectedChallan.items.map((item) => ({
+              name: item.asset_name || "Unnamed Asset",
+              quantity: item.quantity,
+            }))
+          : [{ name: "No Items", quantity: 0 }];
 
-        const returnableCount = selectedChallan.items.filter(
-          (item) => item.returnable === "yes"
-        ).length;
-        const nonReturnableCount =
-          selectedChallan.items.length - returnableCount;
+      const returnableCount =
+        selectedChallan.items?.length > 0
+          ? selectedChallan.items.filter((item) => item.returnable === "yes")
+              .length
+          : 0;
+      const nonReturnableCount =
+        selectedChallan.items?.length > 0
+          ? selectedChallan.items.length - returnableCount
+          : 0;
 
-        setChartData({
-          items: itemsData,
-          returnStatus: [
-            { name: "Returnable", value: returnableCount },
-            { name: "Non-Returnable", value: nonReturnableCount },
-          ],
-        });
-      }
+      setChartData({
+        items: itemsData,
+        returnStatus: [
+          { name: "Returnable", value: returnableCount },
+          { name: "Non-Returnable", value: nonReturnableCount },
+        ],
+      });
+    } else {
+      // Set default chart data when no challan is selected
+      setChartData({
+        items: [{ name: "No Items", quantity: 0 }],
+        returnStatus: [
+          { name: "Returnable", value: 0 },
+          { name: "Non-Returnable", value: 0 },
+        ],
+      });
     }
   }, [selectedChallan, projects]);
 
@@ -365,7 +383,7 @@ const DataView = () => {
     },
     yaxis: { title: { text: "Quantity" } },
     fill: { opacity: 1 },
-    colors: ["#4361ee", "#3a0ca3", "#4895ef"],
+    colors: ["#134e60ff", "#0f959aff", "#4895ef"],
     tooltip: {
       y: { formatter: (val) => `${val} units` },
     },
@@ -378,7 +396,7 @@ const DataView = () => {
       toolbar: { show: false },
     },
     labels: chartData.returnStatus.map((item) => item.name),
-    colors: ["#4cc9f0", "#f72585"],
+    colors: ["#4cc9f0", "#d82323ff"],
     responsive: [
       {
         breakpoint: 480,
@@ -387,6 +405,18 @@ const DataView = () => {
     ],
     legend: { position: "bottom" },
     dataLabels: { enabled: false },
+    noData: {
+      text: "No data available",
+      align: "center",
+      verticalAlign: "middle",
+      offsetX: 0,
+      offsetY: 0,
+      style: {
+        color: undefined,
+        fontSize: "14px",
+        fontFamily: undefined,
+      },
+    },
   };
 
   if (loading) {
@@ -501,8 +531,10 @@ const DataView = () => {
               </InputGroup>
             </Col>
             <Col md={6} className="d-flex justify-content-end gap-3">
-              <Dropdown >
-                <Dropdown.Toggle style={{ backgroundColor: "#0e787b", borderColor: "#0e787b" }} >
+              <Dropdown>
+                <Dropdown.Toggle
+                  style={{ backgroundColor: "#0e787b", borderColor: "#0e787b" }}
+                >
                   <BiFilterAlt className="me-1" /> Filter:{" "}
                   {timeRange === "all"
                     ? "All Time"
@@ -510,7 +542,12 @@ const DataView = () => {
                     ? "This Month"
                     : "This Week"}
                 </Dropdown.Toggle>
-                <Dropdown.Menu style={{ backgroundColor: "#ffffffff", borderColor: "#0e787b" }}>
+                <Dropdown.Menu
+                  style={{
+                    backgroundColor: "#ffffffff",
+                    borderColor: "#0e787b",
+                  }}
+                >
                   <Dropdown.Item
                     active={timeRange === "all"}
                     onClick={() => setTimeRange("all")}
@@ -724,19 +761,28 @@ const DataView = () => {
                                   </h5>
                                 </Card.Header>
                                 <Card.Body>
-                                  <Chart
-                                    options={barChartOptions}
-                                    series={[
-                                      {
-                                        name: "Quantity",
-                                        data: chartData.items.map(
-                                          (item) => item.quantity
-                                        ),
-                                      },
-                                    ]}
-                                    type="bar"
-                                    height={300}
-                                  />
+                                  {loading ? (
+                                    <div className="text-center py-4">
+                                      <Spinner
+                                        animation="border"
+                                        variant="primary"
+                                      />
+                                    </div>
+                                  ) : (
+                                    <Chart
+                                      options={barChartOptions}
+                                      series={[
+                                        {
+                                          name: "Quantity",
+                                          data: chartData.items.map(
+                                            (item) => item.quantity
+                                          ),
+                                        },
+                                      ]}
+                                      type="bar"
+                                      height={300}
+                                    />
+                                  )}
                                 </Card.Body>
                               </Card>
                             </Col>
@@ -802,14 +848,23 @@ const DataView = () => {
                                   </h5>
                                 </Card.Header>
                                 <Card.Body>
-                                  <Chart
-                                    options={pieChartOptions}
-                                    series={chartData.returnStatus.map(
-                                      (item) => item.value
-                                    )}
-                                    type="donut"
-                                    height={300}
-                                  />
+                                  {loading ? (
+                                    <div className="text-center py-4">
+                                      <Spinner
+                                        animation="border"
+                                        variant="primary"
+                                      />
+                                    </div>
+                                  ) : (
+                                    <Chart
+                                      options={pieChartOptions}
+                                      series={chartData.returnStatus.map(
+                                        (item) => item.value
+                                      )}
+                                      type="donut"
+                                      height={300}
+                                    />
+                                  )}
                                 </Card.Body>
                               </Card>
                             </Col>
