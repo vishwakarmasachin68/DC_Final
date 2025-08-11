@@ -425,7 +425,7 @@ const DataView = () => {
         className="d-flex justify-content-center align-items-center"
         style={{ height: "50vh" }}
       >
-        <Spinner animation="border" variant="primary" />
+        <Spinner animation="border" style={{ color: "#085f79ff" }} />
       </div>
     );
   }
@@ -600,7 +600,7 @@ const DataView = () => {
                   </Badge>
                 </Card.Header>
                 <Card.Body className="p-0">
-                  <div style={{ maxHeight: "600px", overflowY: "auto" }}>
+                  <div style={{ maxHeight: "565px", overflowY: "auto" }}>
                     <Accordion defaultActiveKey="0" flush>
                       {filteredChallans.map((challan, index) => (
                         <Accordion.Item
@@ -765,7 +765,7 @@ const DataView = () => {
                                     <div className="text-center py-4">
                                       <Spinner
                                         animation="border"
-                                        variant="primary"
+                                        style={{ color: "#085f79ff" }}
                                       />
                                     </div>
                                   ) : (
@@ -850,10 +850,7 @@ const DataView = () => {
                                 <Card.Body>
                                   {loading ? (
                                     <div className="text-center py-4">
-                                      <Spinner
-                                        animation="border"
-                                        variant="primary"
-                                      />
+                                      <Spinner animation="border" style={{ color: "#085f79ff" }} />
                                     </div>
                                   ) : (
                                     <Chart
@@ -873,213 +870,6 @@ const DataView = () => {
                       </Card>
                     </Col>
                   </Row>
-
-                  <Card className="mb-4">
-                    <Card.Header className="d-flex justify-content-between align-items-center bg-light">
-                      <h5 className="mb-0">Challan Details</h5>
-                      <Badge bg="light" text="dark">
-                        <BiCalendar className="me-1" />
-                        {formatDate(selectedChallan.date) || "No date set"}
-                      </Badge>
-                    </Card.Header>
-                    <Card.Body>
-                      <Row className="mb-4">
-                        <Col md={3}>
-                          <div className="mb-3">
-                            <h6 className="text-muted">DC Number</h6>
-                            <p className="fw-bold">
-                              {selectedChallan.dc_number || "-"}
-                            </p>
-                          </div>
-                        </Col>
-                        <Col md={3}>
-                          <div className="mb-3">
-                            <h6 className="text-muted">Project</h6>
-                            <p className="fw-bold">
-                              {selectedChallan.project_name || "-"}
-                            </p>
-                          </div>
-                        </Col>
-                        <Col md={3}>
-                          <div className="mb-3">
-                            <h6 className="text-muted">Prepared By</h6>
-                            <p className="fw-bold">
-                              {selectedChallan.name || "-"}
-                            </p>
-                          </div>
-                        </Col>
-                        <Col md={3}>
-                          <div className="mb-3">
-                            <h6 className="text-muted">Client</h6>
-                            <p className="fw-bold">
-                              {selectedChallan.client || "-"}
-                            </p>
-                          </div>
-                        </Col>
-                      </Row>
-                      <Row className="mb-4">
-                        <Col md={3}>
-                          <div className="mb-3">
-                            <h6 className="text-muted">Location</h6>
-                            <p className="fw-bold">
-                              {selectedChallan.location || "-"}
-                            </p>
-                          </div>
-                        </Col>
-                        <Col md={3}>
-                          <div className="mb-3">
-                            <h6 className="text-muted">PO Number</h6>
-                            <p className="fw-bold">
-                              {selectedChallan.po_number || "-"}
-                            </p>
-                          </div>
-                        </Col>
-                        <Col md={3}>
-                          <div className="mb-3">
-                            <h6 className="text-muted">Returnable Items</h6>
-                            <p className="fw-bold">
-                              {selectedChallan.items?.filter(
-                                (item) => item.returnable === "yes"
-                              ).length || 0}
-                            </p>
-                          </div>
-                        </Col>
-                        <Col md={3}>
-                          <div className="mb-3">
-                            <h6 className="text-muted">Non-Returnable Items</h6>
-                            <p className="fw-bold">
-                              {selectedChallan.items?.filter(
-                                (item) => item.returnable !== "yes"
-                              ).length || 0}
-                            </p>
-                          </div>
-                        </Col>
-                      </Row>
-                      <Row className="mb-4">
-                        <Col md={6}>
-                          <div className="mb-3">
-                            <h6 className="text-muted">
-                              Project Lead / Person who is visiting
-                            </h6>
-                            <p className="fw-bold">
-                              {selectedProject?.field_supervisor ||
-                                "Not specified"}
-                            </p>
-                          </div>
-                        </Col>
-                        <Col md={6}>
-                          <div className="mb-3">
-                            <h6 className="text-muted">Project Details</h6>
-                            <p className="fw-bold">
-                              {selectedProject?.project_details ||
-                                "No details provided"}
-                            </p>
-                          </div>
-                        </Col>
-                      </Row>
-
-                      {selectedProject?.persons_involved && (
-                        <Row className="mb-4">
-                          <Col>
-                            <Card>
-                              <Card.Header className="bg-light">
-                                <h6 className="mb-0">Team Members</h6>
-                              </Card.Header>
-                              <Card.Body>
-                                <Row>
-                                  {JSON.parse(
-                                    selectedProject.persons_involved
-                                  ).map((person, index) => (
-                                    <Col md={4} key={index} className="mb-2">
-                                      <Badge
-                                        bg="light"
-                                        text="dark"
-                                        className="w-100 text-start p-2"
-                                      >
-                                        {person || `Team member ${index + 1}`}
-                                      </Badge>
-                                    </Col>
-                                  ))}
-                                </Row>
-                              </Card.Body>
-                            </Card>
-                          </Col>
-                        </Row>
-                      )}
-
-                      {selectedChallan.items?.length > 0 ? (
-                        <div className="table-responsive">
-                          <Table striped bordered hover>
-                            <thead className="table-light">
-                              <tr>
-                                <th width="5%">#</th>
-                                <th width="20%">Asset Name</th>
-                                <th width="25%">Description</th>
-                                <th width="10%">Qty</th>
-                                <th width="15%">Serial No</th>
-                                <th width="10%">Returnable</th>
-                                <th width="15%">Return Date</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {selectedChallan.items.map((item, index) => (
-                                <tr key={index}>
-                                  <td className="text-center">
-                                    {item.sno || index + 1}
-                                  </td>
-                                  <td>
-                                    {item.asset_name || (
-                                      <span className="text-muted">-</span>
-                                    )}
-                                  </td>
-                                  <td>
-                                    {item.description || (
-                                      <span className="text-muted">-</span>
-                                    )}
-                                  </td>
-                                  <td className="text-center">
-                                    {item.quantity}
-                                  </td>
-                                  <td>
-                                    {item.serial_no || (
-                                      <span className="text-muted">-</span>
-                                    )}
-                                  </td>
-                                  <td className="text-center">
-                                    <Badge
-                                      bg={
-                                        item.returnable === "yes"
-                                          ? "success"
-                                          : "secondary"
-                                      }
-                                    >
-                                      {item.returnable === "yes" ? "Yes" : "No"}
-                                    </Badge>
-                                  </td>
-                                  <td>
-                                    {item.returnable === "yes" ? (
-                                      formatDate(item.expected_return_date) || (
-                                        <span className="text-muted">-</span>
-                                      )
-                                    ) : (
-                                      <Badge bg="secondary">N/A</Badge>
-                                    )}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </Table>
-                        </div>
-                      ) : (
-                        <div className="text-center py-4">
-                          <p className="text-muted">No items in this challan</p>
-                        </div>
-                      )}
-                    </Card.Body>
-                    <Card.Footer className="text-muted text-center">
-                      Generated on {formatDate(selectedChallan.date)}
-                    </Card.Footer>
-                  </Card>
                 </>
               ) : (
                 <Card className="text-center py-5">
@@ -1089,6 +879,211 @@ const DataView = () => {
                   </Card.Body>
                 </Card>
               )}
+            </Col>
+          </Row>
+          <Row>
+            <Col>
+              <Card className="mb-4">
+                <Card.Header className="d-flex justify-content-between align-items-center bg-light">
+                  <h5 className="mb-0">Challan Details</h5>
+                  <Badge bg="light" text="dark">
+                    <BiCalendar className="me-1" />
+                    {formatDate(selectedChallan.date) || "No date set"}
+                  </Badge>
+                </Card.Header>
+                <Card.Body>
+                  <Row className="mb-4">
+                    <Col md={3}>
+                      <div className="mb-3">
+                        <h6 className="text-muted">DC Number</h6>
+                        <p className="fw-bold">
+                          {selectedChallan.dc_number || "-"}
+                        </p>
+                      </div>
+                    </Col>
+                    <Col md={3}>
+                      <div className="mb-3">
+                        <h6 className="text-muted">Project</h6>
+                        <p className="fw-bold">
+                          {selectedChallan.project_name || "-"}
+                        </p>
+                      </div>
+                    </Col>
+                    <Col md={3}>
+                      <div className="mb-3">
+                        <h6 className="text-muted">Prepared By</h6>
+                        <p className="fw-bold">{selectedChallan.name || "-"}</p>
+                      </div>
+                    </Col>
+                    <Col md={3}>
+                      <div className="mb-3">
+                        <h6 className="text-muted">Client</h6>
+                        <p className="fw-bold">
+                          {selectedChallan.client || "-"}
+                        </p>
+                      </div>
+                    </Col>
+                  </Row>
+                  <Row className="mb-4">
+                    <Col md={3}>
+                      <div className="mb-3">
+                        <h6 className="text-muted">Location</h6>
+                        <p className="fw-bold">
+                          {selectedChallan.location || "-"}
+                        </p>
+                      </div>
+                    </Col>
+                    <Col md={3}>
+                      <div className="mb-3">
+                        <h6 className="text-muted">PO Number</h6>
+                        <p className="fw-bold">
+                          {selectedChallan.po_number || "-"}
+                        </p>
+                      </div>
+                    </Col>
+                    <Col md={3}>
+                      <div className="mb-3">
+                        <h6 className="text-muted">Returnable Items</h6>
+                        <p className="fw-bold">
+                          {selectedChallan.items?.filter(
+                            (item) => item.returnable === "yes"
+                          ).length || 0}
+                        </p>
+                      </div>
+                    </Col>
+                    <Col md={3}>
+                      <div className="mb-3">
+                        <h6 className="text-muted">Non-Returnable Items</h6>
+                        <p className="fw-bold">
+                          {selectedChallan.items?.filter(
+                            (item) => item.returnable !== "yes"
+                          ).length || 0}
+                        </p>
+                      </div>
+                    </Col>
+                  </Row>
+                  <Row className="mb-4">
+                    <Col md={6}>
+                      <div className="mb-3">
+                        <h6 className="text-muted">
+                          Project Lead / Person who is visiting
+                        </h6>
+                        <p className="fw-bold">
+                          {selectedProject?.field_supervisor || "Not specified"}
+                        </p>
+                      </div>
+                    </Col>
+                    <Col md={6}>
+                      <div className="mb-3">
+                        <h6 className="text-muted">Project Details</h6>
+                        <p className="fw-bold">
+                          {selectedProject?.project_details ||
+                            "No details provided"}
+                        </p>
+                      </div>
+                    </Col>
+                  </Row>
+
+                  {selectedProject?.persons_involved && (
+                    <Row className="mb-4">
+                      <Col>
+                        <Card>
+                          <Card.Header className="bg-light">
+                            <h6 className="mb-0">Team Members</h6>
+                          </Card.Header>
+                          <Card.Body>
+                            <Row>
+                              {JSON.parse(selectedProject.persons_involved).map(
+                                (person, index) => (
+                                  <Col md={4} key={index} className="mb-2">
+                                    <Badge
+                                      bg="light"
+                                      text="dark"
+                                      className="w-100 text-start p-2"
+                                    >
+                                      {person || `Team member ${index + 1}`}
+                                    </Badge>
+                                  </Col>
+                                )
+                              )}
+                            </Row>
+                          </Card.Body>
+                        </Card>
+                      </Col>
+                    </Row>
+                  )}
+
+                  {selectedChallan.items?.length > 0 ? (
+                    <div className="table-responsive">
+                      <Table striped bordered hover>
+                        <thead className="table-light">
+                          <tr>
+                            <th width="5%">#</th>
+                            <th width="20%">Asset Name</th>
+                            <th width="25%">Description</th>
+                            <th width="10%">Qty</th>
+                            <th width="15%">Serial No</th>
+                            <th width="10%">Returnable</th>
+                            <th width="15%">Return Date</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedChallan.items.map((item, index) => (
+                            <tr key={index}>
+                              <td className="text-center">
+                                {item.sno || index + 1}
+                              </td>
+                              <td>
+                                {item.asset_name || (
+                                  <span className="text-muted">-</span>
+                                )}
+                              </td>
+                              <td>
+                                {item.description || (
+                                  <span className="text-muted">-</span>
+                                )}
+                              </td>
+                              <td className="text-center">{item.quantity}</td>
+                              <td>
+                                {item.serial_no || (
+                                  <span className="text-muted">-</span>
+                                )}
+                              </td>
+                              <td className="text-center">
+                                <Badge
+                                  bg={
+                                    item.returnable === "yes"
+                                      ? "success"
+                                      : "secondary"
+                                  }
+                                >
+                                  {item.returnable === "yes" ? "Yes" : "No"}
+                                </Badge>
+                              </td>
+                              <td>
+                                {item.returnable === "yes" ? (
+                                  formatDate(item.expected_return_date) || (
+                                    <span className="text-muted">-</span>
+                                  )
+                                ) : (
+                                  <Badge bg="secondary">N/A</Badge>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <p className="text-muted">No items in this challan</p>
+                    </div>
+                  )}
+                </Card.Body>
+                <Card.Footer className="text-muted text-center">
+                  Generated on {formatDate(selectedChallan.date)}
+                </Card.Footer>
+              </Card>
             </Col>
           </Row>
         </>
