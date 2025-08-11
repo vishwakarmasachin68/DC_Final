@@ -38,9 +38,10 @@ const ChallanForm = ({ onSave }) => {
 
   const getDcNumber = (challan) => {
     const prefix = "DSI/";
-    const middle = challan.has_po === "yes" && challan.po_number
-      ? challan.po_number
-      : formatDate(challan.date).replace(/\//g, "");
+    const middle =
+      challan.has_po === "yes" && challan.po_number
+        ? challan.po_number
+        : formatDate(challan.date).replace(/\//g, "");
     return `${prefix}${middle}/${challan.dc_sequence}`;
   };
 
@@ -658,93 +659,103 @@ const ChallanForm = ({ onSave }) => {
             </div>
           </Card.Header>
           <Card.Body className="p-0">
-            <Table bordered hover className="mb-0">
-              <thead>
-                <tr>
-                  <th width="5%">#</th>
-                  <th width="20%">Asset Name</th>
-                  <th width="25%">Description</th>
-                  <th width="10%">Qty</th>
-                  <th width="15%">Serial No</th>
-                  <th width="10%">Returnable</th>
-                  {challan.items.some((item) => item.returnable === "yes") && (
-                    <th width="15%">Expected Return Date</th>
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {challan.items.map((item, idx) => (
-                  <tr key={idx}>
-                    <td className="text-center">{item.sno}</td>
-                    <td>
-                      <Form.Control
-                        type="text"
-                        name="asset_name"
-                        value={item.asset_name}
-                        onChange={(e) => handleItemChange(idx, e)}
-                        required
-                        placeholder="Enter asset name"
-                      />
-                    </td>
-                    <td>
-                      <Form.Control
-                        type="text"
-                        name="description"
-                        value={item.description}
-                        onChange={(e) => handleItemChange(idx, e)}
-                        required
-                        placeholder="Enter description"
-                      />
-                    </td>
-                    <td>
-                      <Form.Control
-                        type="number"
-                        name="quantity"
-                        min="1"
-                        value={item.quantity}
-                        onChange={(e) => handleItemChange(idx, e)}
-                        className="text-center"
-                      />
-                    </td>
-                    <td>
-                      <Form.Control
-                        type="text"
-                        name="serial_no"
-                        value={item.serial_no}
-                        onChange={(e) => handleItemChange(idx, e)}
-                        required
-                        placeholder="Enter serial no"
-                      />
-                    </td>
-                    <td>
-                      <Form.Select
-                        name="returnable"
-                        value={item.returnable}
-                        onChange={(e) => handleItemChange(idx, e)}
-                      >
-                        <option value="no">No</option>
-                        <option value="yes">Yes</option>
-                      </Form.Select>
-                    </td>
-                    {challan.items.some((i) => i.returnable === "yes") && (
-                      <td>
-                        {item.returnable === "yes" ? (
-                          <Form.Control
-                            type="date"
-                            name="expected_return_date"
-                            value={item.expected_return_date}
-                            onChange={(e) => handleItemChange(idx, e)}
-                            required
-                          />
-                        ) : (
-                          <span className="text-muted">N/A</span>
-                        )}
-                      </td>
-                    )}
+            <div style={{ maxHeight: "400px", overflowY: "auto" }}>
+              <Table bordered hover className="mb-0">
+                <thead
+                  style={{
+                    position: "sticky",
+                    top: 0,
+                    zIndex: 1,
+                    backgroundColor: "white",
+                  }}
+                >
+                  <tr>
+                    {" "}
+                    <th width="5%">#</th>
+                    <th width="20%">Asset Name</th>
+                    <th width="25%">Description</th>
+                    <th width="10%">Qty</th>
+                    <th width="15%">Serial No</th>
+                    <th width="10%">Returnable</th>
+                    {challan.items.some(
+                      (item) => item.returnable === "yes"
+                    ) && <th width="15%">Expected Return Date</th>}
                   </tr>
-                ))}
-              </tbody>
-            </Table>
+                </thead>
+                <tbody>
+                  {challan.items.map((item, idx) => (
+                    <tr key={idx}>
+                      <td className="text-center">{item.sno}</td>
+                      <td>
+                        <Form.Control
+                          type="text"
+                          name="asset_name"
+                          value={item.asset_name}
+                          onChange={(e) => handleItemChange(idx, e)}
+                          required
+                          placeholder="Enter asset name"
+                        />
+                      </td>
+                      <td>
+                        <Form.Control
+                          type="text"
+                          name="description"
+                          value={item.description}
+                          onChange={(e) => handleItemChange(idx, e)}
+                          required
+                          placeholder="Enter description"
+                        />
+                      </td>
+                      <td>
+                        <Form.Control
+                          type="number"
+                          name="quantity"
+                          min="1"
+                          value={item.quantity}
+                          onChange={(e) => handleItemChange(idx, e)}
+                          className="text-center"
+                        />
+                      </td>
+                      <td>
+                        <Form.Control
+                          type="text"
+                          name="serial_no"
+                          value={item.serial_no}
+                          onChange={(e) => handleItemChange(idx, e)}
+                          required
+                          placeholder="Enter serial no"
+                        />
+                      </td>
+                      <td>
+                        <Form.Select
+                          name="returnable"
+                          value={item.returnable}
+                          onChange={(e) => handleItemChange(idx, e)}
+                        >
+                          <option value="no">No</option>
+                          <option value="yes">Yes</option>
+                        </Form.Select>
+                      </td>
+                      {challan.items.some((i) => i.returnable === "yes") && (
+                        <td>
+                          {item.returnable === "yes" ? (
+                            <Form.Control
+                              type="date"
+                              name="expected_return_date"
+                              value={item.expected_return_date}
+                              onChange={(e) => handleItemChange(idx, e)}
+                              required
+                            />
+                          ) : (
+                            <span className="text-muted">N/A</span>
+                          )}
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
           </Card.Body>
         </Card>
 
