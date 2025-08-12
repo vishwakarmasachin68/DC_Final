@@ -850,7 +850,10 @@ const DataView = () => {
                                 <Card.Body>
                                   {loading ? (
                                     <div className="text-center py-4">
-                                      <Spinner animation="border" style={{ color: "#085f79ff" }} />
+                                      <Spinner
+                                        animation="border"
+                                        style={{ color: "#085f79ff" }}
+                                      />
                                     </div>
                                   ) : (
                                     <Chart

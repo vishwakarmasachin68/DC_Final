@@ -37,9 +37,8 @@ const Navbar = () => {
           </span>
         </div>
 
-        {/* Desktop Navigation - shows on lg screens and up */}
         <div className="d-none d-lg-flex ms-auto">
-          <div className="d-flex gap-2">
+          <div className="d-flex gap-2">            
             <Button
               as={Link}
               to="/"
@@ -63,6 +62,14 @@ const Navbar = () => {
               className="d-flex align-items-center"
             >
               <i className="bi bi-folder-plus me-2"></i>Manage Project
+            </Button>
+            <Button
+              as={Link}
+              to="/AssetManagement"
+              variant="outline-light"
+              className="d-flex align-items-center"
+            >
+              <i className="bi bi-gear me-2"></i>Asset Management
             </Button>
           </div>
         </div>

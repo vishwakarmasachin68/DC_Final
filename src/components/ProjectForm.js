@@ -307,7 +307,6 @@ const ProjectForm = ({ onProjectUpdate }) => {
       <div className="page-header mb-4">
         <h2>Project Management</h2>
       </div>
-
       {error && (
         <Alert variant="danger" dismissible onClose={() => setError(null)}>
           {error}
