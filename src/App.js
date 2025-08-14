@@ -3,10 +3,10 @@ import { Routes, Route } from "react-router-dom";
 import ChallanForm from "./components/ChallanForm";
 import DataView from "./components/DataView";
 import ProjectForm from "./components/ProjectForm";
+import AssetManagement from "./components/AssetManagement";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import AssetManagement from "./components/AssetManagement";
 
 function App() {
   const [savedChallans, setSavedChallans] = useState([]);

@@ -21,6 +21,7 @@ import {
   getLocations,
   addClient,
   addLocation,
+  getAssets,
 } from "../services/api";
 import { generateDoc } from "../services/docGenerator";
 import "../styles/ChallanForm.css";
@@ -48,6 +49,8 @@ const ChallanForm = ({ onSave }) => {
   const [clients, setClients] = useState([]);
   const [locations, setLocations] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [assets, setAssets] = useState([]);
+  const [selectedAssets, setSelectedAssets] = useState([]);
   const [showNewClientInput, setShowNewClientInput] = useState(false);
   const [showNewLocationInput, setShowNewLocationInput] = useState(false);
   const [newClient, setNewClient] = useState("");
@@ -58,20 +61,39 @@ const ChallanForm = ({ onSave }) => {
   const [generating, setGenerating] = useState(false);
   const [nextSequence, setNextSequence] = useState("001");
 
+  const [challan, setChallan] = useState({
+    dc_sequence: nextSequence,
+    date: new Date().toISOString().split("T")[0],
+    name: "",
+    project_id: "",
+    project_name: "",
+    client: "",
+    location: "",
+    has_po: "no",
+    po_number: "",
+  });
+
   const loadData = async () => {
     try {
       setLoading(true);
-      const [projectsData, clientsData, locationsData, challansData] =
-        await Promise.all([
-          getProjects(),
-          getClients(),
-          getLocations(),
-          getChallans(),
-        ]);
+      const [
+        projectsData,
+        clientsData,
+        locationsData,
+        challansData,
+        assetsData,
+      ] = await Promise.all([
+        getProjects(),
+        getClients(),
+        getLocations(),
+        getChallans(),
+        getAssets(),
+      ]);
 
       setProjects(projectsData);
       setClients(clientsData.map((c) => c.name));
       setLocations(locationsData.map((l) => l.name));
+      setAssets(assetsData);
 
       if (challansData.length > 0) {
         const sequences = challansData.map((c) => {
@@ -96,29 +118,6 @@ const ChallanForm = ({ onSave }) => {
     loadData();
   }, []);
 
-  const [challan, setChallan] = useState({
-    dc_sequence: nextSequence,
-    date: new Date().toISOString().split("T")[0],
-    name: "",
-    project_id: "",
-    project_name: "",
-    client: "",
-    location: "",
-    has_po: "no",
-    po_number: "",
-    items: [
-      {
-        sno: 1,
-        asset_name: "",
-        description: "",
-        quantity: 1,
-        serial_no: "",
-        returnable: "no",
-        expected_return_date: "",
-      },
-    ],
-  });
-
   useEffect(() => {
     setChallan((prev) => ({
       ...prev,
@@ -132,10 +131,47 @@ const ChallanForm = ({ onSave }) => {
     setError(null);
   };
 
+  const handleAssetSelect = (e) => {
+    const assetId = e.target.value;
+    if (!assetId) return;
+
+    const asset = assets.find((a) => a.asset_id === assetId);
+    if (!asset) return;
+
+    // Check if asset is already selected
+    if (selectedAssets.some((a) => a.asset_id === assetId)) {
+      return;
+    }
+
+    const newItem = {
+      sno: selectedAssets.length + 1,
+      asset_id: asset.asset_id,
+      asset_name: asset.asset_name,
+      description: `${asset.make_model || ""} ${asset.category || ""}`.trim(),
+      quantity: 1,
+      serial_no: asset.serial_number,
+      returnable: "no",
+      expected_return_date: "",
+    };
+
+    setSelectedAssets((prev) => [...prev, newItem]);
+  };
+
+  const removeSelectedAsset = (index) => {
+    setSelectedAssets((prev) =>
+      prev
+        .filter((_, i) => i !== index)
+        .map((item, idx) => ({
+          ...item,
+          sno: idx + 1,
+        }))
+    );
+  };
+
   const handleItemChange = (index, e) => {
     const { name, value } = e.target;
-    setChallan((prev) => {
-      const updatedItems = [...prev.items];
+    setSelectedAssets((prev) => {
+      const updatedItems = [...prev];
       updatedItems[index] = {
         ...updatedItems[index],
         [name]: name === "quantity" ? Math.max(1, parseInt(value) || 1) : value,
@@ -145,34 +181,8 @@ const ChallanForm = ({ onSave }) => {
         updatedItems[index].expected_return_date = "";
       }
 
-      return { ...prev, items: updatedItems };
+      return updatedItems;
     });
-  };
-
-  const addItem = () => {
-    setChallan((prev) => ({
-      ...prev,
-      items: [
-        ...prev.items,
-        {
-          sno: prev.items.length + 1,
-          asset_name: "",
-          description: "",
-          quantity: 1,
-          serial_no: "",
-          returnable: "no",
-          expected_return_date: "",
-        },
-      ],
-    }));
-  };
-
-  const removeItem = (index) => {
-    if (challan.items.length <= 1) return;
-    const updatedItems = challan.items
-      .filter((_, i) => i !== index)
-      .map((item, i) => ({ ...item, sno: i + 1 }));
-    setChallan((prev) => ({ ...prev, items: updatedItems }));
   };
 
   const validateForm = () => {
@@ -196,8 +206,12 @@ const ChallanForm = ({ onSave }) => {
       setError("PO Number is required");
       return false;
     }
-    for (const [i, item] of challan.items.entries()) {
-      if (!item.asset_name || !item.description || !item.serial_no) {
+    if (selectedAssets.length === 0) {
+      setError("Please add at least one asset");
+      return false;
+    }
+    for (const [i, item] of selectedAssets.entries()) {
+      if (!item.asset_name || !item.serial_no) {
         setError(`Please complete all fields for item ${i + 1}`);
         return false;
       }
@@ -234,7 +248,7 @@ const ChallanForm = ({ onSave }) => {
         location: challan.location,
         has_po: challan.has_po,
         po_number: challan.po_number,
-        items: challan.items.map((item) => ({
+        items: selectedAssets.map((item) => ({
           sno: item.sno,
           asset_name: item.asset_name,
           description: item.description,
@@ -262,6 +276,7 @@ const ChallanForm = ({ onSave }) => {
       });
 
       setShowPreview(false);
+      setSelectedAssets([]);
       setError(null);
       navigate("/");
     } catch (err) {
@@ -285,18 +300,8 @@ const ChallanForm = ({ onSave }) => {
       location: "",
       has_po: "no",
       po_number: "",
-      items: [
-        {
-          sno: 1,
-          asset_name: "",
-          description: "",
-          quantity: 1,
-          serial_no: "",
-          returnable: "no",
-          expected_return_date: "",
-        },
-      ],
     });
+    setSelectedAssets([]);
     setShowNewClientInput(false);
     setShowNewLocationInput(false);
   };
@@ -626,36 +631,27 @@ const ChallanForm = ({ onSave }) => {
         <Card className="mb-4 form-card">
           <Card.Header className="card-header-custom d-flex justify-content-between align-items-center text-white">
             <h5 className="card-title">
-              <i className="bi bi-list-ul me-2"></i>Item Details
+              <i className="bi bi-list-ul me-2"></i>Asset Details
             </h5>
             <div>
-              <Button
-                variant="outline-success"
-                size="sm"
-                onClick={addItem}
-                className="me-2"
-                style={{
-                  backgroundColor: "#27ae60",
-                  borderColor: "#ffffffff",
-                  color: "#ffffffff",
-                }}
+              <Form.Select
+                style={{ width: "300px" }}
+                onChange={handleAssetSelect}
+                value=""
               >
-                <i className="bi bi-plus-circle me-1"></i>Add Item
-              </Button>
-
-              <Button
-                variant="outline-danger"
-                size="sm"
-                onClick={() => removeItem(challan.items.length - 1)}
-                disabled={challan.items.length <= 1}
-                style={{
-                  backgroundColor: "#ce2121ff",
-                  borderColor: "#ffffffff",
-                  color: "#ffffffff",
-                }}
-              >
-                <i className="bi bi-dash-circle me-1"></i>Remove Item
-              </Button>
+                <option value="">Select an asset to add</option>
+                <option value="add">+ Add Assets</option>
+                {assets
+                  .filter(
+                    (asset) =>
+                      !selectedAssets.some((a) => a.asset_id === asset.asset_id)
+                  )
+                  .map((asset) => (
+                    <option key={asset.asset_id} value={asset.asset_id}>
+                      {asset.asset_id} {asset.asset_name} ({asset.serial_number}) 
+                    </option>
+                  ))}
+              </Form.Select>
             </div>
           </Card.Header>
           <Card.Body className="p-0">
@@ -670,42 +666,24 @@ const ChallanForm = ({ onSave }) => {
                   }}
                 >
                   <tr>
-                    {" "}
                     <th width="5%">#</th>
-                    <th width="20%">Asset Name</th>
+                    <th width="25%">Asset Name</th>
                     <th width="25%">Description</th>
                     <th width="10%">Qty</th>
                     <th width="15%">Serial No</th>
                     <th width="10%">Returnable</th>
-                    {challan.items.some(
+                    {selectedAssets.some(
                       (item) => item.returnable === "yes"
-                    ) && <th width="15%">Expected Return Date</th>}
+                    ) && <th width="10%">Return Date</th>}
+                    <th width="5%">Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {challan.items.map((item, idx) => (
+                  {selectedAssets.map((item, idx) => (
                     <tr key={idx}>
                       <td className="text-center">{item.sno}</td>
-                      <td>
-                        <Form.Control
-                          type="text"
-                          name="asset_name"
-                          value={item.asset_name}
-                          onChange={(e) => handleItemChange(idx, e)}
-                          required
-                          placeholder="Enter asset name"
-                        />
-                      </td>
-                      <td>
-                        <Form.Control
-                          type="text"
-                          name="description"
-                          value={item.description}
-                          onChange={(e) => handleItemChange(idx, e)}
-                          required
-                          placeholder="Enter description"
-                        />
-                      </td>
+                      <td>{item.asset_name}</td>
+                      <td>{item.description}</td>
                       <td>
                         <Form.Control
                           type="number"
@@ -716,16 +694,7 @@ const ChallanForm = ({ onSave }) => {
                           className="text-center"
                         />
                       </td>
-                      <td>
-                        <Form.Control
-                          type="text"
-                          name="serial_no"
-                          value={item.serial_no}
-                          onChange={(e) => handleItemChange(idx, e)}
-                          required
-                          placeholder="Enter serial no"
-                        />
-                      </td>
+                      <td>{item.serial_no}</td>
                       <td>
                         <Form.Select
                           name="returnable"
@@ -736,7 +705,7 @@ const ChallanForm = ({ onSave }) => {
                           <option value="yes">Yes</option>
                         </Form.Select>
                       </td>
-                      {challan.items.some((i) => i.returnable === "yes") && (
+                      {selectedAssets.some((i) => i.returnable === "yes") && (
                         <td>
                           {item.returnable === "yes" ? (
                             <Form.Control
@@ -751,6 +720,15 @@ const ChallanForm = ({ onSave }) => {
                           )}
                         </td>
                       )}
+                      <td className="text-center">
+                        <Button
+                          variant="outline-danger"
+                          size="sm"
+                          onClick={() => removeSelectedAsset(idx)}
+                        >
+                          <i className="bi bi-trash"></i>
+                        </Button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -778,7 +756,7 @@ const ChallanForm = ({ onSave }) => {
         challan={{
           ...challan,
           dcNumber: getDcNumber(challan),
-          items: challan.items.map((item) => ({
+          items: selectedAssets.map((item) => ({
             ...item,
             assetName: item.asset_name,
             serialNo: item.serial_no,

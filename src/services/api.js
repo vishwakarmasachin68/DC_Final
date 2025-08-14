@@ -108,3 +108,58 @@ export async function updateProject(id, project) {
 export async function deleteProject(id) {
   return fetchAPI(`/projects/${id}/`, "DELETE");
 }
+export const getAssets = async () => {
+    try {
+        const response = await fetchAPI('/assets/', 'GET');
+        return response;
+    } catch (error) {
+        console.error('Error fetching assets:', error);
+        throw error;
+    }
+};
+
+export const addAsset = async (assetData) => {
+    try {
+        // Convert dates to ISO string format
+        const formattedData = {
+            ...assetData,
+            transaction_date: assetData.transaction_date ? assetData.transaction_date.toISOString().split('T')[0] : null,
+            expected_return_date: assetData.expected_return_date ? assetData.expected_return_date.toISOString().split('T')[0] : null,
+            returned_date: assetData.returned_date ? assetData.returned_date.toISOString().split('T')[0] : null
+        };
+        
+        const response = await fetchAPI('/assets/', 'POST', formattedData);
+        return response;
+    } catch (error) {
+        console.error('Error adding asset:', error);
+        throw error;
+    }
+};
+
+export const updateAsset = async (assetId, assetData) => {
+    try {
+        // Convert dates to ISO string format
+        const formattedData = {
+            ...assetData,
+            transaction_date: assetData.transaction_date ? assetData.transaction_date.toISOString().split('T')[0] : null,
+            expected_return_date: assetData.expected_return_date ? assetData.expected_return_date.toISOString().split('T')[0] : null,
+            returned_date: assetData.returned_date ? assetData.returned_date.toISOString().split('T')[0] : null
+        };
+        
+        const response = await fetchAPI(`/assets/${assetId}`, 'PUT', formattedData);
+        return response;
+    } catch (error) {
+        console.error('Error updating asset:', error);
+        throw error;
+    }
+};
+
+export const deleteAsset = async (assetId) => {
+    try {
+        const response = await fetchAPI(`/assets/${assetId}`, 'DELETE');
+        return response;
+    } catch (error) {
+        console.error('Error deleting asset:', error);
+        throw error;
+    }
+};

@@ -63,14 +63,14 @@ const Navbar = () => {
             >
               <i className="bi bi-folder-plus me-2"></i>Manage Project
             </Button>
-            <Button
+            {/* <Button
               as={Link}
               to="/AssetManagement"
               variant="outline-light"
               className="d-flex align-items-center"
             >
               <i className="bi bi-gear me-2"></i>Asset Management
-            </Button>
+            </Button> */}
           </div>
         </div>
 
