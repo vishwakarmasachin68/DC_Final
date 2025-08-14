@@ -134,6 +134,10 @@ const ChallanForm = ({ onSave }) => {
   const handleAssetSelect = (e) => {
     const assetId = e.target.value;
     if (!assetId) return;
+    if (assetId === "add") {
+      navigate("/AssetManagement");
+      return;
+    }
 
     const asset = assets.find((a) => a.asset_id === assetId);
     if (!asset) return;

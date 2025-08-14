@@ -28,8 +28,8 @@ const AssetModal = ({
   if (!currentAsset) return null;
 
   return (
-    <Modal show={show} onHide={onHide} size="lg">
-      <Modal.Header closeButton>
+    <Modal show={show} onHide={onHide} size="xl">
+      <Modal.Header closeButton className="custom-modal-header bg-primary text-white">
         <Modal.Title>{isEditing ? "Edit Asset" : "Add New Asset"}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
