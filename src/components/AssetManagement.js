@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { 
-  Container, 
-  Table, 
-  Button, 
-  Alert, 
+import {
+  Container,
+  Table,
+  Button,
+  Alert,
   Spinner,
   Card,
   InputGroup,
   Badge,
-  Form, 
+  Form,
   Modal,
 } from "react-bootstrap";
 import { getAssets, addAsset, updateAsset, deleteAsset } from "../services/api";
@@ -39,7 +39,7 @@ const AssetManagement = () => {
     received_by: "",
     expected_return_date: null,
     returned_date: null,
-    is_received: false
+    is_received: false,
   };
 
   useEffect(() => {
@@ -81,9 +81,13 @@ const AssetManagement = () => {
   const handleEdit = (asset) => {
     setCurrentAsset({
       ...asset,
-      transaction_date: asset.transaction_date ? new Date(asset.transaction_date) : null,
-      expected_return_date: asset.expected_return_date ? new Date(asset.expected_return_date) : null,
-      returned_date: asset.returned_date ? new Date(asset.returned_date) : null
+      transaction_date: asset.transaction_date
+        ? new Date(asset.transaction_date)
+        : null,
+      expected_return_date: asset.expected_return_date
+        ? new Date(asset.expected_return_date)
+        : null,
+      returned_date: asset.returned_date ? new Date(asset.returned_date) : null,
     });
     setIsEditing(true);
     setShowModal(true);
@@ -110,15 +114,19 @@ const AssetManagement = () => {
     setShowModal(true);
   };
 
-  const filteredAssets = assets.filter(asset => 
-    asset.asset_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    asset.asset_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    asset.serial_number.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredAssets = assets.filter(
+    (asset) =>
+      asset.asset_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      asset.asset_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      asset.serial_number.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading && assets.length === 0) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ height: "100vh" }}>
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ height: "100vh" }}
+      >
         <Spinner animation="border" style={{ color: "#085f79ff" }} />
       </div>
     );
@@ -151,7 +159,10 @@ const AssetManagement = () => {
               </Button>
             </InputGroup>
           </div>
-          <Button variant="primary" onClick={handleAddNew}>
+          <Button
+            style={{ backgroundColor: "#0e787b", borderColor: "#0e787b" }}
+            onClick={handleAddNew}
+          >
             <i className="bi bi-plus-circle me-2"></i>Add New Asset
           </Button>
         </Card.Header>
@@ -175,27 +186,39 @@ const AssetManagement = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredAssets.map(asset => (
+                {filteredAssets.map((asset) => (
                   <tr key={asset.asset_id}>
                     <td>{asset.asset_id}</td>
                     <td>{asset.asset_name}</td>
                     <td>{asset.serial_number}</td>
-                    <td>{asset.transaction_date ? new Date(asset.transaction_date).toLocaleDateString() : "N/A"}</td>
                     <td>
-                      <Badge bg={asset.transaction_type === "inward" ? "success" : "primary"}>
+                      {asset.transaction_date
+                        ? new Date(asset.transaction_date).toLocaleDateString()
+                        : "N/A"}
+                    </td>
+                    <td>
+                      <Badge
+                        bg={
+                          asset.transaction_type === "inward"
+                            ? "success"
+                            : "primary"
+                        }
+                      >
                         {asset.transaction_type || "N/A"}
                       </Badge>
                     </td>
                     <td>{asset.received_from || "N/A"}</td>
                     <td>{asset.purpose || "N/A"}</td>
                     <td>
-                      {asset.transaction_type === "inward" 
-                        ? (asset.received_by || "N/A") 
-                        : (asset.issued_by || "N/A")}
+                      {asset.transaction_type === "inward"
+                        ? asset.received_by || "N/A"
+                        : asset.issued_by || "N/A"}
                     </td>
                     <td>
-                      {asset.expected_return_date 
-                        ? new Date(asset.expected_return_date).toLocaleDateString() 
+                      {asset.expected_return_date
+                        ? new Date(
+                            asset.expected_return_date
+                          ).toLocaleDateString()
                         : "N/A"}
                     </td>
                     <td>
@@ -204,28 +227,30 @@ const AssetManagement = () => {
                       </Badge>
                     </td>
                     <td>
-                      <Badge 
+                      <Badge
                         bg={
-                          asset.status === "active" ? "success" : 
-                          asset.status === "inactive" ? "secondary" : 
-                          "danger"
+                          asset.status === "active"
+                            ? "success"
+                            : asset.status === "inactive"
+                            ? "secondary"
+                            : "danger"
                         }
                       >
                         {asset.status}
                       </Badge>
                     </td>
                     <td>
-                      <Button 
-                        variant="outline-primary" 
-                        size="sm" 
+                      <Button
+                        variant="outline-primary"
+                        size="sm"
                         onClick={() => handleEdit(asset)}
                         className="me-2"
                       >
                         <i className="bi bi-pencil"></i>
                       </Button>
-                      <Button 
-                        variant="outline-danger" 
-                        size="sm" 
+                      <Button
+                        variant="outline-danger"
+                        size="sm"
                         onClick={() => handleDelete(asset.asset_id)}
                       >
                         <i className="bi bi-trash"></i>

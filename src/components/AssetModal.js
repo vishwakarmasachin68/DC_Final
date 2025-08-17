@@ -29,8 +29,10 @@ const AssetModal = ({
 
   return (
     <Modal show={show} onHide={onHide} size="xl">
-      <Modal.Header closeButton className="custom-modal-header bg-primary text-white">
-        <Modal.Title>{isEditing ? "Edit Asset" : "Add New Asset"}</Modal.Title>
+      <Modal.Header closeButton className="card-header-custom text-white">
+        <Modal.Title className="d-flex align-items-center">
+          {isEditing ? "Edit Asset" : "Add New Asset"}
+        </Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <Form onSubmit={handleSubmit}>
@@ -255,7 +257,11 @@ const AssetModal = ({
             <Button variant="secondary" onClick={onHide} className="me-2">
               Cancel
             </Button>
-            <Button variant="primary" type="submit" disabled={loading}>
+            <Button
+              style={{ backgroundColor: "#0e787b", borderColor: "#0e787b" }}
+              type="submit"
+              disabled={loading}
+            >
               {loading ? (
                 <Spinner
                   as="span"

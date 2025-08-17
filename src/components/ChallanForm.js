@@ -60,6 +60,7 @@ const ChallanForm = ({ onSave }) => {
   const [showPreview, setShowPreview] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [nextSequence, setNextSequence] = useState("001");
+  const [assetSearchTerm, setAssetSearchTerm] = useState("");
 
   const [challan, setChallan] = useState({
     dc_sequence: nextSequence,
@@ -159,6 +160,7 @@ const ChallanForm = ({ onSave }) => {
     };
 
     setSelectedAssets((prev) => [...prev, newItem]);
+    setAssetSearchTerm(""); // Clear search term after selection
   };
 
   const removeSelectedAsset = (index) => {
@@ -308,7 +310,18 @@ const ChallanForm = ({ onSave }) => {
     setSelectedAssets([]);
     setShowNewClientInput(false);
     setShowNewLocationInput(false);
+    setAssetSearchTerm("");
   };
+
+  // Filter available assets based on search term and exclude already selected ones
+  const availableAssets = assets
+    .filter(
+      (asset) =>
+        !selectedAssets.some((a) => a.asset_id === asset.asset_id) &&
+        (asset.asset_name.toLowerCase().includes(assetSearchTerm.toLowerCase()) ||
+         asset.asset_id.toLowerCase().includes(assetSearchTerm.toLowerCase()) ||
+         asset.serial_number.toLowerCase().includes(assetSearchTerm.toLowerCase()))
+    );
 
   if (loading) {
     return (
@@ -638,24 +651,30 @@ const ChallanForm = ({ onSave }) => {
               <i className="bi bi-list-ul me-2"></i>Asset Details
             </h5>
             <div>
-              <Form.Select
-                style={{ width: "300px" }}
-                onChange={handleAssetSelect}
-                value=""
-              >
-                <option value="">Select an asset to add</option>
-                <option value="add">+ Add Assets</option>
-                {assets
-                  .filter(
-                    (asset) =>
-                      !selectedAssets.some((a) => a.asset_id === asset.asset_id)
-                  )
-                  .map((asset) => (
-                    <option key={asset.asset_id} value={asset.asset_id}>
-                      {asset.asset_id} {asset.asset_name} ({asset.serial_number}) 
-                    </option>
-                  ))}
-              </Form.Select>
+              <InputGroup style={{ width: "500px" }}>
+                <Form.Control
+                  type="text"
+                  placeholder="Search assets..."
+                  value={assetSearchTerm}
+                  onChange={(e) => setAssetSearchTerm(e.target.value)}
+                />
+                <Form.Select
+                  onChange={handleAssetSelect}
+                  value=""
+                >
+                  <option value="">Select an asset</option>
+                  <option value="add">+ Add Assets</option>
+                  {availableAssets.length > 0 ? (
+                    availableAssets.map((asset) => (
+                      <option key={asset.asset_id} value={asset.asset_id}>
+                        {asset.asset_id} - {asset.asset_name} ({asset.serial_number})
+                      </option>
+                    ))
+                  ) : (
+                    <option disabled>No matching assets found</option>
+                  )}
+                </Form.Select>
+              </InputGroup>
             </div>
           </Card.Header>
           <Card.Body className="p-0">
