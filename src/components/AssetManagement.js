@@ -103,8 +103,8 @@ const AssetManagement = () => {
   const handleEdit = (asset) => {
     setCurrentAsset({
       ...asset,
-      make: asset.make || "", // Handle existing assets that might not have this field
-      model: asset.model || "", // Handle existing assets that might not have this field
+      make: asset.make || "",
+      model: asset.model || "",
       date_of_purchase: asset.date_of_purchase
         ? new Date(asset.date_of_purchase)
         : null,
@@ -151,6 +151,12 @@ const AssetManagement = () => {
     setShowModal(true);
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
+  };
+
   const filteredAssets = assets.filter((asset) => {
     const matchesSearch =
       asset.asset_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -163,7 +169,11 @@ const AssetManagement = () => {
       (asset.current_location &&
         asset.current_location
           .toLowerCase()
-          .includes(searchTerm.toLowerCase()));
+          .includes(searchTerm.toLowerCase())) ||
+      (asset.make &&
+        asset.make.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (asset.model &&
+        asset.model.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesStatus =
       filterStatus === "all" || asset.status === filterStatus;
@@ -260,9 +270,13 @@ const AssetManagement = () => {
                   <th>Asset ID</th>
                   <th>Asset Name</th>
                   <th>Category</th>
+                  <th>Make/Model</th>
                   <th>Serial No</th>
+                  <th>Purchase Date</th>
+                  <th>Condition</th>
                   <th>Current Location</th>
                   <th>Issued To</th>
+                  <th>Last Service</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -273,9 +287,32 @@ const AssetManagement = () => {
                     <td>{asset.asset_id}</td>
                     <td>{asset.asset_name}</td>
                     <td>{asset.category || "N/A"}</td>
+                    <td>
+                      {asset.make || "N/A"} / {asset.model || "N/A"}
+                    </td>
                     <td>{asset.serial_number}</td>
+                    <td>{formatDate(asset.date_of_purchase)}</td>
+                    <td>
+                      <Badge
+                        bg={
+                          asset.condition === "New"
+                            ? "success"
+                            : asset.condition === "Good"
+                            ? "primary"
+                            : asset.condition === "Fair"
+                            ? "warning"
+                            : asset.condition === "Poor" ||
+                              asset.condition === "Not Working"
+                            ? "danger"
+                            : "secondary"
+                        }
+                      >
+                        {asset.condition || "N/A"}
+                      </Badge>
+                    </td>
                     <td>{asset.current_location || "N/A"}</td>
                     <td>{asset.asset_issued_to || "N/A"}</td>
+                    <td>{formatDate(asset.last_service_date)}</td>
                     <td>
                       <Badge
                         bg={
@@ -290,21 +327,26 @@ const AssetManagement = () => {
                       </Badge>
                     </td>
                     <td>
-                      <Button
-                        variant="outline-primary"
-                        size="sm"
-                        onClick={() => handleEdit(asset)}
-                        className="me-2"
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="outline-danger"
-                        size="sm"
-                        onClick={() => handleDelete(asset.asset_id)}
-                      >
-                        Delete
-                      </Button>
+                      <div className="d-flex gap-2">
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
+                          onClick={() => handleEdit(asset)}
+                          className="d-flex align-items-center gap-1"
+                        >
+                          <i className="bi bi-pencil"></i>
+                          <span>Edit</span>
+                        </Button>
+                        <Button
+                          variant="outline-danger"
+                          size="sm"
+                          onClick={() => handleDelete(asset.asset_id)}
+                          className="d-flex align-items-center gap-1"
+                        >
+                          <i className="bi bi-trash"></i>
+                          <span>Delete</span>
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -156,7 +156,9 @@ const AssetModal = ({
                 <Form.Label>Date of Purchase</Form.Label>
                 <DatePicker
                   selected={currentAsset.date_of_purchase}
-                  onChange={(date) => handleDateChange(date, "date_of_purchase")}
+                  onChange={(date) =>
+                    handleDateChange(date, "date_of_purchase")
+                  }
                   className="form-control"
                   dateFormat="dd/MM/yyyy"
                   isClearable
@@ -168,7 +170,9 @@ const AssetModal = ({
                 <Form.Label>Last Service Date</Form.Label>
                 <DatePicker
                   selected={currentAsset.last_service_date}
-                  onChange={(date) => handleDateChange(date, "last_service_date")}
+                  onChange={(date) =>
+                    handleDateChange(date, "last_service_date")
+                  }
                   className="form-control"
                   dateFormat="dd/MM/yyyy"
                   isClearable
@@ -314,7 +318,9 @@ const AssetModal = ({
                       type="checkbox"
                       label="Disposal Approvals Obtained"
                       name="disposal_approvals_obtained"
-                      checked={currentAsset.disposal_approvals_obtained || false}
+                      checked={
+                        currentAsset.disposal_approvals_obtained || false
+                      }
                       onChange={handleCheckboxChange}
                     />
                   </Form.Group>
@@ -324,7 +330,9 @@ const AssetModal = ({
                     <Form.Label>Date Of Approval</Form.Label>
                     <DatePicker
                       selected={currentAsset.date_of_approval}
-                      onChange={(date) => handleDateChange(date, "date_of_approval")}
+                      onChange={(date) =>
+                        handleDateChange(date, "date_of_approval")
+                      }
                       className="form-control"
                       dateFormat="dd/MM/yyyy"
                       isClearable
@@ -371,7 +379,9 @@ const AssetModal = ({
                     <Form.Label>Date Of Media Sanitisation</Form.Label>
                     <DatePicker
                       selected={currentAsset.date_of_media_sanitisation}
-                      onChange={(date) => handleDateChange(date, "date_of_media_sanitisation")}
+                      onChange={(date) =>
+                        handleDateChange(date, "date_of_media_sanitisation")
+                      }
                       className="form-control"
                       dateFormat="dd/MM/yyyy"
                       isClearable

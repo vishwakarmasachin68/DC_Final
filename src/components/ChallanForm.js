@@ -314,14 +314,15 @@ const ChallanForm = ({ onSave }) => {
   };
 
   // Filter available assets based on search term and exclude already selected ones
-  const availableAssets = assets
-    .filter(
-      (asset) =>
-        !selectedAssets.some((a) => a.asset_id === asset.asset_id) &&
-        (asset.asset_name.toLowerCase().includes(assetSearchTerm.toLowerCase()) ||
-         asset.asset_id.toLowerCase().includes(assetSearchTerm.toLowerCase()) ||
-         asset.serial_number.toLowerCase().includes(assetSearchTerm.toLowerCase()))
-    );
+  const availableAssets = assets.filter(
+    (asset) =>
+      !selectedAssets.some((a) => a.asset_id === asset.asset_id) &&
+      (asset.asset_name.toLowerCase().includes(assetSearchTerm.toLowerCase()) ||
+        asset.asset_id.toLowerCase().includes(assetSearchTerm.toLowerCase()) ||
+        asset.serial_number
+          .toLowerCase()
+          .includes(assetSearchTerm.toLowerCase()))
+  );
 
   if (loading) {
     return (
@@ -658,16 +659,14 @@ const ChallanForm = ({ onSave }) => {
                   value={assetSearchTerm}
                   onChange={(e) => setAssetSearchTerm(e.target.value)}
                 />
-                <Form.Select
-                  onChange={handleAssetSelect}
-                  value=""
-                >
+                <Form.Select onChange={handleAssetSelect} value="">
                   <option value="">Select an asset</option>
                   <option value="add">+ Add Assets</option>
                   {availableAssets.length > 0 ? (
                     availableAssets.map((asset) => (
                       <option key={asset.asset_id} value={asset.asset_id}>
-                        {asset.asset_id} - {asset.asset_name} ({asset.serial_number})
+                        {asset.asset_id} - {asset.asset_name} (
+                        {asset.serial_number})
                       </option>
                     ))
                   ) : (
