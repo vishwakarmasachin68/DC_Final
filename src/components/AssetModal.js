@@ -86,15 +86,29 @@ const AssetModal = ({
           <Row>
             <Col md={6}>
               <Form.Group className="mb-3">
-                <Form.Label>Make/Model</Form.Label>
+                <Form.Label>Make</Form.Label>
                 <Form.Control
                   type="text"
-                  name="make_model"
-                  value={currentAsset.make_model}
+                  name="make"
+                  value={currentAsset.make || ""}
                   onChange={handleInputChange}
                 />
               </Form.Group>
             </Col>
+            <Col md={6}>
+              <Form.Group className="mb-3">
+                <Form.Label>Model</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="model"
+                  value={currentAsset.model || ""}
+                  onChange={handleInputChange}
+                />
+              </Form.Group>
+            </Col>
+          </Row>
+
+          <Row>
             <Col md={6}>
               <Form.Group className="mb-3">
                 <Form.Label>Serial Number *</Form.Label>

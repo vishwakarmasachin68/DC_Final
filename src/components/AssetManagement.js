@@ -26,14 +26,14 @@ const AssetManagement = () => {
   const [currentAsset, setCurrentAsset] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
 
   const emptyAsset = {
     asset_id: "",
     asset_name: "",
     category: "",
-    make_model: "",
+    make: "",
+    model: "",
     serial_number: "",
     supplier_details: "",
     date_of_purchase: null,
@@ -103,14 +103,28 @@ const AssetManagement = () => {
   const handleEdit = (asset) => {
     setCurrentAsset({
       ...asset,
-      date_of_purchase: asset.date_of_purchase ? new Date(asset.date_of_purchase) : null,
-      last_service_date: asset.last_service_date ? new Date(asset.last_service_date) : null,
-      transaction_date: asset.transaction_date ? new Date(asset.transaction_date) : null,
+      make: asset.make || "", // Handle existing assets that might not have this field
+      model: asset.model || "", // Handle existing assets that might not have this field
+      date_of_purchase: asset.date_of_purchase
+        ? new Date(asset.date_of_purchase)
+        : null,
+      last_service_date: asset.last_service_date
+        ? new Date(asset.last_service_date)
+        : null,
+      transaction_date: asset.transaction_date
+        ? new Date(asset.transaction_date)
+        : null,
       date_of_issue: asset.date_of_issue ? new Date(asset.date_of_issue) : null,
-      expected_return_date: asset.expected_return_date ? new Date(asset.expected_return_date) : null,
+      expected_return_date: asset.expected_return_date
+        ? new Date(asset.expected_return_date)
+        : null,
       returned_date: asset.returned_date ? new Date(asset.returned_date) : null,
-      date_of_approval: asset.date_of_approval ? new Date(asset.date_of_approval) : null,
-      date_of_media_sanitisation: asset.date_of_media_sanitisation ? new Date(asset.date_of_media_sanitisation) : null,
+      date_of_approval: asset.date_of_approval
+        ? new Date(asset.date_of_approval)
+        : null,
+      date_of_media_sanitisation: asset.date_of_media_sanitisation
+        ? new Date(asset.date_of_media_sanitisation)
+        : null,
     });
     setIsEditing(true);
     setShowModal(true);
@@ -142,18 +156,19 @@ const AssetManagement = () => {
       asset.asset_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       asset.asset_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       asset.serial_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (asset.asset_issued_to && asset.asset_issued_to.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (asset.current_location && asset.current_location.toLowerCase().includes(searchTerm.toLowerCase()));
+      (asset.asset_issued_to &&
+        asset.asset_issued_to
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())) ||
+      (asset.current_location &&
+        asset.current_location
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()));
 
-    const matchesType = 
-      filterType === "all" || 
-      asset.transaction_type === filterType;
+    const matchesStatus =
+      filterStatus === "all" || asset.status === filterStatus;
 
-    const matchesStatus = 
-      filterStatus === "all" || 
-      asset.status === filterStatus;
-
-    return matchesSearch && matchesType && matchesStatus;
+    return matchesSearch && matchesStatus;
   });
 
   if (loading && assets.length === 0) {
@@ -198,26 +213,25 @@ const AssetManagement = () => {
           <div className="d-flex gap-2">
             <Dropdown>
               <Dropdown.Toggle variant="outline-secondary">
-                <BiFilter className="me-1" /> 
-                {filterType === "all" ? "All Types" : filterType === "inward" ? "Inward" : "Outward"}
+                <BiFilter className="me-1" />
+                {filterStatus === "all"
+                  ? "All Status"
+                  : filterStatus.charAt(0).toUpperCase() +
+                    filterStatus.slice(1)}
               </Dropdown.Toggle>
               <Dropdown.Menu>
-                <Dropdown.Item onClick={() => setFilterType("all")}>All Types</Dropdown.Item>
-                <Dropdown.Item onClick={() => setFilterType("inward")}>Inward</Dropdown.Item>
-                <Dropdown.Item onClick={() => setFilterType("outward")}>Outward</Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown>
-            
-            <Dropdown>
-              <Dropdown.Toggle variant="outline-secondary">
-                <BiFilter className="me-1" /> 
-                {filterStatus === "all" ? "All Status" : filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)}
-              </Dropdown.Toggle>
-              <Dropdown.Menu>
-                <Dropdown.Item onClick={() => setFilterStatus("all")}>All Status</Dropdown.Item>
-                <Dropdown.Item onClick={() => setFilterStatus("active")}>Active</Dropdown.Item>
-                <Dropdown.Item onClick={() => setFilterStatus("in-use")}>In Use</Dropdown.Item>
-                <Dropdown.Item onClick={() => setFilterStatus("disposed")}>Disposed</Dropdown.Item>
+                <Dropdown.Item onClick={() => setFilterStatus("all")}>
+                  All Status
+                </Dropdown.Item>
+                <Dropdown.Item onClick={() => setFilterStatus("active")}>
+                  Active
+                </Dropdown.Item>
+                <Dropdown.Item onClick={() => setFilterStatus("in-use")}>
+                  In Use
+                </Dropdown.Item>
+                <Dropdown.Item onClick={() => setFilterStatus("disposed")}>
+                  Disposed
+                </Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
 
@@ -247,7 +261,6 @@ const AssetManagement = () => {
                   <th>Asset Name</th>
                   <th>Category</th>
                   <th>Serial No</th>
-                  <th>Type</th>
                   <th>Current Location</th>
                   <th>Issued To</th>
                   <th>Status</th>
@@ -261,13 +274,6 @@ const AssetManagement = () => {
                     <td>{asset.asset_name}</td>
                     <td>{asset.category || "N/A"}</td>
                     <td>{asset.serial_number}</td>
-                    <td>
-                      <Badge
-                        bg={asset.transaction_type === "inward" ? "success" : "primary"}
-                      >
-                        {asset.transaction_type || "N/A"}
-                      </Badge>
-                    </td>
                     <td>{asset.current_location || "N/A"}</td>
                     <td>{asset.asset_issued_to || "N/A"}</td>
                     <td>
