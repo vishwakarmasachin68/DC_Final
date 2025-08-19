@@ -195,8 +195,27 @@ const AssetManagement = () => {
   return (
     <Container className="mt-4">
       <div className="page-header mb-4">
-        <h2>Asset Management</h2>
-        <p className="text-muted">Track all office assets and their movement</p>
+        <div className="d-flex justify-content-between align-items-center">
+          <div>
+            <h2>Asset Management</h2>
+            <p className="text-muted">
+              Track all office assets and their movement.
+            </p>
+          </div>
+          <div>
+            <Button
+              style={{
+                backgroundColor: "#0e787b",
+                borderColor: "#0e787b",
+                fontSize: "1.3rem",
+              }}
+              onClick={() => (window.location.href = "/AssetTracking")}
+              className="ms-2"
+            >
+              <i className="bi bi-truck"></i> Asset Tracking
+            </Button>
+          </div>
+        </div>
       </div>
 
       {error && (
