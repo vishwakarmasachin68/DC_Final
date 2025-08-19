@@ -16,13 +16,15 @@ import {
 } from "react-bootstrap";
 import { getAssets, addAsset, updateAsset, deleteAsset } from "../services/api";
 import AssetModal from "./AssetModal";
-import { BiFilter, BiSearch, BiPlusCircle, BiRefresh } from "react-icons/bi";
+import AssetPreviewModal from "./AssetPreviewModal";
+import { BiFilter, BiSearch, BiPlusCircle, BiRefresh, BiShow } from "react-icons/bi";
 
 const AssetManagement = () => {
   const [assets, setAssets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [currentAsset, setCurrentAsset] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -128,6 +130,11 @@ const AssetManagement = () => {
     });
     setIsEditing(true);
     setShowModal(true);
+  };
+
+  const handlePreview = (asset) => {
+    setCurrentAsset(asset);
+    setShowPreviewModal(true);
   };
 
   const handleDelete = async (assetId) => {
@@ -295,7 +302,6 @@ const AssetManagement = () => {
                   <th>Condition</th>
                   <th>Current Location</th>
                   <th>Issued To</th>
-                  <th>Last Service</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -331,7 +337,6 @@ const AssetManagement = () => {
                     </td>
                     <td>{asset.current_location || "N/A"}</td>
                     <td>{asset.asset_issued_to || "N/A"}</td>
-                    <td>{formatDate(asset.last_service_date)}</td>
                     <td>
                       <Badge
                         bg={
@@ -347,6 +352,15 @@ const AssetManagement = () => {
                     </td>
                     <td>
                       <div className="d-flex gap-2">
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
+                          onClick={() => handlePreview(asset)}
+                          className="d-flex align-items-center gap-1"
+                        >
+                          <BiShow />
+                          <span>View</span>
+                        </Button>
                         <Button
                           variant="outline-primary"
                           size="sm"
@@ -383,6 +397,12 @@ const AssetManagement = () => {
         handleSubmit={handleSubmit}
         loading={loading}
         isEditing={isEditing}
+      />
+
+      <AssetPreviewModal
+        show={showPreviewModal}
+        onHide={() => setShowPreviewModal(false)}
+        asset={currentAsset}
       />
     </Container>
   );

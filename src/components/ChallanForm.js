@@ -705,7 +705,17 @@ const ChallanForm = ({ onSave }) => {
                     <tr key={idx}>
                       <td className="text-center">{item.sno}</td>
                       <td>{item.asset_name}</td>
-                      <td>{item.description}</td>
+                      <td>
+                        {" "}
+                        <Form.Control
+                          type="text"
+                          name="description"
+                          value={item.description}
+                          onChange={(e) => handleItemChange(idx, e)}
+                          required
+                          placeholder="Enter description"
+                        />
+                      </td>
                       <td>
                         <Form.Control
                           type="number"
