@@ -55,7 +55,7 @@ const AssetManagement = () => {
     returned_date: null,
     current_location: "",
     condition: "",
-    status: "active",
+    status: "available",
     disposal_approvals_obtained: false,
     date_of_approval: null,
     approved_by: "",
@@ -252,8 +252,8 @@ const AssetManagement = () => {
                 <Dropdown.Item onClick={() => setFilterStatus("all")}>
                   All Status
                 </Dropdown.Item>
-                <Dropdown.Item onClick={() => setFilterStatus("active")}>
-                  Active
+                <Dropdown.Item onClick={() => setFilterStatus("available")}>
+                  Available
                 </Dropdown.Item>
                 <Dropdown.Item onClick={() => setFilterStatus("in-use")}>
                   In Use
@@ -335,7 +335,7 @@ const AssetManagement = () => {
                     <td>
                       <Badge
                         bg={
-                          asset.status === "active"
+                          asset.status === "available"
                             ? "success"
                             : asset.status === "in-use"
                             ? "warning"

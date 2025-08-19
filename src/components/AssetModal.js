@@ -301,7 +301,7 @@ const AssetModal = ({
                   value={currentAsset.status || "active"}
                   onChange={handleInputChange}
                 >
-                  <option value="active">Active</option>
+                  <option value="available">Available</option>
                   <option value="in-use">In Use</option>
                   <option value="disposed">Disposed</option>
                 </Form.Select>
