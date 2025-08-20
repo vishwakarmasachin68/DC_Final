@@ -298,7 +298,7 @@ const AssetModal = ({
                 <Form.Label>Current Status of Device</Form.Label>
                 <Form.Select
                   name="status"
-                  value={currentAsset.status || "active"}
+                  value={currentAsset.status || "available"}
                   onChange={handleInputChange}
                 >
                   <option value="available">Available</option>

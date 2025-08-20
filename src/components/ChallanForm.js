@@ -21,6 +21,7 @@ import {
   getLocations,
   addClient,
   addLocation,
+  getAvailableAssets,
   getAssets,
 } from "../services/api";
 import { generateDoc } from "../services/docGenerator";
@@ -30,6 +31,7 @@ const ChallanForm = ({ onSave }) => {
   const navigate = useNavigate();
 
   const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, "0");
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -88,7 +90,7 @@ const ChallanForm = ({ onSave }) => {
         getClients(),
         getLocations(),
         getChallans(),
-        getAssets(),
+        getAvailableAssets(),
       ]);
 
       setProjects(projectsData);
@@ -150,9 +152,9 @@ const ChallanForm = ({ onSave }) => {
 
     const newItem = {
       sno: selectedAssets.length + 1,
-      asset_id: asset.asset_id,
+      asset_id: asset.asset_id, // Include asset_id
       asset_name: asset.asset_name,
-      description: `${asset.make_model || ""} ${asset.category || ""}`.trim(),
+      description: `${asset.make || ""} ${asset.model || ""} ${asset.category || ""}`.trim(),
       quantity: 1,
       serial_no: asset.serial_number,
       returnable: "no",
@@ -160,7 +162,7 @@ const ChallanForm = ({ onSave }) => {
     };
 
     setSelectedAssets((prev) => [...prev, newItem]);
-    setAssetSearchTerm(""); // Clear search term after selection
+    setAssetSearchTerm("");
   };
 
   const removeSelectedAsset = (index) => {
@@ -256,6 +258,7 @@ const ChallanForm = ({ onSave }) => {
         po_number: challan.po_number,
         items: selectedAssets.map((item) => ({
           sno: item.sno,
+          asset_id: item.asset_id, // Include asset_id
           asset_name: item.asset_name,
           description: item.description,
           quantity: item.quantity,
@@ -284,6 +287,11 @@ const ChallanForm = ({ onSave }) => {
       setShowPreview(false);
       setSelectedAssets([]);
       setError(null);
+
+      // ✅ Refresh available assets so used ones disappear
+      const availableAssets = await getAvailableAssets();
+      setAssets(availableAssets);
+
       navigate("/");
     } catch (err) {
       console.error("Failed to save/generate challan:", err);
@@ -319,9 +327,8 @@ const ChallanForm = ({ onSave }) => {
       !selectedAssets.some((a) => a.asset_id === asset.asset_id) &&
       (asset.asset_name.toLowerCase().includes(assetSearchTerm.toLowerCase()) ||
         asset.asset_id.toLowerCase().includes(assetSearchTerm.toLowerCase()) ||
-        asset.serial_number
-          .toLowerCase()
-          .includes(assetSearchTerm.toLowerCase()))
+        (asset.serial_number &&
+          asset.serial_number.toLowerCase().includes(assetSearchTerm.toLowerCase())))
   );
 
   if (loading) {
@@ -670,7 +677,7 @@ const ChallanForm = ({ onSave }) => {
                       </option>
                     ))
                   ) : (
-                    <option disabled>No matching assets found</option>
+                    <option disabled>No available assets found</option>
                   )}
                 </Form.Select>
               </InputGroup>

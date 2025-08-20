@@ -17,7 +17,15 @@ import {
 import { getAssets, addAsset, updateAsset, deleteAsset } from "../services/api";
 import AssetModal from "./AssetModal";
 import AssetPreviewModal from "./AssetPreviewModal";
-import { BiFilter, BiSearch, BiPlusCircle, BiRefresh, BiShow } from "react-icons/bi";
+import AssetHistoryModal from "./AssetHistoryModal"; // Import the new modal
+import {
+  BiFilter,
+  BiSearch,
+  BiPlusCircle,
+  BiRefresh,
+  BiShow,
+  BiHistory,
+} from "react-icons/bi";
 
 const AssetManagement = () => {
   const [assets, setAssets] = useState([]);
@@ -25,6 +33,7 @@ const AssetManagement = () => {
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false); // State for history modal
   const [currentAsset, setCurrentAsset] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -135,6 +144,11 @@ const AssetManagement = () => {
   const handlePreview = (asset) => {
     setCurrentAsset(asset);
     setShowPreviewModal(true);
+  };
+
+  const handleHistory = (asset) => {
+    setCurrentAsset(asset);
+    setShowHistoryModal(true);
   };
 
   const handleDelete = async (assetId) => {
@@ -309,7 +323,16 @@ const AssetManagement = () => {
               <tbody>
                 {filteredAssets.map((asset) => (
                   <tr key={asset.asset_id}>
-                    <td>{asset.asset_id}</td>
+                    <td>
+                      <Button
+                        variant="link"
+                        className="p-0 text-decoration-none"
+                        onClick={() => handleHistory(asset)}
+                        title="View Asset History"
+                      >
+                        {asset.asset_id}
+                      </Button>
+                    </td>
                     <td>{asset.asset_name}</td>
                     <td>{asset.category || "N/A"}</td>
                     <td>
@@ -371,6 +394,16 @@ const AssetManagement = () => {
                           <span>Edit</span>
                         </Button>
                         <Button
+                          variant="outline-info"
+                          size="sm"
+                          onClick={() => handleHistory(asset)}
+                          className="d-flex align-items-center gap-1"
+                          title="View History"
+                        >
+                          <BiHistory />
+                          <span>History</span>
+                        </Button>
+                        <Button
                           variant="outline-danger"
                           size="sm"
                           onClick={() => handleDelete(asset.asset_id)}
@@ -402,6 +435,12 @@ const AssetManagement = () => {
       <AssetPreviewModal
         show={showPreviewModal}
         onHide={() => setShowPreviewModal(false)}
+        asset={currentAsset}
+      />
+
+      <AssetHistoryModal
+        show={showHistoryModal}
+        onHide={() => setShowHistoryModal(false)}
         asset={currentAsset}
       />
     </Container>
