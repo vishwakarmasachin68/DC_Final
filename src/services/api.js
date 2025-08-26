@@ -1,19 +1,8 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+// const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+// const API_BASE_URL = "http://192.168.1.213:8000"
+const API = "https://backend-final-dc-2.onrender.com";
 
-// const API = "http://localhost:8000";
-// const API = process.env.REACT_APP_API_URL || "http://localhost:8000";
-// const API = "https://backend-final-dc-2.onrender.com";
-// const API = process.env.REACT_APP_API_BASE_URL;
-// const API_BASE_URL =
-//   (typeof window !== "undefined" && window._env_?.API_BASE_URL) ||
-//   process.env.REACT_APP_API_URL ||
-//   "http://localhost:8000";
 
-// export default API_BASE_URL;
-// const API_BASE_URL =
-//   (typeof window !== "undefined" && window._env_?.API_BASE_URL) ||
-//   process.env.REACT_APP_API_URL ||
-//   "http://localhost:8000";
 
 export default API_BASE_URL;
 
