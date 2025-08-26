@@ -3,7 +3,6 @@
 const API = "https://backend-final-dc-2.onrender.com";
 
 
-
 export default API_BASE_URL;
 
 // Generic API request handler
