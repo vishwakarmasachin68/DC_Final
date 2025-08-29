@@ -154,7 +154,11 @@ const ChallanForm = ({ onSave }) => {
       sno: selectedAssets.length + 1,
       asset_id: asset.asset_id, // Include asset_id
       asset_name: asset.asset_name,
-      description: `${asset.make || ""} ${asset.model || ""} ${asset.category || ""}`.trim(),
+      description:
+        asset.description ||
+        `${asset.make || ""} ${asset.model || ""} ${
+          asset.category || ""
+        }`.trim(),
       quantity: 1,
       serial_no: asset.serial_number,
       returnable: "no",
@@ -303,7 +307,7 @@ const ChallanForm = ({ onSave }) => {
     }
   };
 
-  const handleClearForm = () => {
+  const handleClearForm = ()  => {
     setChallan({
       dc_sequence: nextSequence,
       date: new Date().toISOString().split("T")[0],
@@ -328,7 +332,9 @@ const ChallanForm = ({ onSave }) => {
       (asset.asset_name.toLowerCase().includes(assetSearchTerm.toLowerCase()) ||
         asset.asset_id.toLowerCase().includes(assetSearchTerm.toLowerCase()) ||
         (asset.serial_number &&
-          asset.serial_number.toLowerCase().includes(assetSearchTerm.toLowerCase())))
+          asset.serial_number
+            .toLowerCase()
+            .includes(assetSearchTerm.toLowerCase())))
   );
 
   if (loading) {
@@ -654,71 +660,70 @@ const ChallanForm = ({ onSave }) => {
         </Card>
 
         <Card className="mb-4 form-card">
-          <Card.Header className="card-header-custom d-flex justify-content-between align-items-center text-white">
-            <h5 className="card-title">
-              <i className="bi bi-list-ul me-2"></i>Asset Details
+          <Card.Header className="card-header-custom text-white d-flex justify-content-between align-items-center">
+            <h5 className="card-title mb-0" style={{ fontWeight: "bold" }}>
+              <i className="bi bi-box me-2"></i>Asset Details
             </h5>
-            <div>
-              <InputGroup style={{ width: "500px" }}>
-                <Form.Control
-                  type="text"
-                  placeholder="Search assets..."
-                  value={assetSearchTerm}
-                  onChange={(e) => setAssetSearchTerm(e.target.value)}
-                />
-                <Form.Select onChange={handleAssetSelect} value="">
-                  <option value="">Select an asset</option>
-                  <option value="add">+ Add Assets</option>
-                  {availableAssets.length > 0 ? (
-                    availableAssets.map((asset) => (
-                      <option key={asset.asset_id} value={asset.asset_id}>
-                        {asset.asset_id} - {asset.asset_name} (
-                        {asset.serial_number})
-                      </option>
-                    ))
-                  ) : (
-                    <option disabled>No available assets found</option>
-                  )}
-                </Form.Select>
-              </InputGroup>
+            
+            <div className="d-flex gap-2 align-items-center">
+              <Form.Control
+                type="text"
+                placeholder="Search assets..."
+                value={assetSearchTerm}
+                onChange={(e) => setAssetSearchTerm(e.target.value)}
+                style={{ width: "200px" }}
+              />
+              <Form.Select
+                value=""
+                onChange={handleAssetSelect}
+                style={{ width: "250px" }}
+              >
+                <option value="">Select an asset...</option>
+                {availableAssets.length === 0 ? (
+                  <option value="add">
+                    No assets available. Click to add assets
+                  </option>
+                ) : (
+                  availableAssets.map((asset) => (
+                    <option key={asset.asset_id} value={asset.asset_id}>
+                      {asset.asset_id} - {asset.asset_name} -{" "}
+                      {asset.serial_number}
+                    </option>
+                  ))
+                )}
+              </Form.Select>
             </div>
           </Card.Header>
-          <Card.Body className="p-0">
-            <div style={{ maxHeight: "400px", overflowY: "auto" }}>
-              <Table bordered hover className="mb-0">
-                <thead
-                  style={{
-                    position: "sticky",
-                    top: 0,
-                    zIndex: 1,
-                    backgroundColor: "white",
-                  }}
-                >
-                  <tr>
-                    <th width="5%">#</th>
-                    <th width="25%">Asset Name</th>
-                    <th width="25%">Description</th>
-                    <th width="10%">Qty</th>
-                    <th width="15%">Serial No</th>
-                    <th width="10%">Returnable</th>
-                    {selectedAssets.some(
-                      (item) => item.returnable === "yes"
-                    ) && <th width="10%">Return Date</th>}
-                    <th width="5%">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedAssets.map((item, idx) => (
-                    <tr key={idx}>
-                      <td className="text-center">{item.sno}</td>
+          <Card.Body>
+            <Table striped bordered hover responsive>
+              <thead className="table-header-custom">
+                <tr>
+                  <th>S.No</th>
+                  <th>Asset ID</th>
+                  <th>Asset Name</th>
+                  <th>Description</th>
+                  <th>Quantity</th>
+                  <th>Serial No</th>
+                  <th>Returnable</th>
+                  {selectedAssets.some(item => item.returnable === "yes") && (
+                    <th>Expected Return Date</th>
+                  )}
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedAssets.length > 0 ? (
+                  selectedAssets.map((item, index) => (
+                    <tr key={index}>
+                      <td>{item.sno}</td>
+                      <td>{item.asset_id}</td>
                       <td>{item.asset_name}</td>
                       <td>
-                        {" "}
                         <Form.Control
                           type="text"
                           name="description"
                           value={item.description}
-                          onChange={(e) => handleItemChange(idx, e)}
+                          onChange={(e) => handleItemChange(index, e)}
                           required
                           placeholder="Enter description"
                         />
@@ -727,10 +732,10 @@ const ChallanForm = ({ onSave }) => {
                         <Form.Control
                           type="number"
                           name="quantity"
-                          min="1"
                           value={item.quantity}
-                          onChange={(e) => handleItemChange(idx, e)}
-                          className="text-center"
+                          onChange={(e) => handleItemChange(index, e)}
+                          min="1"
+                          style={{ width: "80px" }}
                         />
                       </td>
                       <td>{item.serial_no}</td>
@@ -738,54 +743,89 @@ const ChallanForm = ({ onSave }) => {
                         <Form.Select
                           name="returnable"
                           value={item.returnable}
-                          onChange={(e) => handleItemChange(idx, e)}
+                          onChange={(e) => handleItemChange(index, e)}
+                          style={{ width: "120px" }}
                         >
                           <option value="no">No</option>
                           <option value="yes">Yes</option>
                         </Form.Select>
                       </td>
-                      {selectedAssets.some((i) => i.returnable === "yes") && (
+                      {selectedAssets.some(item => item.returnable === "yes") && (
                         <td>
                           {item.returnable === "yes" ? (
                             <Form.Control
                               type="date"
                               name="expected_return_date"
                               value={item.expected_return_date}
-                              onChange={(e) => handleItemChange(idx, e)}
-                              required
+                              onChange={(e) => handleItemChange(index, e)}
+                              style={{ width: "150px" }}
                             />
                           ) : (
-                            <span className="text-muted">N/A</span>
+                            <span>-</span>
                           )}
                         </td>
                       )}
-                      <td className="text-center">
+                      <td>
                         <Button
-                          variant="outline-danger"
+                          variant="danger"
                           size="sm"
-                          onClick={() => removeSelectedAsset(idx)}
+                          onClick={() => removeSelectedAsset(index)}
                         >
-                          <i className="bi bi-trash"></i>
+                          <i className="bi bi-trash"> </i>
+                          <span> Remove</span>
                         </Button>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </div>
+                  ))
+                ) : (
+                  <tr>
+                    <td 
+                      colSpan={selectedAssets.some(item => item.returnable === "yes") ? 9 : 8} 
+                      className="text-center text-muted py-4"
+                    >
+                      No assets selected. Please select assets from the dropdown above.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </Table>
           </Card.Body>
         </Card>
 
-        <div className="d-flex justify-content-end gap-3">
+        <div className="d-flex justify-content-between">
           <Button variant="secondary" onClick={handleClearForm}>
             Clear Form
           </Button>
-          <Button
-            style={{ backgroundColor: "#085f79ff" }}
-            onClick={handlePreview}
-          >
-            Preview Challan
-          </Button>
+          <div className="d-flex gap-2">
+            <Button
+              variant="primary"
+              onClick={handlePreview}
+              disabled={selectedAssets.length === 0}
+            >
+              Preview
+            </Button>
+            <Button
+              variant="success"
+              onClick={handleSaveAndGenerate}
+              disabled={selectedAssets.length === 0}
+            >
+              {generating ? (
+                <>
+                  <Spinner
+                    as="span"
+                    animation="border"
+                    size="sm"
+                    role="status"
+                    aria-hidden="true"
+                    className="me-2"
+                  />
+                  Generating...
+                </>
+              ) : (
+                "Save & Generate"
+              )}
+            </Button>
+          </div>
         </div>
       </Form>
 
@@ -794,19 +834,11 @@ const ChallanForm = ({ onSave }) => {
         onHide={() => setShowPreview(false)}
         challan={{
           ...challan,
-          dcNumber: getDcNumber(challan),
-          items: selectedAssets.map((item) => ({
-            ...item,
-            assetName: item.asset_name,
-            serialNo: item.serial_no,
-            expectedReturnDate: item.expected_return_date,
-          })),
-          hasPO: challan.has_po,
-          poNumber: challan.po_number,
+          dc_number: getDcNumber(challan),
+          items: selectedAssets,
         }}
-        dcNumber={getDcNumber(challan)}
-        onSave={handleSaveAndGenerate}
-        loading={generating}
+        onGenerate={handleSaveAndGenerate}
+        generating={generating}
       />
     </Container>
   );

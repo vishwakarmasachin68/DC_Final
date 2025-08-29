@@ -97,7 +97,9 @@ const AssetTracking = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this tracking record?")) {
+    if (
+      window.confirm("Are you sure you want to delete this tracking record?")
+    ) {
       try {
         setLoading(true);
         await deleteAssetTracking(id);
@@ -139,9 +141,13 @@ const AssetTracking = () => {
       record.asset_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       record.asset_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (record.serial_number &&
-        record.serial_number.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        record.serial_number
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())) ||
       (record.vendor_sent_to &&
-        record.vendor_sent_to.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        record.vendor_sent_to
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())) ||
       (record.received_from &&
         record.received_from.toLowerCase().includes(searchTerm.toLowerCase()))
     );
@@ -162,7 +168,9 @@ const AssetTracking = () => {
     <Container className="mt-4">
       <div className="page-header mb-4">
         <h2>Asset Tracking</h2>
-        <p className="text-muted">Track all asset movements in and out of office</p>
+        <p className="text-muted">
+          Track all asset movements in and out of office
+        </p>
       </div>
 
       {error && (
@@ -479,7 +487,9 @@ const AssetTracking = () => {
                       name="return_date"
                       value={
                         currentRecord?.return_date
-                          ? currentRecord.return_date.toISOString().split("T")[0]
+                          ? currentRecord.return_date
+                              .toISOString()
+                              .split("T")[0]
                           : ""
                       }
                       onChange={(e) =>
@@ -517,7 +527,11 @@ const AssetTracking = () => {
             </Row>
 
             <div className="d-flex justify-content-end mt-3">
-              <Button variant="secondary" onClick={() => setShowModal(false)} className="me-2">
+              <Button
+                variant="secondary"
+                onClick={() => setShowModal(false)}
+                className="me-2"
+              >
                 Cancel
               </Button>
               <Button

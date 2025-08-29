@@ -1,5 +1,5 @@
-import React from 'react';
-import { Modal, Table, Badge } from 'react-bootstrap';
+import React from "react";
+import { Modal, Table, Badge } from "react-bootstrap";
 
 const AssetPreviewModal = ({ show, onHide, asset }) => {
   const formatDate = (dateString) => {
@@ -10,11 +10,11 @@ const AssetPreviewModal = ({ show, onHide, asset }) => {
 
   const getStatusBadge = (status) => {
     switch (status) {
-      case 'available':
+      case "available":
         return <Badge bg="success">Available</Badge>;
-      case 'in-use':
+      case "in-use":
         return <Badge bg="warning">In Use</Badge>;
-      case 'disposed':
+      case "disposed":
         return <Badge bg="danger">Disposed</Badge>;
       default:
         return <Badge bg="secondary">N/A</Badge>;
@@ -23,14 +23,14 @@ const AssetPreviewModal = ({ show, onHide, asset }) => {
 
   const getConditionBadge = (condition) => {
     switch (condition) {
-      case 'New':
+      case "New":
         return <Badge bg="success">New</Badge>;
-      case 'Good':
+      case "Good":
         return <Badge bg="primary">Good</Badge>;
-      case 'Fair':
+      case "Fair":
         return <Badge bg="warning">Fair</Badge>;
-      case 'Poor':
-      case 'Not Working':
+      case "Poor":
+      case "Not Working":
         return <Badge bg="danger">{condition}</Badge>;
       default:
         return <Badge bg="secondary">N/A</Badge>;
@@ -64,7 +64,13 @@ const AssetPreviewModal = ({ show, onHide, asset }) => {
             </tr>
             <tr>
               <th>Make/Model</th>
-              <td>{asset?.make || "N/A"} / {asset?.model || "N/A"}</td>
+              <td>
+                {asset?.make || "N/A"} / {asset?.model || "N/A"}
+              </td>
+            </tr>
+            <tr>
+              <th>Asset Description</th>
+              <td>{asset?.description || "N/A"}</td>
             </tr>
             <tr>
               <th>Supplier Details</th>
@@ -116,7 +122,7 @@ const AssetPreviewModal = ({ show, onHide, asset }) => {
               <th>Actual Return Date</th>
               <td>{formatDate(asset?.returned_date)}</td>
             </tr>
-            {asset?.status === 'disposed' && (
+            {asset?.status === "disposed" && (
               <>
                 <tr>
                   <th>Disposal Approvals Obtained</th>

@@ -121,6 +121,18 @@ const AssetModal = ({
                 />
               </Form.Group>
             </Col>
+            <Col md={6}>
+              <Form.Group className="mb-3">
+                <Form.Label>Asset Description</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="description"
+                  value={currentAsset.description || ""}
+                  onChange={handleInputChange}
+                  placeholder="Enter asset description"
+                />
+              </Form.Group>
+            </Col>
           </Row>
 
           <Row>
