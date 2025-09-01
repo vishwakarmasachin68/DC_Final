@@ -195,14 +195,14 @@ const AssetTracking = () => {
             </InputGroup>
           </div>
           <div className="d-flex gap-2">
-            <Button
+            {/* <Button
               variant="outline-primary"
               onClick={loadData}
               disabled={loading}
             >
               <BiRefresh className="me-1" />
               Refresh
-            </Button>
+            </Button> */}
 
             <Button
               style={{ backgroundColor: "#0e787b", borderColor: "#0e787b" }}

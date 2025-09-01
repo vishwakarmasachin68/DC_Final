@@ -307,7 +307,7 @@ const ChallanForm = ({ onSave }) => {
     }
   };
 
-  const handleClearForm = ()  => {
+  const handleClearForm = () => {
     setChallan({
       dc_sequence: nextSequence,
       date: new Date().toISOString().split("T")[0],
@@ -664,7 +664,7 @@ const ChallanForm = ({ onSave }) => {
             <h5 className="card-title mb-0" style={{ fontWeight: "bold" }}>
               <i className="bi bi-box me-2"></i>Asset Details
             </h5>
-            
+
             <div className="d-flex gap-2 align-items-center">
               <Form.Control
                 type="text"
@@ -705,7 +705,7 @@ const ChallanForm = ({ onSave }) => {
                   <th>Quantity</th>
                   <th>Serial No</th>
                   <th>Returnable</th>
-                  {selectedAssets.some(item => item.returnable === "yes") && (
+                  {selectedAssets.some((item) => item.returnable === "yes") && (
                     <th>Expected Return Date</th>
                   )}
                   <th>Action</th>
@@ -750,7 +750,9 @@ const ChallanForm = ({ onSave }) => {
                           <option value="yes">Yes</option>
                         </Form.Select>
                       </td>
-                      {selectedAssets.some(item => item.returnable === "yes") && (
+                      {selectedAssets.some(
+                        (item) => item.returnable === "yes"
+                      ) && (
                         <td>
                           {item.returnable === "yes" ? (
                             <Form.Control
@@ -779,11 +781,16 @@ const ChallanForm = ({ onSave }) => {
                   ))
                 ) : (
                   <tr>
-                    <td 
-                      colSpan={selectedAssets.some(item => item.returnable === "yes") ? 9 : 8} 
+                    <td
+                      colSpan={
+                        selectedAssets.some((item) => item.returnable === "yes")
+                          ? 9
+                          : 8
+                      }
                       className="text-center text-muted py-4"
                     >
-                      No assets selected. Please select assets from the dropdown above.
+                      No assets selected. Please select assets from the dropdown
+                      above.
                     </td>
                   </tr>
                 )}
@@ -793,39 +800,26 @@ const ChallanForm = ({ onSave }) => {
         </Card>
 
         <div className="d-flex justify-content-between">
-          <Button variant="secondary" onClick={handleClearForm}>
+          <Button
+            variant="secondary"
+            onClick={handleClearForm}
+            style={{ padding: "10px 20px", fontSize: "18px" }}
+          >
             Clear Form
           </Button>
-          <div className="d-flex gap-2">
-            <Button
-              variant="primary"
-              onClick={handlePreview}
-              disabled={selectedAssets.length === 0}
-            >
-              Preview
-            </Button>
-            <Button
-              variant="success"
-              onClick={handleSaveAndGenerate}
-              disabled={selectedAssets.length === 0}
-            >
-              {generating ? (
-                <>
-                  <Spinner
-                    as="span"
-                    animation="border"
-                    size="sm"
-                    role="status"
-                    aria-hidden="true"
-                    className="me-2"
-                  />
-                  Generating...
-                </>
-              ) : (
-                "Save & Generate"
-              )}
-            </Button>
-          </div>
+          <Button
+            style={{
+              backgroundColor: "#085f79ff",
+              border: "none",
+              padding: "10px 20px",
+              fontSize: "18px",
+              fontWeight: "bold",
+            }}
+            onClick={handlePreview}
+            disabled={selectedAssets.length === 0}
+          >
+            Preview
+          </Button>
         </div>
       </Form>
 
@@ -837,8 +831,9 @@ const ChallanForm = ({ onSave }) => {
           dc_number: getDcNumber(challan),
           items: selectedAssets,
         }}
-        onGenerate={handleSaveAndGenerate}
-        generating={generating}
+        dcNumber={getDcNumber(challan)}
+        onSave={handleSaveAndGenerate}
+        loading={generating}
       />
     </Container>
   );

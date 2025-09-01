@@ -285,14 +285,14 @@ const AssetManagement = () => {
               </Dropdown.Menu>
             </Dropdown>
 
-            <Button
+            {/* <Button
               variant="outline-primary"
               onClick={loadAssets}
               disabled={loading}
             >
               <BiRefresh className="me-1" />
               Refresh
-            </Button>
+            </Button> */}
 
             <Button
               style={{ backgroundColor: "#0e787b", borderColor: "#0e787b" }}

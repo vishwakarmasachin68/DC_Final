@@ -6,7 +6,6 @@ const PreviewModal = ({
   onHide,
   challan,
   dcNumber,
-  onPrint,
   onSave,
   loading,
 }) => {
@@ -135,35 +134,29 @@ const PreviewModal = ({
         <Button variant="outline-secondary" onClick={onHide}>
           <i className="bi bi-arrow-left me-2"></i>Back to Edit
         </Button>
-        <div>
-          <Button
-            variant="success"
-            onClick={onSave}
-            className="me-2"
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <Spinner
-                  as="span"
-                  animation="border"
-                  size="sm"
-                  role="status"
-                  aria-hidden="true"
-                  className="me-2"
-                />
-                Generating...
-              </>
-            ) : (
-              <>
-                <i className="bi bi-save me-2"></i>Generate & Save Challan
-              </>
-            )}
-          </Button>
-          {/* <Button variant="primary" onClick={onPrint}>
-            <i className="bi bi-printer me-2"></i>Print Preview
-          </Button>  */}
-        </div>
+        <Button
+          variant="success"
+          onClick={onSave}
+          disabled={loading}
+        >
+          {loading ? (
+            <>
+              <Spinner
+                as="span"
+                animation="border"
+                size="sm"
+                role="status"
+                aria-hidden="true"
+                className="me-2"
+              />
+              Generating...
+            </>
+          ) : (
+            <>
+              <i className="bi bi-save me-2"></i>Generate & Save Challan
+            </>
+          )}
+        </Button>
       </Modal.Footer>
     </Modal>
   );
