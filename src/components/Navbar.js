@@ -91,6 +91,10 @@ const Navbar = () => {
             <NavDropdown.Item as={Link} to="/Projects">
               <i className="bi bi-folder-plus me-2"></i>Manage Project
             </NavDropdown.Item>
+            <NavDropdown.Item as={Link} to="/AssetManagement">
+              <i className="bi bi-gear me-2"></i>Asset Management
+            </NavDropdown.Item>
+            
           </NavDropdown>
         </div>
       </Container>

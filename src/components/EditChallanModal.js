@@ -11,7 +11,7 @@ import {
   InputGroup,
   Card,
 } from "react-bootstrap";
-import { BiPlus, BiMinus, BiTrash } from "react-icons/bi";
+import { BiTrash } from "react-icons/bi";
 import {
   getProjects,
   getClients,
