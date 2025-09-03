@@ -47,6 +47,14 @@ const formatDateForAPI = (date) => {
   return date.toISOString().split("T")[0];
 };
 
+// -------------------- Categories --------------------
+export const getCategories = () => fetchAPI("/categories/");
+
+export const addCategory = (name) => fetchAPI("/categories/", "POST", { name });
+
+export const deleteCategory = (categoryName) =>
+  fetchAPI(`/categories/${encodeURIComponent(categoryName)}`, "DELETE");
+
 // -------------------- Assets --------------------
 export const getAssets = () => fetchAPI("/assets/");
 
