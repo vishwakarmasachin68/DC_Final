@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:8000";  
+const API_BASE_URL = "http://localhost:8000";
 
 export default API_BASE_URL;
 
@@ -173,7 +173,7 @@ export const addProject = (project) => fetchAPI("/projects/", "POST", project);
 export const updateProject = (id, project) =>
   fetchAPI(`/projects/${id}/`, "PUT", project);
 
-export const deleteProject = (id) => fetchAPI(`/projects/${id}/`, "DELETE");  
+export const deleteProject = (id) => fetchAPI(`/projects/${id}/`, "DELETE");
 
 // -------------------- Available Assets --------------------
 export const getAvailableAssets = () => fetchAPI("/assets/available/");
