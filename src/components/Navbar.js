@@ -38,7 +38,7 @@ const Navbar = () => {
         </div>
 
         <div className="d-none d-lg-flex ms-auto">
-          <div className="d-flex gap-2">            
+          <div className="d-flex gap-2">
             <Button
               as={Link}
               to="/"
@@ -94,7 +94,6 @@ const Navbar = () => {
             <NavDropdown.Item as={Link} to="/AssetManagement">
               <i className="bi bi-gear me-2"></i>Asset Management
             </NavDropdown.Item>
-            
           </NavDropdown>
         </div>
       </Container>

@@ -280,7 +280,7 @@ const AssetTracking = () => {
       </Card>
 
       {/* Tracking Record Modal */}
-      <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
+      <Modal show={showModal} onHide={() => setShowModal(false)} size="xl">
         <Modal.Header closeButton className="card-header-custom text-white">
           <Modal.Title>
             {isEditing ? "Edit Tracking Record" : "Add New Tracking Record"}
